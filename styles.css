@@ -480,6 +480,7 @@ footer a{color:var(--text2)}
 .rec-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text2);font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
 .rec-btn:hover{border-color:var(--accent);color:var(--text)}
 .rec-btn .rcnt{font-family:var(--mono);color:var(--accent2);font-size:11px}
+.rec-btn.preset-sel{border-color:var(--accent);background:rgba(168,85,247,.12);color:var(--text);box-shadow:0 0 0 1px var(--accent) inset}
 
 /* === Feature 7: Explain Modal === */
 .explain-content{font-size:14px;line-height:1.75;color:var(--text2)}

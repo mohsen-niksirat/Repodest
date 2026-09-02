@@ -285,6 +285,34 @@
             <label class="optrow"><input type="checkbox" id="optReadme" checked> README as context</label>
             <label class="optrow"><input type="checkbox" id="optMeta" checked> Repo metadata header</label>
           </div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="minititle">🎯 Digest Preset</div>
+            <div class="rec-btns">
+              <button class="rec-btn preset-sel" data-preset="general" onclick="selectDigestPreset('general')">🧩 General</button>
+              <button class="rec-btn" data-preset="review" onclick="selectDigestPreset('review')">🔍 Code review</button>
+              <button class="rec-btn" data-preset="learn" onclick="selectDigestPreset('learn')">🎓 Learn codebase</button>
+              <button class="rec-btn" data-preset="migrate" onclick="selectDigestPreset('migrate')">🚚 Migration</button>
+              <button class="rec-btn" data-preset="docs" onclick="selectDigestPreset('docs')">📝 Docs writing</button>
+            </div>
+            <div class="rec-btns">
+              <button class="rec-btn" data-format="md" onclick="selectDigestFormat('md')">Markdown</button>
+              <button class="rec-btn" data-format="xml" onclick="selectDigestFormat('xml')">XML</button>
+              <button class="rec-btn" data-format="json" onclick="selectDigestFormat('json')">JSON</button>
+              <button class="rec-btn sig-btn" onclick="toggleSigOnly()" id="sigBtn" title="Strip function bodies — keep only signatures, types & comments">🗜️ Signatures only</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="minititle">Model & token estimate</div>
+            <div class="digest-meta" style="margin-bottom:10px">
+              <select id="modelSelect" onchange="updateSelMeta()" style="padding:7px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none">
+                <option value="gpt5">GPT-5 / GPT-4o (128k)</option>
+                <option value="claude">Claude Sonnet (200k)</option>
+                <option value="gemini">Gemini 2.5 Pro (1M)</option>
+                <option value="llama">Llama 3 70B (8k)</option>
+              </select>
+              <span id="ctxStatus" style="font-size:11.5px;color:var(--text3)"></span>
+            </div>
+          </div>
           <div class="card">
             <div class="minititle">⚡ Smart Recommendations</div>
             <div class="rec-btns">

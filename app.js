@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 /* ============================================================
    Utility helpers
    ============================================================ */
@@ -7,7 +7,7 @@ const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.par
 const S={repo:null,langs:null,tree:null,contribs:null,commits:null,activity:null,sel:new Set(),digestText:'',charts:{},user:null,userRepos:null,platform:'github',branches:[],tags:[],currentBranch:null,compareData:null};
 const FILEMAP=new Map(),DIRMAP=new Map(),NODEMAP=new Map();
 /* esc/fmt/fmtSize/timeAgo, TEXT_EXT/BINARY_EXT, LANG_COLORS/PALETTE,
-   detectPlatform/parseRepoInput, asciiTree, SPDX_MAP — shared via core.js */
+   detectPlatform/parseRepoInput, asciiTree, SPDX_MAP â€” shared via core.js */
 const MANIFESTS=[{f:'package.json',t:'json',label:'npm'},{f:'requirements.txt',t:'lines',label:'pip'},{f:'pyproject.toml',t:'toml',label:'pyproject'},{f:'Cargo.toml',t:'toml',label:'Cargo'},{f:'go.mod',t:'gomod',label:'Go modules'},{f:'composer.json',t:'json',label:'Composer'},{f:'Gemfile',t:'gemfile',label:'Bundler'},{f:'pom.xml',t:'pom',label:'Maven'}];
 let ROASTS=[];
 
@@ -59,9 +59,9 @@ function renderLicenseAnalysis(){
       '<div class="kv"><span>License</span><b>'+esc(info.name)+'</b></div>'+
       '<div class="kv"><span>SPDX ID</span><b>'+esc(spdx)+'</b></div>'+
       '<div class="license-grid">'+
-        '<div class="license-col perm"><h4>✅ Permissions</h4><ul>'+info.perms.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul></div>'+
-        '<div class="license-col cond"><h4>⚠️ Conditions</h4><ul>'+(info.conds.length?info.conds.map(c=>'<li>'+esc(c)+'</li>').join(''):'<li style="color:var(--text3)">None</li>')+'</ul></div>'+
-        '<div class="license-col lim"><h4>🚫 Limitations</h4><ul>'+info.lims.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul></div>'+
+        '<div class="license-col perm"><h4>âœ… Permissions</h4><ul>'+info.perms.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul></div>'+
+        '<div class="license-col cond"><h4>âš ï¸ Conditions</h4><ul>'+(info.conds.length?info.conds.map(c=>'<li>'+esc(c)+'</li>').join(''):'<li style="color:var(--text3)">None</li>')+'</ul></div>'+
+        '<div class="license-col lim"><h4>ðŸš« Limitations</h4><ul>'+info.lims.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul></div>'+
       '</div>';
   }catch(e){console.warn('License analysis error:',e)}
 }
@@ -229,13 +229,13 @@ async function fetchRepoData(owner,repo,platform){
    ============================================================ */
 function updateSEO(meta){
   try{
-    const title=(meta.full_name||'Unknown')+' — Repodest';
+    const title=(meta.full_name||'Unknown')+' â€” Repodest';
     const desc=(meta.description||'A repository on '+(meta._platform||'GitHub'))+'. Health score, languages, file explorer, and LLM-ready digest.';
     document.title=title;
     const ogTitle=document.querySelector('meta[property="og:title"]');
     const ogDesc=document.querySelector('meta[property="og:description"]');
     const ogImg=document.querySelector('meta[property="og:image"]');
-    if(ogTitle)ogTitle.setAttribute('content',(meta.full_name||'')+' — X-ray for '+(meta._platform||'GitHub')+' repos');
+    if(ogTitle)ogTitle.setAttribute('content',(meta.full_name||'')+' â€” X-ray for '+(meta._platform||'GitHub')+' repos');
     if(ogDesc)ogDesc.setAttribute('content',desc);
     if(ogImg&&meta.owner&&meta.owner.avatar_url)ogImg.setAttribute('content',meta.owner.avatar_url);
   }catch(e){}
@@ -273,7 +273,7 @@ function renderHistory(){
     const platformClass=h.platform||'github';
     return '<div class="hcard" onclick="loadRepoFromHistory(\''+esc(h.full_name)+'\',\''+esc(h.platform||'github')+'\')">'+
       '<img src="'+esc(h.avatar)+'" alt="" loading="lazy">'+
-      '<div class="hi"><div class="hn">'+esc(h.name||'')+'</div><div class="hm"><span class="platform-chip '+esc(platformClass)+'">'+esc(platformClass)+'</span> · '+ago+'</div></div>'+
+      '<div class="hi"><div class="hn">'+esc(h.name||'')+'</div><div class="hm"><span class="platform-chip '+esc(platformClass)+'">'+esc(platformClass)+'</span> Â· '+ago+'</div></div>'+
       '<div class="hs">'+h.score+'</div>'+
     '</div>';
   }).join('');
@@ -316,7 +316,7 @@ function renderBranchTagUI(){
   const bd=$('#branchDropdown');
   bd.innerHTML=S.branches.map(b=>'<option value="'+esc(b.name||'')+'"'+(b.name===S.currentBranch?' selected':'')+'>'+esc(b.name||'')+'</option>').join('');
   const td=$('#tagDropdown');
-  td.innerHTML='<option value="">—</option>'+S.tags.map(t=>'<option value="'+esc(t.name||'')+'">'+esc(t.name||'')+'</option>').join('');
+  td.innerHTML='<option value="">â€”</option>'+S.tags.map(t=>'<option value="'+esc(t.name||'')+'">'+esc(t.name||'')+'</option>').join('');
 }
 
 async function onBranchChange(branch){
@@ -336,7 +336,7 @@ async function reloadTreeForRef(ref){
   const m=S.repo;
   if(!m)return;
   const key=m.full_name||'';
-  setLoad('Loading file tree for '+ref+'…');
+  setLoad('Loading file tree for '+ref+'â€¦');
   try{
     const tree=await api('/repos/'+key+'/git/trees/'+ref+'?recursive=1').catch(()=>null);
     if(tree){
@@ -372,7 +372,7 @@ async function loadCompare(){
   const p=parseRepoInput(v);
   if(!p){toast('Could not parse that','err');return}
   const content=$('#compareContent');
-  content.innerHTML='<div class="loading"><div class="spinner"></div><p>Loading '+esc(p.owner+'/'+p.repo)+'…</p></div>';
+  content.innerHTML='<div class="loading"><div class="spinner"></div><p>Loading '+esc(p.owner+'/'+p.repo)+'â€¦</p></div>';
   try{
     let data;
     if(p.platform==='github'){
@@ -390,7 +390,7 @@ async function loadCompare(){
     history.replaceState(null,'',url);
     renderCompare(data);
   }catch(e){
-    content.innerHTML='<div class="errbox"><div class="e">💥</div><h3>Could not load comparison</h3><p>'+esc(e.message||'Unknown error')+'</p></div>';
+    content.innerHTML='<div class="errbox"><div class="e">ðŸ’¥</div><h3>Could not load comparison</h3><p>'+esc(e.message||'Unknown error')+'</p></div>';
   }
 }
 
@@ -408,8 +408,8 @@ function renderCompare(data){
             '<h3 style="margin-bottom:12px">'+esc(a.full_name||'')+'</h3>'+
             '<div class="statrow">'+
               '<div class="st"><b>'+ahc.score+'</b><span>health</span></div>'+
-              '<div class="st"><b>★ '+fmt(a.stargazers_count)+'</b><span>stars</span></div>'+
-              '<div class="st"><b>⑂ '+fmt(a.forks_count)+'</b><span>forks</span></div>'+
+              '<div class="st"><b>â˜… '+fmt(a.stargazers_count)+'</b><span>stars</span></div>'+
+              '<div class="st"><b>â‘‚ '+fmt(a.forks_count)+'</b><span>forks</span></div>'+
               '<div class="st"><b>'+fmt(a.open_issues_count)+'</b><span>issues</span></div>'+
             '</div>'+
             '<div style="margin-top:12px"><div class="minititle">Languages</div>'+
@@ -422,8 +422,8 @@ function renderCompare(data){
             '<h3 style="margin-bottom:12px">'+esc(b.full_name||'')+'</h3>'+
             '<div class="statrow">'+
               '<div class="st"><b>'+bScore+'</b><span>health</span></div>'+
-              '<div class="st"><b>★ '+fmt(b.stargazers_count)+'</b><span>stars</span></div>'+
-              '<div class="st"><b>⑂ '+fmt(b.forks_count)+'</b><span>forks</span></div>'+
+              '<div class="st"><b>â˜… '+fmt(b.stargazers_count)+'</b><span>stars</span></div>'+
+              '<div class="st"><b>â‘‚ '+fmt(b.forks_count)+'</b><span>forks</span></div>'+
               '<div class="st"><b>'+fmt(b.open_issues_count)+'</b><span>issues</span></div>'+
             '</div>'+
             '<div style="margin-top:12px"><div class="minititle">Languages</div>'+
@@ -555,14 +555,14 @@ function generateDynamicRoasts(){
     const age=(Date.now()-new Date(m.created_at))/864e5;
     const freshness=(Date.now()-new Date(m.pushed_at))/864e5;
 
-    if(hasTests&&!hasTests.ok&&hasCI&&!hasCI.ok)lines.push("This repo deploys on hopes and dreams — no tests, no CI, just vibes.");
+    if(hasTests&&!hasTests.ok&&hasCI&&!hasCI.ok)lines.push("This repo deploys on hopes and dreams â€” no tests, no CI, just vibes.");
     if(starCount===0&&forkCount===0)lines.push("This repo is so lonely, even the CI bot left.");
-    if(sizeMB>500)lines.push("This repo weighs more than my life choices — "+fmtSize(m.size*1024)+" of pure commitment.");
-    if(contribCount<=1)lines.push("Solo dev energy — the commit history reads like a diary.");
-    if(issueCount>100)lines.push("The issue tracker is basically a suggestion box at this point — "+fmt(issueCount)+" open issues.");
-    if(!hasLicense)lines.push("No LICENSE file — legally speaking, this repo is a gray area wrapped in a mystery.");
+    if(sizeMB>500)lines.push("This repo weighs more than my life choices â€” "+fmtSize(m.size*1024)+" of pure commitment.");
+    if(contribCount<=1)lines.push("Solo dev energy â€” the commit history reads like a diary.");
+    if(issueCount>100)lines.push("The issue tracker is basically a suggestion box at this point â€” "+fmt(issueCount)+" open issues.");
+    if(!hasLicense)lines.push("No LICENSE file â€” legally speaking, this repo is a gray area wrapped in a mystery.");
     if(!m.description)lines.push("No description. This repo is so mysterious, even the README is confused.");
-    if(hasReadme&&!hasReadme.ok)lines.push("No README. The code speaks for itself — unfortunately, it mumbles.");
+    if(hasReadme&&!hasReadme.ok)lines.push("No README. The code speaks for itself â€” unfortunately, it mumbles.");
     if(m.archived)lines.push("Archived. The code has entered its retirement phase. It's not dead, it's 'legacy'.");
     if(m.fork)lines.push("It's a fork. Somewhere, a parent repo is pretending this doesn't exist.");
     if(freshness>365)lines.push("Last pushed "+Math.floor(freshness/365)+" year(s) ago. This repo has entered archaeological territory.");
@@ -570,13 +570,13 @@ function generateDynamicRoasts(){
     if(langCount===1)lines.push("One language to rule them all. At least this repo knows what it wants.");
     if(fileCount>5000)lines.push(fmt(fileCount)+" files. At this point, the file tree is a forest.");
     if(fileCount<5&&fileCount>0)lines.push("Only "+fileCount+" file(s). Minimalism taken to its logical extreme.");
-    if(starCount>1000&&hasTests&&!hasTests.ok)lines.push("★ "+fmt(starCount)+" stars and zero tests. Famous and reckless.");
+    if(starCount>1000&&hasTests&&!hasTests.ok)lines.push("â˜… "+fmt(starCount)+" stars and zero tests. Famous and reckless.");
     if(!m.topics||!m.topics.length)lines.push("Zero topics. This repo is hiding from GitHub search like it owes it money.");
     if(hasContributing&&!hasContributing.ok)lines.push("No CONTRIBUTING.md. First-time contributors are greeted with pure chaos.");
     if(age<30)lines.push("Less than a month old. Fresh out of the `git init` oven.");
-    if(forkCount>starCount&&starCount>0)lines.push("More forks than stars — people want to fix it themselves.");
+    if(forkCount>starCount&&starCount>0)lines.push("More forks than stars â€” people want to fix it themselves.");
     if(!m.homepage)lines.push("No homepage. This repo lives in the shadows of the terminal.");
-    if(!lines.length)lines.push("Honestly? Clean repo, good hygiene, tests, CI… I got nothing. This is suspiciously responsible.");
+    if(!lines.length)lines.push("Honestly? Clean repo, good hygiene, tests, CIâ€¦ I got nothing. This is suspiciously responsible.");
     return lines;
   }catch(e){return ["Something went wrong trying to roast this repo. Even the roast engine gave up."]}
 }
@@ -595,9 +595,9 @@ function renderStarHistory(){
 }
 
 /* ============================================================
-   Core helpers (original, preserved) — BUG FIX #5: null safety
+   Core helpers (original, preserved) â€” BUG FIX #5: null safety
    ============================================================ */
-/* esc/fmt/fmtSize/timeAgo/toast/langColor/extOf/isText/isLock —
+/* esc/fmt/fmtSize/timeAgo/toast/langColor/extOf/isText/isLock â€”
    pure ones live in core.js (exposed as globals); toast stays local */
 function toast(msg,cls){const t=document.createElement('div');t.className='tst '+(cls||'');t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),450)},3400)}
 
@@ -643,16 +643,16 @@ function showError(icon,title,msg,extra){
 }
 function handleErr(err,name){
   if(err&&err.message==='RATE_LIMIT'){
-    showError('🚦','Rate limit reached','GitHub allows 60 unauthenticated calls per hour. A free personal access token raises it to 5,000 — click the button below and hit Scope again.');
-    const b=document.createElement('button');b.className='btn';b.style.marginTop='18px';b.textContent='🔑 Add a token';b.onclick=openModal;$('#errorView').appendChild(b);
+    showError('ðŸš¦','Rate limit reached','GitHub allows 60 unauthenticated calls per hour. A free personal access token raises it to 5,000 â€” click the button below and hit Scope again.');
+    const b=document.createElement('button');b.className='btn';b.style.marginTop='18px';b.textContent='ðŸ”‘ Add a token';b.onclick=openModal;$('#errorView').appendChild(b);
   }else if(err&&err.message==='NOT_FOUND'){
-    showError('👻','Not found',esc(name)+' doesn\'t exist, is private, or the name is misspelled.');
+    showError('ðŸ‘»','Not found',esc(name)+' doesn\'t exist, is private, or the name is misspelled.');
   }else{
-    showError('💥','Something broke',(err&&err.message?err.message:'Network error')+' — check your connection and try again.');
+    showError('ðŸ’¥','Something broke',(err&&err.message?err.message:'Network error')+' â€” check your connection and try again.');
   }
 }
 
-/* BUG FIX #1 & #4: Null-safe parseTree — ensure every file has a `name` */
+/* BUG FIX #1 & #4: Null-safe parseTree â€” ensure every file has a `name` */
 function parseTree(apiTree){
   FILEMAP.clear();DIRMAP.clear();NODEMAP.clear();
   const root={name:'/',path:'',dirs:new Map(),files:[],depth:0};
@@ -679,7 +679,7 @@ function parseTree(apiTree){
 }
 
 /* ============================================================
-   Main loadRepo — now supports multi-platform
+   Main loadRepo â€” now supports multi-platform
    ============================================================ */
 async function loadRepo(owner,repo,platform){
   platform=platform||'github';
@@ -691,7 +691,7 @@ async function loadRepo(owner,repo,platform){
   url.searchParams.delete('compare');
   history.replaceState(null,'',url.pathname+'?repo='+encodeURIComponent(key));
   window.scrollTo({top:0});
-  setLoad('Fetching '+key+'…');
+  setLoad('Fetching '+key+'â€¦');
   $('#landing').style.display='none';$('#app').style.display='';
   try{
     const cacheKey=platform+':'+key.toLowerCase();
@@ -699,7 +699,7 @@ async function loadRepo(owner,repo,platform){
     if(cached){applyRepo(key,cached,true);return}
 
     if(platform==='gitlab'||platform==='bitbucket'){
-      setLoad('Fetching from '+platform+'…');
+      setLoad('Fetching from '+platform+'â€¦');
       const data=await fetchRepoData(owner,repo,platform);
       if(!data)throw new Error('Failed to fetch');
       cacheSet('repo:'+cacheKey,data);
@@ -708,12 +708,12 @@ async function loadRepo(owner,repo,platform){
     }
 
     /* GitHub flow (original) */
-    setLoad('Repository metadata…');
+    setLoad('Repository metadataâ€¦');
     const meta=await api('/repos/'+key);
-    setLoad('Languages & file tree…');
+    setLoad('Languages & file treeâ€¦');
     const langs=await api('/repos/'+key+'/languages').catch(()=>({}));
     const tree=await api('/repos/'+key+'/git/trees/'+(meta.default_branch||'main')+'?recursive=1').catch(()=>null);
-    setLoad('Contributors & commits…');
+    setLoad('Contributors & commitsâ€¦');
     const contribs=await api('/repos/'+key+'/contributors?per_page=12').catch(()=>[]);
     const commits=await api('/repos/'+key+'/commits?per_page=100').catch(()=>[]);
     const data={meta:stripRepo(meta),langs,tree,contribs:Array.isArray(contribs)?contribs:[],commits:Array.isArray(commits)?commits.slice(0,100):[]};
@@ -737,8 +737,8 @@ function applyRepo(key,data,fromCache){
 
     renderDash();
     show($('#loadingView'),false);show($('#errorView'),false);show($('#dash'),true);
-    if(data.tree&&data.tree.truncated)toast('Huge repo — file tree was truncated by GitHub','err');
-    if(fromCache)toast('Loaded from cache (≤6h old)');
+    if(data.tree&&data.tree.truncated)toast('Huge repo â€” file tree was truncated by GitHub','err');
+    if(fromCache)toast('Loaded from cache (â‰¤6h old)');
     if(!fromCache)refreshRate();
     if(!S.activity&&S.platform==='github')loadActivity(key);
 
@@ -771,24 +771,24 @@ function loadUser(u){
   history.replaceState(null,'',location.pathname+'?user='+encodeURIComponent(u));
   window.scrollTo({top:0});
   $('#landing').style.display='none';$('#app').style.display='';
-  setLoad('Loading @'+u+'…');
+  setLoad('Loading @'+u+'â€¦');
   (async()=>{
     try{
       const user=await api('/users/'+u);
-      setLoad('Repositories…');
+      setLoad('Repositoriesâ€¦');
       const repos=await api('/users/'+u+'/repos?per_page=100&sort=pushed').catch(()=>[]);
       const el=$('#userView');
       el.innerHTML='';
       show($('#dash'),false);show($('#userView'),true);
       const wrap=document.createElement('div');
-      wrap.innerHTML='<div class="card ubig"><img src="'+esc(user.avatar_url)+'" alt="" loading="lazy"><div style="flex:1;min-width:220px"><h2>'+esc(user.name||user.login)+'</h2><div class="u">@'+esc(user.login)+' · '+fmt(user.followers)+' followers · '+fmt(user.public_repos)+' repos</div><div class="bio">'+esc(user.bio||'')+'</div></div><a class="btn sm" target="_blank" rel="noopener" href="'+esc(user.html_url)+'">Profile ↗</a></div><div class="minititle" style="margin-top:22px">Pick a repository to scope</div><div class="usergrid" id="userGrid"></div>';
+      wrap.innerHTML='<div class="card ubig"><img src="'+esc(user.avatar_url)+'" alt="" loading="lazy"><div style="flex:1;min-width:220px"><h2>'+esc(user.name||user.login)+'</h2><div class="u">@'+esc(user.login)+' Â· '+fmt(user.followers)+' followers Â· '+fmt(user.public_repos)+' repos</div><div class="bio">'+esc(user.bio||'')+'</div></div><a class="btn sm" target="_blank" rel="noopener" href="'+esc(user.html_url)+'">Profile â†—</a></div><div class="minititle" style="margin-top:22px">Pick a repository to scope</div><div class="usergrid" id="userGrid"></div>';
       el.appendChild(wrap);
       const grid=wrap.querySelector('#userGrid');
       const list=(Array.isArray(repos)?repos:[]).slice().sort((a,b)=>(b.stargazers_count||0)-(a.stargazers_count||0));
       if(!list.length){grid.innerHTML='<div class="card">No public repositories.</div>'}
       list.forEach(r=>{
         const c=document.createElement('div');c.className='ucard';
-        c.innerHTML='<h4>'+esc(r.name||'')+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span><span>★ '+fmt(r.stargazers_count)+'</span><span>⑂ '+fmt(r.forks_count)+'</span></div>';
+        c.innerHTML='<h4>'+esc(r.name||'')+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>â˜… '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'â€”')+'</span><span>â˜… '+fmt(r.stargazers_count)+'</span><span>â‘‚ '+fmt(r.forks_count)+'</span></div>';
         c.onclick=()=>loadRepo(r.owner.login,r.name,'github');
         grid.appendChild(c);
       });
@@ -810,8 +810,8 @@ function renderDash(){
       '<div class="desc">'+esc(m.description||'No description provided.')+'</div>'+
       ((m.topics||[]).length?'<div class="topicrow">'+(m.topics||[]).slice(0,10).map(t=>'<span class="topic">'+esc(t)+'</span>').join('')+'</div>':'')+
       '<div class="statrow">'+
-        '<div class="st"><b>★ '+fmt(m.stargazers_count)+'</b><span>stars</span></div>'+
-        '<div class="st"><b>⑂ '+fmt(m.forks_count)+'</b><span>forks</span></div>'+
+        '<div class="st"><b>â˜… '+fmt(m.stargazers_count)+'</b><span>stars</span></div>'+
+        '<div class="st"><b>â‘‚ '+fmt(m.forks_count)+'</b><span>forks</span></div>'+
         '<div class="st"><b>'+fmt(m.open_issues_count)+'</b><span>open issues</span></div>'+
         '<div class="st"><b>'+fmtSize(m.size*1024)+'</b><span>repo size</span></div>'+
         '<div class="st"><b>'+(m.license?esc(m.license.spdx_id||'Yes'):'None')+'</b><span>license</span></div>'+
@@ -858,22 +858,22 @@ function getAch(){
   const m=S.repo,hc=healthCheck(),paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
   const tests=hc.items.find(x=>x.n==='Tests');
   return[
-    {i:'📜',n:'Licensed',d:'Has an open-source license',on:!!(m&&m.license)},
-    {i:'📖',n:'Documented',d:'README + docs folder',on:hc.items.find(x=>x.n==='README').ok&&hc.items.find(x=>x.n==='Docs folder').ok},
-    {i:'🧪',n:'Tested',d:'Contains test suites',on:tests?tests.ok:false},
-    {i:'🤖',n:'CI Powered',d:'GitHub Actions workflows',on:hc.items.find(x=>x.n==='CI workflows').ok},
-    {i:'⭐',n:'Star Collector',d:'100+ stars',on:m&&(m.stargazers_count||0)>=100},
-    {i:'🌟',n:'Rising Star',d:'1,000+ stars',on:m&&(m.stargazers_count||0)>=1000},
-    {i:'🚀',n:'Supernova',d:'10,000+ stars',on:m&&(m.stargazers_count||0)>=10000},
-    {i:'👥',n:'Community',d:'5+ contributors',on:S.contribs.length>=5},
-    {i:'🔥',n:'Fresh',d:'Pushed within 7 days',on:m&&(Date.now()-new Date(m.pushed_at))<7*864e5},
-    {i:'🕰️',n:'Veteran',d:'3+ years old',on:m&&(Date.now()-new Date(m.created_at))>3*365*864e5},
-    {i:'🦄',n:'Monorepo',d:'1,000+ files tracked',on:FILEMAP.size>=1000},
-    {i:'🪶',n:'Featherweight',d:'Under 1 MB total',on:m&&(m.size||0)*1024<1048576},
-    {i:'🌍',n:'Polyglot',d:'4+ languages',on:Object.keys(S.langs).length>=4},
-    {i:'🧹',n:'Clean House',d:'.gitignore present',on:hc.items.find(x=>x.n==='.gitignore').ok},
-    {i:'🎪',n:'Showcased',d:'Has topics on GitHub',on:m&&(m.topics||[]).length>=3},
-    {i:'📦',n:'Release Ready',d:'Open issues under control',on:m&&(m.open_issues_count||0)<=(m.stargazers_count||0)/50}
+    {i:'ðŸ“œ',n:'Licensed',d:'Has an open-source license',on:!!(m&&m.license)},
+    {i:'ðŸ“–',n:'Documented',d:'README + docs folder',on:hc.items.find(x=>x.n==='README').ok&&hc.items.find(x=>x.n==='Docs folder').ok},
+    {i:'ðŸ§ª',n:'Tested',d:'Contains test suites',on:tests?tests.ok:false},
+    {i:'ðŸ¤–',n:'CI Powered',d:'GitHub Actions workflows',on:hc.items.find(x=>x.n==='CI workflows').ok},
+    {i:'â­',n:'Star Collector',d:'100+ stars',on:m&&(m.stargazers_count||0)>=100},
+    {i:'ðŸŒŸ',n:'Rising Star',d:'1,000+ stars',on:m&&(m.stargazers_count||0)>=1000},
+    {i:'ðŸš€',n:'Supernova',d:'10,000+ stars',on:m&&(m.stargazers_count||0)>=10000},
+    {i:'ðŸ‘¥',n:'Community',d:'5+ contributors',on:S.contribs.length>=5},
+    {i:'ðŸ”¥',n:'Fresh',d:'Pushed within 7 days',on:m&&(Date.now()-new Date(m.pushed_at))<7*864e5},
+    {i:'ðŸ•°ï¸',n:'Veteran',d:'3+ years old',on:m&&(Date.now()-new Date(m.created_at))>3*365*864e5},
+    {i:'ðŸ¦„',n:'Monorepo',d:'1,000+ files tracked',on:FILEMAP.size>=1000},
+    {i:'ðŸª¶',n:'Featherweight',d:'Under 1 MB total',on:m&&(m.size||0)*1024<1048576},
+    {i:'ðŸŒ',n:'Polyglot',d:'4+ languages',on:Object.keys(S.langs).length>=4},
+    {i:'ðŸ§¹',n:'Clean House',d:'.gitignore present',on:hc.items.find(x=>x.n==='.gitignore').ok},
+    {i:'ðŸŽª',n:'Showcased',d:'Has topics on GitHub',on:m&&(m.topics||[]).length>=3},
+    {i:'ðŸ“¦',n:'Release Ready',d:'Open issues under control',on:m&&(m.open_issues_count||0)<=(m.stargazers_count||0)/50}
   ];
 }
 
@@ -882,28 +882,28 @@ function personaFor(){
   const main=((S.repo&&S.repo.language)||langs[0]||'').toLowerCase();
   const total=FILEMAP.size;
   const map={
-    'javascript':{i:'🧙',n:'The Web Wizard',d:'Mostly JavaScript — this repo summons browser magic and node spells. Probably has 400 dependencies for what 40 could do.'},
-    'typescript':{i:'🔮',n:'The Type Enchanter',d:'TypeScript-dominant. Interfaces for everything, `any` hidden somewhere, and a build step longer than the runtime.'},
-    'python':{i:'🧪',n:'The Data Alchemist',d:'Python rules here: notebooks, scripts, and one dependency that silently pins everything to Python 3.8.'},
-    'html':{i:'🎨',n:'The Interface Artist',d:'HTML-heavy — a hand-crafted web experience. View source is the real documentation.'},
-    'css':{i:'💅',n:'The Style Sorcerer',d:'CSS is the star. Somewhere in here is a one-liner that took three days.'},
-    'rust':{i:'🦀',n:'The Memory Guardian',d:'Rust. The compiler is the true maintainer; humans just resolve its complaints.'},
-    'go':{i:'🐹',n:'The Speed Daemon',d:'Go — compiled, concurrent, and allergic to dependencies. `go.mod` is basically poetry.'},
-    'c':{i:'⚙️',n:'The Metal Bender',d:'C. Pointers everywhere and segfaults are a lifestyle. memory ownership is documented… sometimes.'},
-    'c++':{i:'🗡️',n:'The Template Ninja',d:'C++ — ten levels of templates deep. Error messages longer than the actual code.'},
-    'c#':{i:'🏛️',n:'The Enterprise Architect',d:'C# — interfaces, factories, and a folder structure worthy of a Fortune 500.'},
-    'java':{i:'☕',n:'The Abstract Factory',d:'Java. AbstractSingletonProxyFactoryBean is somewhere in here. It compiles. Ship it.'},
-    'kotlin':{i:'🤖',n:'The Pragmatic Droid',d:'Kotlin — Java\'s cooler cousin. Null safety everywhere except that one `!!`.'},
-    'php':{i:'🐘',n:'The Phoenix',d:'PHP. Everyone jokes about it; this repo quietly powers half the internet.'},
-    'ruby':{i:'💎',n:'The Gem Collector',d:'Ruby on probably. Developer happiness as a measurable metric.'},
-    'swift':{i:'🍎',n:'The Apple Polisher',d:'Swift — pixel-perfect and Apple-gated. There is a SwiftUI view in here younger than the docs.'},
-    'shell':{i:'👻',n:'The Automation Ghost',d:'Shell scripts holding the whole project together. One `rm -rf` away from a very bad day.'},
-    'dart':{i:'🎯',n:'The Flutter Flyer',d:'Dart — widgets all the way down, hot reload all day long.'},
-    'vue':{i:'💚',n:'The Progressive One',d:'Vue components, gently progressive, suspiciously elegant.'}
+    'javascript':{i:'ðŸ§™',n:'The Web Wizard',d:'Mostly JavaScript â€” this repo summons browser magic and node spells. Probably has 400 dependencies for what 40 could do.'},
+    'typescript':{i:'ðŸ”®',n:'The Type Enchanter',d:'TypeScript-dominant. Interfaces for everything, `any` hidden somewhere, and a build step longer than the runtime.'},
+    'python':{i:'ðŸ§ª',n:'The Data Alchemist',d:'Python rules here: notebooks, scripts, and one dependency that silently pins everything to Python 3.8.'},
+    'html':{i:'ðŸŽ¨',n:'The Interface Artist',d:'HTML-heavy â€” a hand-crafted web experience. View source is the real documentation.'},
+    'css':{i:'ðŸ’…',n:'The Style Sorcerer',d:'CSS is the star. Somewhere in here is a one-liner that took three days.'},
+    'rust':{i:'ðŸ¦€',n:'The Memory Guardian',d:'Rust. The compiler is the true maintainer; humans just resolve its complaints.'},
+    'go':{i:'ðŸ¹',n:'The Speed Daemon',d:'Go â€” compiled, concurrent, and allergic to dependencies. `go.mod` is basically poetry.'},
+    'c':{i:'âš™ï¸',n:'The Metal Bender',d:'C. Pointers everywhere and segfaults are a lifestyle. memory ownership is documentedâ€¦ sometimes.'},
+    'c++':{i:'ðŸ—¡ï¸',n:'The Template Ninja',d:'C++ â€” ten levels of templates deep. Error messages longer than the actual code.'},
+    'c#':{i:'ðŸ›ï¸',n:'The Enterprise Architect',d:'C# â€” interfaces, factories, and a folder structure worthy of a Fortune 500.'},
+    'java':{i:'â˜•',n:'The Abstract Factory',d:'Java. AbstractSingletonProxyFactoryBean is somewhere in here. It compiles. Ship it.'},
+    'kotlin':{i:'ðŸ¤–',n:'The Pragmatic Droid',d:'Kotlin â€” Java\'s cooler cousin. Null safety everywhere except that one `!!`.'},
+    'php':{i:'ðŸ˜',n:'The Phoenix',d:'PHP. Everyone jokes about it; this repo quietly powers half the internet.'},
+    'ruby':{i:'ðŸ’Ž',n:'The Gem Collector',d:'Ruby on probably. Developer happiness as a measurable metric.'},
+    'swift':{i:'ðŸŽ',n:'The Apple Polisher',d:'Swift â€” pixel-perfect and Apple-gated. There is a SwiftUI view in here younger than the docs.'},
+    'shell':{i:'ðŸ‘»',n:'The Automation Ghost',d:'Shell scripts holding the whole project together. One `rm -rf` away from a very bad day.'},
+    'dart':{i:'ðŸŽ¯',n:'The Flutter Flyer',d:'Dart â€” widgets all the way down, hot reload all day long.'},
+    'vue':{i:'ðŸ’š',n:'The Progressive One',d:'Vue components, gently progressive, suspiciously elegant.'}
   };
   if(main&&map[main])return map[main];
-  if(total>0&&FILEMAP.size&&Array.from(FILEMAP.keys()).every(p=>/\.(md|txt|rst)$/i.test(p)))return{i:'📚',n:'The Documentarian',d:'This "code" repo is essentially a library. Words are the API.'};
-  return{i:'🧭',n:'The Wanderer',d:'A unique blend of technologies that defies categorization. Genuinely interesting.'};
+  if(total>0&&FILEMAP.size&&Array.from(FILEMAP.keys()).every(p=>/\.(md|txt|rst)$/i.test(p)))return{i:'ðŸ“š',n:'The Documentarian',d:'This "code" repo is essentially a library. Words are the API.'};
+  return{i:'ðŸ§­',n:'The Wanderer',d:'A unique blend of technologies that defies categorization. Genuinely interesting.'};
 }
 
 function roastLines(){
@@ -914,7 +914,7 @@ function rerollRoast(){
   const b=$('#roastBox');
   const next=ROASTS[(ROASTS.indexOf(b.dataset.cur||'')+1)%ROASTS.length]||ROASTS[0];
   b.dataset.cur=next;
-  b.innerHTML='<b>🔥 Roast mode:</b> '+esc(next);
+  b.innerHTML='<b>ðŸ”¥ Roast mode:</b> '+esc(next);
 }
 
 /* BUG FIX #5: try/catch around render functions + animated score counter */
@@ -949,8 +949,8 @@ function renderOverview(){
     ring.classList.remove('done');
     setTimeout(()=>ring.classList.add('done'),1200);
 
-    $('#scoreTag').innerHTML=hc.score>=80?'<span style="color:var(--green2)">Excellent shape 🟢</span>':hc.score>=60?'<span style="color:#fde047">Decent shape 🟡</span>':hc.score>=40?'<span style="color:var(--orange)">Needs love 🟠</span>':'<span style="color:#f87171">Needs serious care 🔴</span>';
-    $('#checks').innerHTML=hc.items.map(c=>'<div class="chk '+(c.ok?'ok':'bad')+'"><span class="ic">'+(c.ok?'✓':'✕')+'</span><span><b>'+esc(c.n)+'</b> · '+esc(c.ok?'present':'missing')+'</span></div>').join('');
+    $('#scoreTag').innerHTML=hc.score>=80?'<span style="color:var(--green2)">Excellent shape ðŸŸ¢</span>':hc.score>=60?'<span style="color:#fde047">Decent shape ðŸŸ¡</span>':hc.score>=40?'<span style="color:var(--orange)">Needs love ðŸŸ </span>':'<span style="color:#f87171">Needs serious care ðŸ”´</span>';
+    $('#checks').innerHTML=hc.items.map(c=>'<div class="chk '+(c.ok?'ok':'bad')+'"><span class="ic">'+(c.ok?'âœ“':'âœ•')+'</span><span><b>'+esc(c.n)+'</b> Â· '+esc(c.ok?'present':'missing')+'</span></div>').join('');
     $('#facts').innerHTML=
       '<div class="kv"><span>Created</span><b>'+esc(new Date(m.created_at).toLocaleDateString())+'</b></div>'+
       '<div class="kv"><span>Last push</span><b>'+esc(new Date(m.pushed_at).toLocaleDateString())+'</b></div>'+
@@ -959,9 +959,9 @@ function renderOverview(){
       '<div class="kv"><span>Languages</span><b>'+Object.keys(S.langs).length+'</b></div>'+
       '<div class="kv"><span>Contributors (top)</span><b>'+S.contribs.length+'</b></div>'+
       '<div class="kv"><span>Platform</span><b><span class="platform-chip '+(S.platform||'github')+'">'+esc(S.platform||'github')+'</span></b></div>'+
-      '<div class="kv"><span>Homepage</span><b>'+(m.homepage?'<a href="'+esc(m.homepage)+'" target="_blank" rel="noopener">link ↗</a>':'—')+'</b></div>';
+      '<div class="kv"><span>Homepage</span><b>'+(m.homepage?'<a href="'+esc(m.homepage)+'" target="_blank" rel="noopener">link â†—</a>':'â€”')+'</b></div>';
     const ach=getAch();
-    $('#achPreview').innerHTML=ach.filter(a=>a.on).slice(0,6).map(a=>achHTML(a)).join('')||'<span style="color:var(--text3);font-size:12.5px">No trophies yet — this repo keeps a low profile.</span>';
+    $('#achPreview').innerHTML=ach.filter(a=>a.on).slice(0,6).map(a=>achHTML(a)).join('')||'<span style="color:var(--text3);font-size:12.5px">No trophies yet â€” this repo keeps a low profile.</span>';
   }catch(e){console.warn('renderOverview error:',e)}
 }
 function achHTML(a){return'<div class="ach '+(a.on?'on':'')+'"><span class="ai">'+a.i+'</span><span><span class="an">'+esc(a.n)+'</span><div class="ad">'+esc(a.d)+'</div></span></div>'}
@@ -974,7 +974,7 @@ function renderLanguages(){
     $('#langRows').innerHTML=entries.slice(0,10).map(e=>{
       const pct=(e[1]/total*100).toFixed(1);
       return'<div class="langrow"><span class="ld" style="background:'+langColor(e[0])+'"></span><span class="ln">'+esc(e[0])+'</span><span class="lb"><i style="width:'+pct+'%;background:'+langColor(e[0])+'"></i></span><span class="lp">'+pct+'%</span></div>';
-    }).join('')||'<p style="color:var(--text3);font-size:13px">No language data — probably a docs-only or empty repo.</p>';
+    }).join('')||'<p style="color:var(--text3);font-size:13px">No language data â€” probably a docs-only or empty repo.</p>';
 
     const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
     const stacks=[];
@@ -1006,7 +1006,7 @@ async function renderDeps(stacks){
     const targets=stacks.slice(0,3);
     for(const st of targets){
       const col=document.createElement('div');col.className='card depcol';
-      col.innerHTML='<h4>'+esc(st.label)+'<span style="color:var(--text3);font-weight:400;font-size:11px">'+esc(st.file)+'</span></h4><div class="dlist"><span style="color:var(--text3);font-size:12px">Fetching…</span></div>';
+      col.innerHTML='<h4>'+esc(st.label)+'<span style="color:var(--text3);font-weight:400;font-size:11px">'+esc(st.file)+'</span></h4><div class="dlist"><span style="color:var(--text3);font-size:12px">Fetchingâ€¦</span></div>';
       host.appendChild(col);
       const raw='https://raw.githubusercontent.com/'+(S.repo&&S.repo.full_name)+'/'+branch+'/'+st.file;
       let deps=[];
@@ -1053,14 +1053,14 @@ function renderFiles(){
       '<div class="fstat"><b>'+fmtSize(totalSize)+'</b><span>total size</span></div>'+
       '<div class="fstat"><b>'+Object.keys(extCounts).length+'</b><span>file types</span></div>'+
       '<div class="fstat"><b>'+fmtSize(sizes[0]?sizes[0].s:0)+'</b><span>biggest file</span></div>';
-    $('#extRows').innerHTML=exts.map(e=>'<div class="langrow"><span class="ln" style="width:90px">.'+esc(e[0])+'</span><span class="lb"><i style="width:'+(e[1]/maxExt*100).toFixed(1)+'%;background:'+PALETTE[(e[0].length*13)%PALETTE.length]+'"></i></span><span class="lp">'+e[1]+'×</span></div>').join('')||'<p style="color:var(--text3);font-size:13px">No files.</p>';
+    $('#extRows').innerHTML=exts.map(e=>'<div class="langrow"><span class="ln" style="width:90px">.'+esc(e[0])+'</span><span class="lb"><i style="width:'+(e[1]/maxExt*100).toFixed(1)+'%;background:'+PALETTE[(e[0].length*13)%PALETTE.length]+'"></i></span><span class="lp">'+e[1]+'Ã—</span></div>').join('')||'<p style="color:var(--text3);font-size:13px">No files.</p>';
     const maxBig=sizes.length?Math.max(sizes[0].s,1):1;
     $('#bigFiles').innerHTML=sizes.slice(0,8).map(x=>'<div class="row"><span class="p" title="'+esc(x.p)+'">'+esc(x.p)+'</span><span class="bar"><i style="width:'+(x.s/maxBig*100).toFixed(1)+'%"></i></span><span class="s">'+fmtSize(x.s)+'</span></div>').join('')||'<p style="color:var(--text3);font-size:13px">No files.</p>';
     const root=NODEMAP.get('');
     const tree=$('#tree');
     tree.innerHTML='';
     if(root)renderNode(tree,root);
-    $('#treeInfo').textContent=fmt(FILEMAP.size)+' files · tick boxes to select for the Digest';
+    $('#treeInfo').textContent=fmt(FILEMAP.size)+' files Â· tick boxes to select for the Digest';
     updateSelMeta();
     updateRecCounts();
   }catch(e){console.warn('renderFiles error:',e)}
@@ -1076,7 +1076,7 @@ function renderNode(container,node){
       const row=document.createElement('div');
       row.className='trow dir';
       row.dataset.path=d.path||'';
-      row.innerHTML='<span class="caret">▶</span><input type="checkbox" class="dcb"'+(dirAllSelected(d)?' checked':'')+'><span class="fico">📁</span><span class="fname">'+esc(d.name||'')+'/</span><span class="fsize">'+countDir(d)+' files</span>';
+      row.innerHTML='<span class="caret">â–¶</span><input type="checkbox" class="dcb"'+(dirAllSelected(d)?' checked':'')+'><span class="fico">ðŸ“</span><span class="fname">'+esc(d.name||'')+'/</span><span class="fsize">'+countDir(d)+' files</span>';
       container.appendChild(row);
       const child=document.createElement('div');
       child.className='tnode';
@@ -1087,11 +1087,11 @@ function renderNode(container,node){
     for(const f of files){
       const row=document.createElement('div');
       row.className='trow';
-      const icon=isLock(f)?'🔒':isText(f)?'📄':'🧊';
+      const icon=isLock(f)?'ðŸ”’':isText(f)?'ðŸ“„':'ðŸ§Š';
       /* File type color coding */
       const ext=extOf(f.path||'');
       const ficoClass='fico'+(ext?' '+ext:'');
-      row.innerHTML='<span class="caret" style="visibility:hidden">·</span><input type="checkbox" class="fcb" data-path="'+esc(f.path||'')+'"'+(S.sel.has(f.path)?' checked':'')+'><span class="'+ficoClass+'">'+icon+'</span><span class="fname" title="'+esc(f.path||'')+'">'+esc((f.name||(f.path||'').split('/').pop())||'')+'</span><span class="fsize">'+fmtSize(f.size||0)+'</span>';
+      row.innerHTML='<span class="caret" style="visibility:hidden">Â·</span><input type="checkbox" class="fcb" data-path="'+esc(f.path||'')+'"'+(S.sel.has(f.path)?' checked':'')+'><span class="'+ficoClass+'">'+icon+'</span><span class="fname" title="'+esc(f.path||'')+'">'+esc((f.name||(f.path||'').split('/').pop())||'')+'</span><span class="fsize">'+fmtSize(f.size||0)+'</span>';
       container.appendChild(row);
     }
   }catch(e){console.warn('renderNode error:',e)}
@@ -1141,7 +1141,7 @@ document.addEventListener('change',e=>{
   }
 });
 function expandAll(open){
-  if(open&&FILEMAP.size>2500){toast('Too many files to auto-expand — open folders manually','err');return}
+  if(open&&FILEMAP.size>2500){toast('Too many files to auto-expand â€” open folders manually','err');return}
   $$('#tree .trow.dir').forEach(row=>{
     if(open&&row.dataset.rendered==='0'){
       const node=NODEMAP.get(row.dataset.path);
@@ -1175,49 +1175,54 @@ function clearSel(){
   updateSelMeta();
 }
 function updateSelMeta(){
-  let bytes=0;
-  S.sel.forEach(p=>{const f=FILEMAP.get(p);if(f)bytes+=f.size||0});
-  const toks=Math.round(bytes/4);
-  $('#selMeta').innerHTML='<span><b>'+S.sel.size+'</b> files</span><span><b>'+fmtSize(bytes)+'</b></span><span>~<b>'+fmt(toks)+'</b> tokens</span>';
+  const modelSel=$('#modelSelect');
+  const model=modelSel?modelSel.value:'gpt5';
+  const ctx=MODEL_CTX[model]||128000,cpt=MODEL_CHARS_PER_TOK[model]||4;
+  const text=S.digestText||null;
+  const bytes=text?text.length:(()=>{let b=0;S.sel.forEach(p=>{const f=FILEMAP.get(p);if(f)b+=f.size||0});return b})();
+  const toks=Math.round(bytes/cpt);
+  const pct=Math.min(999,Math.round(toks/ctx*100));
+  const ctxColor=pct>90?'var(--red)':pct>60?'var(--yellow)':'var(--green)';
+  const fileCount=text?pathsCountFromDigest():S.sel.size;
+  $('#selMeta').innerHTML='<span><b>'+fileCount+'</b> files</span><span><b>'+fmtSize(bytes)+'</b> '+(text?'prompt':'selected')+'</span><span>~<b>'+fmt(toks)+'</b> tokens</span>';
+  const status=$('#ctxStatus');
+  if(status)status.innerHTML='Fits in <b style="color:'+ctxColor+'">'+pct+'%</b> of context window ('+fmt(ctx)+' tok)';
+}
+function pathsCountFromDigest(){
+  const m=(S.digestText||'').match(/# File: |<file path=/g);
+  return m?m.length:S.sel.size;
 }
 
 /* asciiTree lives in core.js */
 
 async function generateDigest(){
   if(!S.sel.size){toast('Select at least one file first','err');return}
-  const btn=$('#genBtn');btn.disabled=true;btn.textContent='⏳ Fetching…';
+  const btn=$('#genBtn');btn.disabled=true;btn.textContent='â³ Fetchingâ€¦';
   const m=S.repo,branch=(m&&m.default_branch)||'main';
   const paths=Array.from(S.sel).sort();
   let bytes=0;paths.forEach(p=>{const f=FILEMAP.get(p);if(f)bytes+=f.size||0});
-  if(bytes>3*1024*1024){toast('Selection is over 3 MB — trim it down','err');btn.disabled=false;btn.textContent='🤖 Generate digest';return}
+  if(bytes>3*1024*1024){toast('Selection is over 3 MB â€” trim it down','err');btn.disabled=false;btn.textContent='ðŸ¤– Generate digest';return}
   const parts=[];
-  if($('#optMeta').checked){
-    parts.push('# Repository Context: '+(m&&m.full_name));
-    parts.push('Source: '+(m&&m.html_url));
-    parts.push('Platform: '+(S.platform||'github'));
-    parts.push('Branch: '+branch);
-    parts.push('Description: '+(m&&m.description||'N/A'));
-    parts.push('Primary language: '+(m&&m.language||'N/A'));
-    parts.push('Stars: '+fmt(m&&m.stargazers_count)+' · Forks: '+fmt(m&&m.forks_count)+' · License: '+(m&&m.license?m.license.spdx_id:'none'));
-    parts.push('Generated by Repodest on '+new Date().toISOString().slice(0,10));
-  }
+  parts.push(buildDigestHeader(m,branch));
   if($('#optReadme').checked){
     const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
     if(readme){
       try{
-        btn.textContent='⏳ README…';
+        btn.textContent='â³ READMEâ€¦';
         const t=await(await fetch('https://raw.githubusercontent.com/'+(m&&m.full_name)+'/'+branch+'/'+readme)).text();
-        parts.push('\n# README\n\n'+t.slice(0,20000));
+        parts.push(wrapFileSection(readme,'md',t.slice(0,20000)));
       }catch(e){}
     }
   }
   if($('#optTree').checked){
-    parts.push('\n# File Tree\n\n```text\n'+asciiTree(paths)+'\n```');
+    if(digestFormat==='xml')parts.push('  <file_tree>\n'+asciiTree(paths).split('&').join('&amp;').split('<').join('&lt;')+'\n  </file_tree>');
+    else if(digestFormat==='json')parts.push('    "file_tree": '+JSON.stringify(asciiTree(paths))+',');
+    else parts.push('\n# File Tree\n\n```text\n'+asciiTree(paths)+'\n```');
   }
-  let fetched=0,skipped=0,binSkipped=0;
+  let fetched=0,skipped=0,binSkipped=0,sigShrunk=0;
   for(const p of paths){
     fetched++;
-    btn.textContent='⏳ '+fetched+'/'+paths.length+' files…';
+    btn.textContent='â³ '+fetched+'/'+paths.length+' filesâ€¦';
     const f=FILEMAP.get(p);
     if(!f){skipped++;continue}
     const ext=extOf(p);
@@ -1227,20 +1232,20 @@ async function generateDigest(){
     try{
       const r=await fetch('https://raw.githubusercontent.com/'+(m&&m.full_name)+'/'+branch+'/'+p);
       if(!r.ok){skipped++;continue}
-      const t=await r.text();
+      let t=await r.text();
       if(t.includes('\0')||/[ --]{5,}/.test(t)){binSkipped++;skipped++;continue}
-      parts.push('\n# File: '+p+'\n\n````'+ext+'\n'+t+'\n````');
+      if(sigOnly&&(f.size||0)>10*1024){const shrunk=extractSignatures(t,ext);if(shrunk.length<t.length){t=shrunk;sigShrunk++}}
+      parts.push(wrapFileSection(p,ext,t));
     }catch(e){skipped++}
   }
-  if(skipped)parts.push('\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable)');
-  parts.push('\n---\nEnd of repository digest. Use this context to answer questions about the codebase.');
+  if(skipped)parts.push(digestFormat==='xml'?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
+  if(digestFormat!=='xml')parts.push('\n---\nEnd of repository digest. Use this context to answer questions about the codebase.');
   S.digestText=parts.join('\n');
   $('#digestOut').value=S.digestText;
-  const toks=Math.round(S.digestText.length/4);
-  $('#selMeta').innerHTML='<span><b>'+paths.length+'</b> files</span><span><b>'+fmtSize(S.digestText.length)+'</b> prompt</span><span>~<b>'+fmt(toks)+'</b> tokens</span>';
+  updateSelMeta();
   $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;
-  btn.disabled=false;btn.textContent='🤖 Generate digest';
-  toast('Digest ready — ~'+fmt(toks)+' tokens','ok');
+  btn.disabled=false;btn.textContent='ðŸ¤– Generate digest';
+  toast('Digest ready ('+digestFormat.toUpperCase()+')','ok');
   setupLLMButtons();
   switchTab('digest');
 }
@@ -1271,7 +1276,7 @@ function renderActivity(){
       const msg=(c.commit&&c.commit.message||'').split('\n')[0];
       const d=c.commit&&c.commit.author?c.commit.author.date:'';
       const a=c.author?c.author.login:(c.commit&&c.commit.author?c.commit.author.name:'?');
-      return'<div class="commit"><div class="cm">'+esc(msg)+'</div><div class="cd">'+esc(a||'')+' · '+esc(timeAgo(d))+'</div></div>';
+      return'<div class="commit"><div class="cm">'+esc(msg)+'</div><div class="cd">'+esc(a||'')+' Â· '+esc(timeAgo(d))+'</div></div>';
     }).join('')||'<p style="color:var(--text3);font-size:13px">No commit data.</p>';
   }catch(e){console.warn('renderActivity error:',e)}
 }
@@ -1296,20 +1301,20 @@ function renderFun(){
     ROASTS=roastLines();
     const pick=ROASTS[Math.floor(Math.random()*ROASTS.length)];
     $('#roastBox').dataset.cur=pick;
-    $('#roastBox').innerHTML='<b>🔥 Roast mode:</b> '+esc(pick);
+    $('#roastBox').innerHTML='<b>ðŸ”¥ Roast mode:</b> '+esc(pick);
     const ach=getAch();
     $('#achFull').innerHTML=ach.map(a=>achHTML(a)).join('');
   }catch(e){console.warn('renderFun error:',e)}
 }
 
-/* first shareCard removed — using the share template version below */
+/* first shareCard removed â€” using the share template version below */
 function copyLink(){
   const url=location.origin+location.pathname+'?repo='+encodeURIComponent(S.repo&&S.repo.full_name||'');
   (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Deep link copied','ok')).catch(()=>toast('Copy failed','err'));
 }
 function tweet(){
   const m=S.repo;if(!m)return;
-  const txt='Scoped "'+m.full_name+'" with Repodest 🧪 — health score '+healthCheck().score+'/100, ★ '+fmt(m.stargazers_count)+', '+Object.keys(S.langs).length+' languages.';
+  const txt='Scoped "'+m.full_name+'" with Repodest ðŸ§ª â€” health score '+healthCheck().score+'/100, â˜… '+fmt(m.stargazers_count)+', '+Object.keys(S.langs).length+' languages.';
   window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(txt),'_blank');
 }
 function printReport(){
@@ -1322,16 +1327,16 @@ function printReport(){
     const contribs=S.contribs.slice(0,10);
     const ach=getAch().filter(a=>a.on);
     $('#printReport').innerHTML=
-      '<h1>🧪 Repodest Report — '+esc(m.full_name||'')+'</h1>'+
-      '<div class="pr-sub">'+esc(m.description||'No description')+' · generated '+new Date().toLocaleString()+'</div>'+
+      '<h1>ðŸ§ª Repodest Report â€” '+esc(m.full_name||'')+'</h1>'+
+      '<div class="pr-sub">'+esc(m.description||'No description')+' Â· generated '+new Date().toLocaleString()+'</div>'+
       '<table><tr><th>Health score</th><th>Stars</th><th>Forks</th><th>Open issues</th><th>Files</th><th>License</th></tr>'+
       '<tr><td><b>'+hc.score+'/100</b></td><td>'+fmt(m.stargazers_count)+'</td><td>'+fmt(m.forks_count)+'</td><td>'+fmt(m.open_issues_count)+'</td><td>'+fmt(FILEMAP.size)+'</td><td>'+(m.license?esc(m.license.spdx_id):'none')+'</td></tr></table>'+
-      '<h2>Health checks</h2><table>'+hc.items.map(c=>'<tr><td style="width:60%">'+esc(c.n)+'</td><td>'+(c.ok?'✓':'✕')+'</td></tr>').join('')+'</table>'+
+      '<h2>Health checks</h2><table>'+hc.items.map(c=>'<tr><td style="width:60%">'+esc(c.n)+'</td><td>'+(c.ok?'âœ“':'âœ•')+'</td></tr>').join('')+'</table>'+
       '<h2>Languages</h2><table>'+langs.slice(0,8).map(e=>'<tr><td style="width:60%">'+esc(e[0])+'</td><td>'+(e[1]/total*100).toFixed(1)+'%</td></tr>').join('')+'</table>'+
       '<h2>Top contributors</h2><table>'+contribs.map(c=>'<tr><td style="width:60%">'+esc(c.login||'')+'</td><td>'+fmt(c.contributions)+' commits</td></tr>').join('')+'</table>'+
       '<h2>Heaviest files</h2><table>'+sizes.slice(0,10).map(x=>'<tr><td style="width:60%">'+esc(x.p)+'</td><td>'+fmtSize(x.s)+'</td></tr>').join('')+'</table>'+
-      '<h2>Trophies</h2><p>'+ach.map(a=>a.i+' '+esc(a.n)).join(' · ')+'</p>'+
-      '<p style="color:#777;margin-top:20px">Generated by Repodest — '+location.origin+location.pathname+'</p>';
+      '<h2>Trophies</h2><p>'+ach.map(a=>a.i+' '+esc(a.n)).join(' Â· ')+'</p>'+
+      '<p style="color:#777;margin-top:20px">Generated by Repodest â€” '+location.origin+location.pathname+'</p>';
     window.print();
   }catch(e){console.warn('printReport error:',e)}
 }
@@ -1380,24 +1385,24 @@ function confirmShareTpl(){
       if(selectedShareTpl==='minimal'){
         statsHTML=
           '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
-          '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>';
-        footHTML='<span class="sc-badge">🧪 Repodest</span>';
+          '<div class="sc-st"><b>â˜… '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>';
+        footHTML='<span class="sc-badge">ðŸ§ª Repodest</span>';
       }else if(selectedShareTpl==='detailed'){
         statsHTML=
           '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
-          '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
-          '<div class="sc-st"><b>⑂ '+fmt(m.forks_count)+'</b><span>Forks</span></div>'+
+          '<div class="sc-st"><b>â˜… '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
+          '<div class="sc-st"><b>â‘‚ '+fmt(m.forks_count)+'</b><span>Forks</span></div>'+
           '<div class="sc-st"><b>'+fmt(FILEMAP.size)+'</b><span>Files</span></div>';
-        footHTML='<span style="display:flex;gap:10px;align-items:center">'+langs.map(e=>'<span style="display:flex;gap:6px;align-items:center"><span style="width:11px;height:11px;border-radius:3px;display:inline-block;background:'+langColor(e[0])+'"></span>'+esc(e[0])+' '+(e[1]/total*100).toFixed(0)+'%</span>').join('')+'</span><span class="sc-badge">🧪 Repodest</span>';
+        footHTML='<span style="display:flex;gap:10px;align-items:center">'+langs.map(e=>'<span style="display:flex;gap:6px;align-items:center"><span style="width:11px;height:11px;border-radius:3px;display:inline-block;background:'+langColor(e[0])+'"></span>'+esc(e[0])+' '+(e[1]/total*100).toFixed(0)+'%</span>').join('')+'</span><span class="sc-badge">ðŸ§ª Repodest</span>';
       }else{
         const p=personaFor();
         const trophyCount=getAch().filter(a=>a.on).length;
         statsHTML=
           '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
-          '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
+          '<div class="sc-st"><b>â˜… '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
           '<div class="sc-st"><b>'+p.i+'</b><span>'+esc(p.n)+'</span></div>'+
-          '<div class="sc-st"><b>🏆 '+trophyCount+'</b><span>Trophies</span></div>';
-        footHTML='<span class="sc-badge">🧪 Repodest</span>';
+          '<div class="sc-st"><b>ðŸ† '+trophyCount+'</b><span>Trophies</span></div>';
+        footHTML='<span class="sc-badge">ðŸ§ª Repodest</span>';
       }
       $('#shareCard').innerHTML=
         '<div class="sc-top"><img src="'+esc(m.owner&&m.owner.avatar_url)+'" crossorigin="anonymous"><div><h2>'+esc(m.name||'')+'</h2><div class="sc-u">'+esc(m.full_name||'')+'</div><div class="sc-desc">'+esc(m.description||'')+'</div></div></div>'+
@@ -1429,7 +1434,7 @@ function openCloneModal(){
     '<div class="clone-row">'+
       '<span class="clone-label">'+esc(o.label)+'</span>'+
       '<code>'+esc(o.cmd)+'</code>'+
-      '<button class="btn ghost sm" onclick="copyCloneCmd(this,\''+esc(o.cmd)+'\')">📋</button>'+
+      '<button class="btn ghost sm" onclick="copyCloneCmd(this,\''+esc(o.cmd)+'\')">ðŸ“‹</button>'+
     '</div>'
   ).join('');
   generateQR(url);
@@ -1438,8 +1443,8 @@ function openCloneModal(){
 function closeCloneModal(){$('#cloneModalBg').classList.add('hidden')}
 function copyCloneCmd(btn,cmd){
   navigator.clipboard.writeText(cmd).then(()=>{
-    btn.textContent='✓';
-    setTimeout(()=>btn.textContent='📋',1500);
+    btn.textContent='âœ“';
+    setTimeout(()=>btn.textContent='ðŸ“‹',1500);
     toast('Copied to clipboard','ok');
   }).catch(()=>toast('Copy failed','err'));
 }
@@ -1518,7 +1523,7 @@ async function renderSimilarRepos(){
     el.innerHTML='<span style="color:var(--text3);font-size:12.5px">No topics or language to find similar repos.</span>';
     return;
   }
-  el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Searching…</span>';
+  el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Searchingâ€¦</span>';
   try{
     let queryParts=[];
     if(topics.length)queryParts.push('topic:'+topics[0]);
@@ -1532,9 +1537,9 @@ async function renderSimilarRepos(){
     }
     el.innerHTML='<div class="similar-grid">'+repos.map(r=>
       '<div class="similar-card" onclick="loadRepo(\''+esc((r.owner&&r.owner.login)||'')+'\',\''+esc(r.name||'')+'\',\'github\')">'+
-        '<h4>'+esc(r.name||'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4>'+
+        '<h4>'+esc(r.name||'')+'<b>â˜… '+fmt(r.stargazers_count)+'</b></h4>'+
         '<div class="sim-desc">'+esc(r.description||'No description')+'</div>'+
-        '<div class="sim-meta">'+esc(r.full_name||'')+(r.language?' · '+esc(r.language):'')+'</div>'+
+        '<div class="sim-meta">'+esc(r.full_name||'')+(r.language?' Â· '+esc(r.language):'')+'</div>'+
       '</div>'
     ).join('')+'</div>';
   }catch(e){
@@ -1573,12 +1578,12 @@ function renderSecurityScan(){
     '<div class="security-score">'+
       '<div class="sec-ring" style="border:3px solid '+scoreColor+';color:'+scoreColor+'">'+score+'</div>'+
       '<div><div style="font-weight:700;font-size:15px">Security Score</div>'+
-      '<div class="sec-label">'+dangerCount+' potential issue'+(dangerCount!==1?'s':'')+' found · '+safeCount+'/'+totalSafe+' best practices</div></div>'+
+      '<div class="sec-label">'+dangerCount+' potential issue'+(dangerCount!==1?'s':'')+' found Â· '+safeCount+'/'+totalSafe+' best practices</div></div>'+
     '</div>'+
     '<div class="security-checklist">'+checks.map(c=>{
       const cls=c.found?(c.type==='safe'?'safe':c.type==='warn'?'warn':'danger'):(c.type==='safe'?'warn':'safe');
-      const icon=c.found?(c.type==='safe'?'✓':'!'):(c.type==='safe'?'✕':'✓');
-      return '<div class="sec-item '+cls+'"><span class="sec-icon">'+icon+'</span><span>'+esc(c.name)+' · '+(c.found?'found':'not found')+'</span></div>';
+      const icon=c.found?(c.type==='safe'?'âœ“':'!'):(c.type==='safe'?'âœ•':'âœ“');
+      return '<div class="sec-item '+cls+'"><span class="sec-icon">'+icon+'</span><span>'+esc(c.name)+' Â· '+(c.found?'found':'not found')+'</span></div>';
     }).join('')+'</div>';
 }
 
@@ -1684,7 +1689,7 @@ async function renderReadmePreview(){
     el.innerHTML='<span style="color:var(--text3);font-size:12.5px">No README.md found in this repository.</span>';
     return;
   }
-  el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Loading README…</span>';
+  el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Loading READMEâ€¦</span>';
   try{
     const branch=(m.default_branch)||'main';
     const raw='https://raw.githubusercontent.com/'+m.full_name+'/'+branch+'/'+readmePath;
@@ -1708,13 +1713,13 @@ function closeShortcutsModal(){$('#shortcutsModalBg').classList.add('hidden')}
    ============================================================ */
 const I18N={
   en:{
-    tabOverview:'🩺 Overview',tabLanguages:'📊 Languages',tabFiles:'🗂️ Files',
-    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',
-    btnHome:'← Home',btnCard:'📸 Card',btnReport:'📄 Report',btnLink:'🔗 Link',
-    btnCompare:'⚖️ Compare',btnBattle:'⚔️ Battle',btnClone:'📋 Clone',
-    btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
-    searchPlaceholder:'owner/repo, a GitHub URL, or a username…',
-    jumpPlaceholder:'scope another repo…',
+    tabOverview:'ðŸ©º Overview',tabLanguages:'ðŸ“Š Languages',tabFiles:'ðŸ—‚ï¸ Files',
+    tabDigest:'ðŸ¤– Digest',tabActivity:'ðŸ“ˆ Activity',tabFun:'ðŸ† Fun',tabDeps:'ðŸ”— Deps',
+    btnHome:'â† Home',btnCard:'ðŸ“¸ Card',btnReport:'ðŸ“„ Report',btnLink:'ðŸ”— Link',
+    btnCompare:'âš–ï¸ Compare',btnBattle:'âš”ï¸ Battle',btnClone:'ðŸ“‹ Clone',
+    btnToken:'ðŸ”‘ Token',btnShortcuts:'â“ Shortcuts',
+    searchPlaceholder:'owner/repo, a GitHub URL, or a usernameâ€¦',
+    jumpPlaceholder:'scope another repoâ€¦',
     toastHistoryCleared:'History cleared',
     toastCardDownloaded:'Card downloaded',
     toastCopied:'Copied to clipboard',
@@ -1724,19 +1729,19 @@ const I18N={
     toastLinkCopied:'Deep link copied',
     heroTitle:'Know a GitHub repo',
     heroSub:'in seconds, not hours.',
-    heroDesc:'Paste any repository or profile. Repodest gives you a health score, language breakdown, file explorer, commit insights and fun trophies — then packs the whole thing into an <b>LLM-ready digest</b> you can feed to ChatGPT, Claude or Gemini.',
+    heroDesc:'Paste any repository or profile. Repodest gives you a health score, language breakdown, file explorer, commit insights and fun trophies â€” then packs the whole thing into an <b>LLM-ready digest</b> you can feed to ChatGPT, Claude or Gemini.',
     scopeBtn:'Scope it',
-    recentRepos:'🕘 Recent repos',
+    recentRepos:'ðŸ•˜ Recent repos',
     clearHistory:'Clear history',
     healthScore:'Health score',
     healthChecks:'Health checks',
     repoFacts:'Repo facts',
     trophiesPreview:'Trophies preview',
-    licenseAnalysis:'📜 License analysis',
-    readmePreview:'📖 README Preview',
-    securityScan:'🔒 Security Quick Scan',
-    similarRepos:'🔍 Similar Repos',
-    apiEndpoints:'🔌 API Endpoints',
+    licenseAnalysis:'ðŸ“œ License analysis',
+    readmePreview:'ðŸ“– README Preview',
+    securityScan:'ðŸ”’ Security Quick Scan',
+    similarRepos:'ðŸ” Similar Repos',
+    apiEndpoints:'ðŸ”Œ API Endpoints',
     langBreakdown:'Language breakdown (bytes)',
     detectedStack:'Detected stack',
     typeDistribution:'Type distribution',
@@ -1744,80 +1749,80 @@ const I18N={
     fileTree:'File tree',
     whatGoesIn:'What goes into the prompt',
     generatedPrompt:'Generated prompt',
-    commitActivity:'Commit activity — last 52 weeks',
-    starHistory:'⭐ Star history',
+    commitActivity:'Commit activity â€” last 52 weeks',
+    starHistory:'â­ Star history',
     topContributors:'Top contributors',
     recentCommits:'Recent commits',
-    roastMode:'🔥 Roast mode',
+    roastMode:'ðŸ”¥ Roast mode',
     trophies:'Trophies',
-    recentReposTitle:'🕘 Recent repos',
+    recentReposTitle:'ðŸ•˜ Recent repos',
     step1:'Paste',step2:'Explore',step3:'Feed your AI',
     step1Desc:'Any repo URL, owner/repo, or username.',
-    step2Desc:'Health score, languages, files, activity — all in one dashboard.',
+    step2Desc:'Health score, languages, files, activity â€” all in one dashboard.',
     step3Desc:'Pick files, hit generate, copy the digest into any LLM chat.',
     feat1:'Health Score',feat2:'LLM Digest',feat3:'File Explorer',
     feat4:'Deep Stats',feat5:'Fun Mode',feat6:'Shareable',
     footer:'Built by',
-    excellentShape:'Excellent shape 🟢',
-    decentShape:'Decent shape 🟡',
-    needsLove:'Needs love 🟠',
-    needsCare:'Needs serious care 🔴'
+    excellentShape:'Excellent shape ðŸŸ¢',
+    decentShape:'Decent shape ðŸŸ¡',
+    needsLove:'Needs love ðŸŸ ',
+    needsCare:'Needs serious care ðŸ”´'
   },
   fa:{
-    tabOverview:'🩺 نمای کلی',tabLanguages:'📊 زبان‌ها',tabFiles:'🗂️ فایل‌ها',
-    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',
-    btnHome:'← خانه',btnCard:'📸 کارت',btnReport:'📄 گزارش',btnLink:'🔗 لینک',
-    btnCompare:'⚖️ مقایسه',btnBattle:'⚔️ نبرد',btnClone:'📋 کلون',
-    btnToken:'🔑 توکن',btnShortcuts:'❓ میانبرها',
-    searchPlaceholder:'مالک/رپو، آدرس گیت‌هاب، یا نام کاربری…',
-    jumpPlaceholder:'رپوی دیگری را بررسی کنید…',
-    toastHistoryCleared:'تاریخچه پاک شد',
-    toastCardDownloaded:'کارت دانلود شد',
-    toastCopied:'در کلیپ‌بورد کپی شد',
-    toastDigestReady:'دایجست آماده است',
-    toastExported:'JSON صادر شد',
-    toastCsvExported:'CSV صادر شد',
-    toastLinkCopied:'لینک کپی شد',
-    heroTitle:'یک رپوی گیت‌هاب را',
-    heroSub:'در چند ثانیه بشناسید.',
-    heroDesc:'هر مخزن یا پروفایلی را وارد کنید. رپودست امتیاز سلامت، تفکیک زبان‌ها، مرورگر فایل، بینش‌های کامیت و جوایز سرگرم‌کننده را به شما می‌دهد — و سپس همه چیز را در یک <b>خلاصه آماده LLM</b> بسته‌بندی می‌کند.',
-    scopeBtn:'بررسی کن',
-    recentRepos:'🕘 رپوهای اخیر',
-    clearHistory:'پاک کردن تاریخچه',
-    healthScore:'امتیاز سلامت',
-    healthChecks:'بررسی‌های سلامت',
-    repoFacts:'اطلاعات رپو',
-    trophiesPreview:'پیش‌نمایش جوایز',
-    licenseAnalysis:'📜 تحلیل مجوز',
-    readmePreview:'📖 پیش‌نمایش README',
-    securityScan:'🔒 اسکن امنیتی سریع',
-    similarRepos:'🔍 رپوهای مشابه',
-    apiEndpoints:'🔌 نقاط پایانی API',
-    langBreakdown:'تفکیک زبان‌ها (بایت)',
-    detectedStack:'استک شناسایی شده',
-    typeDistribution:'توزیع نوع فایل',
-    heaviestFiles:'سنگین‌ترین فایل‌ها',
-    fileTree:'درخت فایل',
-    whatGoesIn:'چه چیزی در پرامپت قرار می‌گیرد',
-    generatedPrompt:'پرامپت تولید شده',
-    commitActivity:'فعالیت کامیت — ۵۲ هفته اخیر',
-    starHistory:'⭐ تاریخچه ستاره‌ها',
-    topContributors:'مشارکت‌کنندگان برتر',
-    recentCommits:'کامیت‌های اخیر',
-    roastMode:'🔥 حالت مسخره کردن',
-    trophies:'جوایز',
-    recentReposTitle:'🕘 رپوهای اخیر',
-    step1:'جایگذاری',step2:'کاوش',step3:'تغذیه AI شما',
-    step1Desc:'هر آدرس رپو، مالک/رپو، یا نام کاربری.',
-    step2Desc:'امتیاز سلامت، زبان‌ها، فایل‌ها، فعالیت — همه در یک داشبورد.',
-    step3Desc:'فایل‌ها را انتخاب کنید، تولید را بزنید، خلاصه را در هر LLM کپی کنید.',
-    feat1:'امتیاز سلامت',feat2:'خلاصه LLM',feat3:'مرورگر فایل',
-    feat4:'آمار عمیق',feat5:'حالت سرگرمی',feat6:'قابل اشتراک',
-    footer:'ساخته شده توسط',
-    excellentShape:'وضعیت عالی 🟢',
-    decentShape:'وضعیت خوب 🟡',
-    needsLove:'نیاز به توجه 🟠',
-    needsCare:'نیاز به مراقبت جدی 🔴'
+    tabOverview:'ðŸ©º Ù†Ù…Ø§ÛŒ Ú©Ù„ÛŒ',tabLanguages:'ðŸ“Š Ø²Ø¨Ø§Ù†â€ŒÙ‡Ø§',tabFiles:'ðŸ—‚ï¸ ÙØ§ÛŒÙ„â€ŒÙ‡Ø§',
+    tabDigest:'ðŸ¤– Ø¯Ø§ÛŒØ¬Ø³Øª',tabActivity:'ðŸ“ˆ ÙØ¹Ø§Ù„ÛŒØª',tabFun:'ðŸ† Ø³Ø±Ú¯Ø±Ù…ÛŒ',tabDeps:'ðŸ”— ÙˆØ§Ø¨Ø³ØªÚ¯ÛŒâ€ŒÙ‡Ø§',
+    btnHome:'â† Ø®Ø§Ù†Ù‡',btnCard:'ðŸ“¸ Ú©Ø§Ø±Øª',btnReport:'ðŸ“„ Ú¯Ø²Ø§Ø±Ø´',btnLink:'ðŸ”— Ù„ÛŒÙ†Ú©',
+    btnCompare:'âš–ï¸ Ù…Ù‚Ø§ÛŒØ³Ù‡',btnBattle:'âš”ï¸ Ù†Ø¨Ø±Ø¯',btnClone:'ðŸ“‹ Ú©Ù„ÙˆÙ†',
+    btnToken:'ðŸ”‘ ØªÙˆÚ©Ù†',btnShortcuts:'â“ Ù…ÛŒØ§Ù†Ø¨Ø±Ù‡Ø§',
+    searchPlaceholder:'Ù…Ø§Ù„Ú©/Ø±Ù¾ÙˆØŒ Ø¢Ø¯Ø±Ø³ Ú¯ÛŒØªâ€ŒÙ‡Ø§Ø¨ØŒ ÛŒØ§ Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒâ€¦',
+    jumpPlaceholder:'Ø±Ù¾ÙˆÛŒ Ø¯ÛŒÚ¯Ø±ÛŒ Ø±Ø§ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯â€¦',
+    toastHistoryCleared:'ØªØ§Ø±ÛŒØ®Ú†Ù‡ Ù¾Ø§Ú© Ø´Ø¯',
+    toastCardDownloaded:'Ú©Ø§Ø±Øª Ø¯Ø§Ù†Ù„ÙˆØ¯ Ø´Ø¯',
+    toastCopied:'Ø¯Ø± Ú©Ù„ÛŒÙ¾â€ŒØ¨ÙˆØ±Ø¯ Ú©Ù¾ÛŒ Ø´Ø¯',
+    toastDigestReady:'Ø¯Ø§ÛŒØ¬Ø³Øª Ø¢Ù…Ø§Ø¯Ù‡ Ø§Ø³Øª',
+    toastExported:'JSON ØµØ§Ø¯Ø± Ø´Ø¯',
+    toastCsvExported:'CSV ØµØ§Ø¯Ø± Ø´Ø¯',
+    toastLinkCopied:'Ù„ÛŒÙ†Ú© Ú©Ù¾ÛŒ Ø´Ø¯',
+    heroTitle:'ÛŒÚ© Ø±Ù¾ÙˆÛŒ Ú¯ÛŒØªâ€ŒÙ‡Ø§Ø¨ Ø±Ø§',
+    heroSub:'Ø¯Ø± Ú†Ù†Ø¯ Ø«Ø§Ù†ÛŒÙ‡ Ø¨Ø´Ù†Ø§Ø³ÛŒØ¯.',
+    heroDesc:'Ù‡Ø± Ù…Ø®Ø²Ù† ÛŒØ§ Ù¾Ø±ÙˆÙØ§ÛŒÙ„ÛŒ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯. Ø±Ù¾ÙˆØ¯Ø³Øª Ø§Ù…ØªÛŒØ§Ø² Ø³Ù„Ø§Ù…ØªØŒ ØªÙÚ©ÛŒÚ© Ø²Ø¨Ø§Ù†â€ŒÙ‡Ø§ØŒ Ù…Ø±ÙˆØ±Ú¯Ø± ÙØ§ÛŒÙ„ØŒ Ø¨ÛŒÙ†Ø´â€ŒÙ‡Ø§ÛŒ Ú©Ø§Ù…ÛŒØª Ùˆ Ø¬ÙˆØ§ÛŒØ² Ø³Ø±Ú¯Ø±Ù…â€ŒÚ©Ù†Ù†Ø¯Ù‡ Ø±Ø§ Ø¨Ù‡ Ø´Ù…Ø§ Ù…ÛŒâ€ŒØ¯Ù‡Ø¯ â€” Ùˆ Ø³Ù¾Ø³ Ù‡Ù…Ù‡ Ú†ÛŒØ² Ø±Ø§ Ø¯Ø± ÛŒÚ© <b>Ø®Ù„Ø§ØµÙ‡ Ø¢Ù…Ø§Ø¯Ù‡ LLM</b> Ø¨Ø³ØªÙ‡â€ŒØ¨Ù†Ø¯ÛŒ Ù…ÛŒâ€ŒÚ©Ù†Ø¯.',
+    scopeBtn:'Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†',
+    recentRepos:'ðŸ•˜ Ø±Ù¾ÙˆÙ‡Ø§ÛŒ Ø§Ø®ÛŒØ±',
+    clearHistory:'Ù¾Ø§Ú© Ú©Ø±Ø¯Ù† ØªØ§Ø±ÛŒØ®Ú†Ù‡',
+    healthScore:'Ø§Ù…ØªÛŒØ§Ø² Ø³Ù„Ø§Ù…Øª',
+    healthChecks:'Ø¨Ø±Ø±Ø³ÛŒâ€ŒÙ‡Ø§ÛŒ Ø³Ù„Ø§Ù…Øª',
+    repoFacts:'Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø±Ù¾Ùˆ',
+    trophiesPreview:'Ù¾ÛŒØ´â€ŒÙ†Ù…Ø§ÛŒØ´ Ø¬ÙˆØ§ÛŒØ²',
+    licenseAnalysis:'ðŸ“œ ØªØ­Ù„ÛŒÙ„ Ù…Ø¬ÙˆØ²',
+    readmePreview:'ðŸ“– Ù¾ÛŒØ´â€ŒÙ†Ù…Ø§ÛŒØ´ README',
+    securityScan:'ðŸ”’ Ø§Ø³Ú©Ù† Ø§Ù…Ù†ÛŒØªÛŒ Ø³Ø±ÛŒØ¹',
+    similarRepos:'ðŸ” Ø±Ù¾ÙˆÙ‡Ø§ÛŒ Ù…Ø´Ø§Ø¨Ù‡',
+    apiEndpoints:'ðŸ”Œ Ù†Ù‚Ø§Ø· Ù¾Ø§ÛŒØ§Ù†ÛŒ API',
+    langBreakdown:'ØªÙÚ©ÛŒÚ© Ø²Ø¨Ø§Ù†â€ŒÙ‡Ø§ (Ø¨Ø§ÛŒØª)',
+    detectedStack:'Ø§Ø³ØªÚ© Ø´Ù†Ø§Ø³Ø§ÛŒÛŒ Ø´Ø¯Ù‡',
+    typeDistribution:'ØªÙˆØ²ÛŒØ¹ Ù†ÙˆØ¹ ÙØ§ÛŒÙ„',
+    heaviestFiles:'Ø³Ù†Ú¯ÛŒÙ†â€ŒØªØ±ÛŒÙ† ÙØ§ÛŒÙ„â€ŒÙ‡Ø§',
+    fileTree:'Ø¯Ø±Ø®Øª ÙØ§ÛŒÙ„',
+    whatGoesIn:'Ú†Ù‡ Ú†ÛŒØ²ÛŒ Ø¯Ø± Ù¾Ø±Ø§Ù…Ù¾Øª Ù‚Ø±Ø§Ø± Ù…ÛŒâ€ŒÚ¯ÛŒØ±Ø¯',
+    generatedPrompt:'Ù¾Ø±Ø§Ù…Ù¾Øª ØªÙˆÙ„ÛŒØ¯ Ø´Ø¯Ù‡',
+    commitActivity:'ÙØ¹Ø§Ù„ÛŒØª Ú©Ø§Ù…ÛŒØª â€” ÛµÛ² Ù‡ÙØªÙ‡ Ø§Ø®ÛŒØ±',
+    starHistory:'â­ ØªØ§Ø±ÛŒØ®Ú†Ù‡ Ø³ØªØ§Ø±Ù‡â€ŒÙ‡Ø§',
+    topContributors:'Ù…Ø´Ø§Ø±Ú©Øªâ€ŒÚ©Ù†Ù†Ø¯Ú¯Ø§Ù† Ø¨Ø±ØªØ±',
+    recentCommits:'Ú©Ø§Ù…ÛŒØªâ€ŒÙ‡Ø§ÛŒ Ø§Ø®ÛŒØ±',
+    roastMode:'ðŸ”¥ Ø­Ø§Ù„Øª Ù…Ø³Ø®Ø±Ù‡ Ú©Ø±Ø¯Ù†',
+    trophies:'Ø¬ÙˆØ§ÛŒØ²',
+    recentReposTitle:'ðŸ•˜ Ø±Ù¾ÙˆÙ‡Ø§ÛŒ Ø§Ø®ÛŒØ±',
+    step1:'Ø¬Ø§ÛŒÚ¯Ø°Ø§Ø±ÛŒ',step2:'Ú©Ø§ÙˆØ´',step3:'ØªØºØ°ÛŒÙ‡ AI Ø´Ù…Ø§',
+    step1Desc:'Ù‡Ø± Ø¢Ø¯Ø±Ø³ Ø±Ù¾ÙˆØŒ Ù…Ø§Ù„Ú©/Ø±Ù¾ÙˆØŒ ÛŒØ§ Ù†Ø§Ù… Ú©Ø§Ø±Ø¨Ø±ÛŒ.',
+    step2Desc:'Ø§Ù…ØªÛŒØ§Ø² Ø³Ù„Ø§Ù…ØªØŒ Ø²Ø¨Ø§Ù†â€ŒÙ‡Ø§ØŒ ÙØ§ÛŒÙ„â€ŒÙ‡Ø§ØŒ ÙØ¹Ø§Ù„ÛŒØª â€” Ù‡Ù…Ù‡ Ø¯Ø± ÛŒÚ© Ø¯Ø§Ø´Ø¨ÙˆØ±Ø¯.',
+    step3Desc:'ÙØ§ÛŒÙ„â€ŒÙ‡Ø§ Ø±Ø§ Ø§Ù†ØªØ®Ø§Ø¨ Ú©Ù†ÛŒØ¯ØŒ ØªÙˆÙ„ÛŒØ¯ Ø±Ø§ Ø¨Ø²Ù†ÛŒØ¯ØŒ Ø®Ù„Ø§ØµÙ‡ Ø±Ø§ Ø¯Ø± Ù‡Ø± LLM Ú©Ù¾ÛŒ Ú©Ù†ÛŒØ¯.',
+    feat1:'Ø§Ù…ØªÛŒØ§Ø² Ø³Ù„Ø§Ù…Øª',feat2:'Ø®Ù„Ø§ØµÙ‡ LLM',feat3:'Ù…Ø±ÙˆØ±Ú¯Ø± ÙØ§ÛŒÙ„',
+    feat4:'Ø¢Ù…Ø§Ø± Ø¹Ù…ÛŒÙ‚',feat5:'Ø­Ø§Ù„Øª Ø³Ø±Ú¯Ø±Ù…ÛŒ',feat6:'Ù‚Ø§Ø¨Ù„ Ø§Ø´ØªØ±Ø§Ú©',
+    footer:'Ø³Ø§Ø®ØªÙ‡ Ø´Ø¯Ù‡ ØªÙˆØ³Ø·',
+    excellentShape:'ÙˆØ¶Ø¹ÛŒØª Ø¹Ø§Ù„ÛŒ ðŸŸ¢',
+    decentShape:'ÙˆØ¶Ø¹ÛŒØª Ø®ÙˆØ¨ ðŸŸ¡',
+    needsLove:'Ù†ÛŒØ§Ø² Ø¨Ù‡ ØªÙˆØ¬Ù‡ ðŸŸ ',
+    needsCare:'Ù†ÛŒØ§Ø² Ø¨Ù‡ Ù…Ø±Ø§Ù‚Ø¨Øª Ø¬Ø¯ÛŒ ðŸ”´'
   }
 };
 let currentLang=LS.get('repodest_lang','en');
@@ -1826,7 +1831,7 @@ function cycleLang(){
   currentLang=currentLang==='en'?'fa':'en';
   LS.set('repodest_lang',currentLang);
   applyLang();
-  toast(currentLang==='en'?'English':'فارسی','ok');
+  toast(currentLang==='en'?'English':'ÙØ§Ø±Ø³ÛŒ','ok');
 }
 function applyLang(){
   const isFa=currentLang==='fa';
@@ -1869,7 +1874,7 @@ renderDash=function(){
 };
 
 /* ============================================================
-   Particles animation — enhanced with connecting lines
+   Particles animation â€” enhanced with connecting lines
    ============================================================ */
 (function particles(){
   const c=$('#particles'),ctx=c.getContext('2d');
@@ -1950,7 +1955,7 @@ function renderComplexity(){
 /* ============================================================
    Feature: AI Repo Summary
    ============================================================ */
-/* generateSummary duplicate removed — keeping version with aiSummaryBox */
+/* generateSummary duplicate removed â€” keeping version with aiSummaryBox */
 
 /* ============================================================
    Feature: Explain This Repo
@@ -1968,8 +1973,8 @@ function explainRepo(){
   explanation+='<p><b>Size:</b> '+fmt(files)+' files. '+(files>1000?'This is a large project.':files>100?'Medium-sized project.':'Small project.')+'</p>';
   explanation+='<p><b>Popularity:</b> '+fmt(stars)+' stars. '+(stars>10000?'Very popular!':stars>1000?'Well-known.':stars>100?'Gaining traction.':'New or niche.')+'</p>';
   const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
-  if(readme)explanation+='<p><b>Has README:</b> Yes — check the Overview tab for details.</p>';
-  showModal('💡 Explain: '+esc(m.name),explanation);
+  if(readme)explanation+='<p><b>Has README:</b> Yes â€” check the Overview tab for details.</p>';
+  showModal('ðŸ’¡ Explain: '+esc(m.name),explanation);
 }
 
 /* ============================================================
@@ -2026,7 +2031,7 @@ function renderSecurity(){
       '<span style="font-size:28px;font-weight:900;color:'+color+'">'+score+'%</span>'+
       '<span style="color:var(--text3);font-size:12px">Security score</span>'+
     '</div>'+
-    checks.map(c=>'<div class="chk '+(c.ok?'ok':'bad')+'"><span class="ic">'+(c.ok?'✓':'✕')+'</span><span><b>'+esc(c.n)+'</b>'+(c.critical&&!c.ok?' <span style="color:var(--red);font-size:10px">CRITICAL</span>':'')+'</span></div>').join('');
+    checks.map(c=>'<div class="chk '+(c.ok?'ok':'bad')+'"><span class="ic">'+(c.ok?'âœ“':'âœ•')+'</span><span><b>'+esc(c.n)+'</b>'+(c.critical&&!c.ok?' <span style="color:var(--red);font-size:10px">CRITICAL</span>':'')+'</span></div>').join('');
 }
 
 /* ============================================================
@@ -2054,7 +2059,7 @@ function detectEndpoints(){
   });
   return endpoints;
 }
-/* renderEndpoints duplicate removed — keeping the correct version at line 2750 */
+/* renderEndpoints duplicate removed â€” keeping the correct version at line 2750 */
 
 /* ============================================================
    Feature: Similar Repos
@@ -2065,7 +2070,7 @@ async function findSimilarRepos(){
   const topics=(m.topics||[]).slice(0,3);
   const lang=m.language||'';
   if(!topics.length&&!lang){el.innerHTML='<p style="color:var(--text3);font-size:13px">No topics or language to find similar repos.</p>';return}
-  el.innerHTML='<p style="color:var(--text3);font-size:13px">Searching…</p>';
+  el.innerHTML='<p style="color:var(--text3);font-size:13px">Searchingâ€¦</p>';
   try{
     const q=topics.length?'topic:'+topics[0]:'language:'+lang;
     const data=await api('/search/repositories?q='+encodeURIComponent(q)+'&per_page=6&sort=stars');
@@ -2073,9 +2078,9 @@ async function findSimilarRepos(){
     if(!list.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No similar repos found.</p>';return}
     el.innerHTML=list.map(r=>
       '<div class="ucard" style="margin-bottom:8px" onclick="loadRepo(\''+esc(r.owner.login)+'\',\''+esc(r.name)+'\')">'+
-        '<h4>'+esc(r.name)+'<b>★ '+fmt(r.stargazers_count)+'</b></h4>'+
+        '<h4>'+esc(r.name)+'<b>â˜… '+fmt(r.stargazers_count)+'</b></h4>'+
         '<div class="d">'+esc(r.description||'No description')+'</div>'+
-        '<div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span></div>'+
+        '<div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'â€”')+'</span></div>'+
       '</div>'
     ).join('');
   }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not fetch similar repos.</p>'}
@@ -2087,7 +2092,7 @@ async function findSimilarRepos(){
 async function loadReleases(){
   const el=$('#releaseTimeline');if(!el)return;
   if(S.platform!=='github'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available on GitHub.</p>';return}
-  el.innerHTML='<p style="color:var(--text3);font-size:13px">Loading releases…</p>';
+  el.innerHTML='<p style="color:var(--text3);font-size:13px">Loading releasesâ€¦</p>';
   try{
     const releases=await api('/repos/'+S.repo.full_name+'/releases?per_page=10');
     if(!Array.isArray(releases)||!releases.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No releases found.</p>';return}
@@ -2098,7 +2103,7 @@ async function loadReleases(){
           '<span style="color:var(--text);font-weight:600;font-size:13px">'+esc(r.name||r.tag_name)+'</span>'+
           '<span style="color:var(--text3);font-size:11px;margin-left:auto">'+esc(timeAgo(r.published_at||r.created_at))+'</span>'+
         '</div>'+
-        (r.body?'<p style="color:var(--text2);font-size:12px;margin-top:6px;line-height:1.5;max-height:60px;overflow:hidden">'+esc(r.body.slice(0,200))+(r.body.length>200?'…':'')+'</p>':'')+
+        (r.body?'<p style="color:var(--text2);font-size:12px;margin-top:6px;line-height:1.5;max-height:60px;overflow:hidden">'+esc(r.body.slice(0,200))+(r.body.length>200?'â€¦':'')+'</p>':'')+
       '</div>'
     ).join('');
   }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not load releases.</p>'}
@@ -2120,7 +2125,7 @@ async function loadBattle(){
   if(!p){toast('Enter owner/repo','err');return}
   const result=$('#battleResult');
   if(!result)return;
-  result.innerHTML='<p style="color:var(--text3)">Loading…</p>';
+  result.innerHTML='<p style="color:var(--text3)">Loadingâ€¦</p>';
   try{
     const meta=await api('/repos/'+p.owner+'/'+p.repo);
     const m1=S.repo,m2=meta;
@@ -2152,7 +2157,7 @@ async function loadBattle(){
           metrics.map(m=>'<div class="battle-row"><span class="bl">'+esc(m.l)+'</span><span class="bv '+(m.lower?(m.v2<=m.v1?'win':'lose'):(m.v2>=m.v1?'win':'lose'))+'">'+fmt(m.v2)+'</span></div>').join('')+
         '</div>'+
       '</div>'+
-      '<div class="battle-summary">'+esc(m1.name)+' vs '+esc(m2.name)+' — compared by Repodest 🧪</div>';
+      '<div class="battle-summary">'+esc(m1.name)+' vs '+esc(m2.name)+' â€” compared by Repodest ðŸ§ª</div>';
   }catch(e){result.innerHTML='<p style="color:var(--red)">Could not load '+esc(v)+'</p>'}
 }
 
@@ -2170,19 +2175,19 @@ function showCloneModal(){
       ['git clone '+url,'git clone --depth 1 '+url,'git clone --recursive '+url].map(cmd=>
         '<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--line)">'+
           '<code style="flex:1;font-size:12px;color:var(--text2);word-break:break-all">'+esc(cmd)+'</code>'+
-          '<button class="btn sm ghost" onclick="copyText(this,\''+esc(cmd)+'\')">📋</button>'+
+          '<button class="btn sm ghost" onclick="copyText(this,\''+esc(cmd)+'\')">ðŸ“‹</button>'+
         '</div>'
       ).join('')+
       '<div style="text-align:center;margin-top:10px">'+
-        '<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">Open on GitHub ↗</a>'+
+        '<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">Open on GitHub â†—</a>'+
       '</div>'+
     '</div>';
   modal.classList.remove('hidden');
 }
 function copyText(btn,text){
   (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>{
-    btn.textContent='✅';
-    setTimeout(()=>btn.textContent='📋',1500);
+    btn.textContent='âœ…';
+    setTimeout(()=>btn.textContent='ðŸ“‹',1500);
   }).catch(()=>toast('Copy failed','err'));
 }
 
@@ -2191,7 +2196,7 @@ function copyText(btn,text){
    ============================================================ */
 let shareTemplate='detailed';
 function showShareTemplateModal(){
-  showModal('📸 Share Card Template',
+  showModal('ðŸ“¸ Share Card Template',
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">'+
       [['minimal','Minimal'],['detailed','Detailed'],['fun','Fun']].map(([k,l])=>
         '<button class="btn '+(shareTemplate===k?'':'ghost')+' sm" onclick="shareTemplate=\''+k+'\';closeModal();shareCard()">'+esc(l)+'</button>'
@@ -2207,7 +2212,7 @@ function showShortcuts(){
   const shortcuts=[
     ['Ctrl+K /','Focus search'],['1-6','Switch tabs'],['Esc','Close modal'],['?','Show shortcuts'],['Ctrl+Enter','Submit']
   ];
-  showModal('⌨️ Keyboard Shortcuts',
+  showModal('âŒ¨ï¸ Keyboard Shortcuts',
     shortcuts.map(([k,d])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)"><span style="font-family:var(--mono);color:var(--accent2);font-size:12px">'+esc(k)+'</span><span style="color:var(--text2);font-size:13px">'+esc(d)+'</span></div>').join('')
   );
 }
@@ -2225,7 +2230,7 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();const inp=$('#inp');if(inp)inp.focus()}
 });
 
-/* Feature: i18n — second block removed (was duplicate of earlier I18N/currentLang/t/toggleLang) */
+/* Feature: i18n â€” second block removed (was duplicate of earlier I18N/currentLang/t/toggleLang) */
 
 /* ============================================================
    Feature: Dependency Graph (simple canvas)
@@ -2410,7 +2415,7 @@ function startDepGraphAnimation(){
       ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.stroke();
       if(n.r>=12||depGraphNodes.length<25){
         ctx.fillStyle='#e2e8f0';ctx.font=(n.r>=14?'bold 11px':'10px')+' Inter,sans-serif';ctx.textAlign='center';
-        ctx.fillText(n.label.length>16?n.label.slice(0,14)+'…':n.label,cx+n.x,cy+n.y+n.r+14);
+        ctx.fillText(n.label.length>16?n.label.slice(0,14)+'â€¦':n.label,cx+n.x,cy+n.y+n.r+14);
       }
     }
     depGraphAnimId=requestAnimationFrame(tick);
@@ -2489,7 +2494,7 @@ function renderBusFactor(){
     if(topPct>50)busFactor=1;
     else busFactor=sorted.filter(c=>(c.contributions||0)/total*100>10).length;
     const bfClass=busFactor<=1?'bad':busFactor<=2?'warn':'good';
-    const bfLabel=busFactor<=1?'🚨 Risky':busFactor<=2?'⚠️ Moderate':'✅ Healthy';
+    const bfLabel=busFactor<=1?'ðŸš¨ Risky':busFactor<=2?'âš ï¸ Moderate':'âœ… Healthy';
     const top5=sorted.slice(0,5);
     const othersPct=100-top5.reduce((a,c)=>a+(c.contributions||0)/total*100,0);
     const barColors=['#a855f7','#22d3ee','#f1e05a','#22c55e','#ec4899','#64748b'];
@@ -2499,7 +2504,7 @@ function renderBusFactor(){
         '<span style="color:var(--text2);font-size:12.5px">Bus Factor: <b>'+busFactor+'</b></span>'+
       '</div>'+
       '<div style="font-size:12px;color:var(--text3);margin-bottom:6px">'+
-        (topPct>50?'Top contributor has '+topPct.toFixed(1)+'% of commits — single point of failure.':'Top contributor has '+topPct.toFixed(1)+'% — contributions are reasonably distributed.')+
+        (topPct>50?'Top contributor has '+topPct.toFixed(1)+'% of commits â€” single point of failure.':'Top contributor has '+topPct.toFixed(1)+'% â€” contributions are reasonably distributed.')+
       '</div>'+
       '<div class="dominance-bar">'+
         top5.map((c,i)=>'<i style="width:'+((c.contributions||0)/total*100).toFixed(1)+'%;background:'+barColors[i]+'"></i>').join('')+
@@ -2521,7 +2526,7 @@ async function renderReleaseTimeline(){
     if(!el)return;
     if(S.platform!=='github'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available for GitHub repos.</p>';return}
     const m=S.repo;if(!m||!m.full_name)return;
-    el.innerHTML='<p style="color:var(--text3);font-size:12px">Loading releases…</p>';
+    el.innerHTML='<p style="color:var(--text3);font-size:12px">Loading releasesâ€¦</p>';
     try{
       const releases=await api('/repos/'+m.full_name+'/releases?per_page=10');
       if(!Array.isArray(releases)||!releases.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No releases found.</p>';return}
@@ -2530,7 +2535,7 @@ async function renderReleaseTimeline(){
         return '<div class="release-item">'+
           '<div class="rver">'+esc(r.tag_name||r.name||'untagged')+'</div>'+
           '<div class="rdate">'+esc(r.published_at?new Date(r.published_at).toLocaleDateString():'unknown date')+'</div>'+
-          (body?'<div class="rbody">'+esc(body)+(r.body&&r.body.length>200?'…':'')+'</div>':'')+
+          (body?'<div class="rbody">'+esc(body)+(r.body&&r.body.length>200?'â€¦':'')+'</div>':'')+
         '</div>';
       }).join('')+'</div>';
     }catch(e){
@@ -2588,7 +2593,7 @@ function updateRecCounts(){
   }
 }
 
-/* Duplicate functions removed — originals at their earlier locations */
+/* Duplicate functions removed â€” originals at their earlier locations */
 
 /* ============================================================
    Store parsed deps globally for dependency graph
@@ -2625,7 +2630,7 @@ renderDeps=async function(stacks){
 };
 
 /* ============================================================
-   Fix: openBattle() was overwritten by duplicates above — restore correct implementation
+   Fix: openBattle() was overwritten by duplicates above â€” restore correct implementation
    ============================================================ */
 function openBattle(){
   $('#battleInput').value='';
@@ -2634,20 +2639,20 @@ function openBattle(){
   setTimeout(()=>$('#battleInput').focus(),60);
 }
 
-/* Fix: closeExplainModal was overwritten — restore correct implementation */
+/* Fix: closeExplainModal was overwritten â€” restore correct implementation */
 function closeExplainModal(){$('#explainModalBg').classList.add('hidden')}
 
 /* Fix: closeBattleModal was never defined */
 function closeBattleModal(){$('#battleModalBg').classList.add('hidden')}
 
-/* Fix: runBattle was overwritten to call loadBattle() which doesn't exist — restore */
+/* Fix: runBattle was overwritten to call loadBattle() which doesn't exist â€” restore */
 async function runBattle(){
   const v=$('#battleInput').value.trim();
   if(!v){toast('Enter a repo to battle','err');return}
   const p=parseRepoInput(v);
   if(!p){toast('Could not parse that','err');return}
   const result=$('#battleResult');
-  result.innerHTML='<div class="loading"><div class="spinner"></div><p>Loading challenger…</p></div>';
+  result.innerHTML='<div class="loading"><div class="spinner"></div><p>Loading challengerâ€¦</p></div>';
   try{
     let otherMeta,otherLangs,otherContribs,otherTree;
     if(p.platform==='github'){
@@ -2686,19 +2691,19 @@ async function runBattle(){
       '</div>';
     }).join('');
     const winnerLabel=aWins>bWins?esc(a.full_name):bWins>aWins?esc(b.full_name):'Tie';
-    const shareText='⚔️ Repo Battle: '+a.full_name+' vs '+b.full_name+' → '+winnerLabel+' wins! ('+aWins+'-'+bWins+')';
+    const shareText='âš”ï¸ Repo Battle: '+a.full_name+' vs '+b.full_name+' â†’ '+winnerLabel+' wins! ('+aWins+'-'+bWins+')';
     result.innerHTML=
       '<div class="battle-grid">'+
         '<div class="battle-side"><h4>'+esc(a.full_name||'')+'</h4>'+rows+'</div>'+
         '<div class="battle-side"><h4>'+esc(b.full_name||'')+'</h4>'+rows.replace(/class="bv (win|lose)"/g,(match)=>match.replace('lose',''))+'</div>'+
       '</div>'+
       '<div style="text-align:center;margin:12px 0;font-size:16px;font-weight:700">'+
-        (aWins>bWins?'🏆 '+esc(a.full_name)+' wins!':bWins>aWins?'🏆 '+esc(b.full_name)+' wins!':'🤝 Tie!')+
+        (aWins>bWins?'ðŸ† '+esc(a.full_name)+' wins!':bWins>aWins?'ðŸ† '+esc(b.full_name)+' wins!':'ðŸ¤ Tie!')+
         ' <span style="color:var(--text3);font-size:13px">('+aWins+'-'+bWins+')</span>'+
       '</div>'+
       '<div class="battle-summary">'+esc(shareText)+'</div>';
   }catch(e){
-    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e">💥</div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
+    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e">ðŸ’¥</div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
   }
 }
 
@@ -2889,12 +2894,12 @@ renderFiles=function(){
     /* Update info text */
     const visible=$$('#tree .trow:not([style*="display: none"])').length;
     const info=$('#treeInfo');
-    if(info)info.textContent=visible+' visible · '+FILEMAP.size+' total';
+    if(info)info.textContent=visible+' visible Â· '+FILEMAP.size+' total';
   }
 }
 
 /* ============================================================
-   Deep Analysis tab — PR analytics, fix rate, churn, OSV scan
+   Deep Analysis tab â€” PR analytics, fix rate, churn, OSV scan
    ============================================================ */
 S.deep={pr:null,fix:null,churn:null,osv:null,loaded:false};
 
@@ -2910,7 +2915,7 @@ function renderDeepPanel(){
 }
 
 function fmtHours(h){
-  if(h==null)return'—';
+  if(h==null)return'â€”';
   if(h<1)return Math.round(h*60)+' min';
   if(h<48)return h.toFixed(1)+' h';
   if(h<24*60)return Math.round(h/24)+' days';
@@ -2932,7 +2937,7 @@ async function runDeepScan(){
 async function loadPRAnalytics(){
   const el=$('#prAnalyticsContent');if(!el)return;
   if(S.deep.pr){renderPRAnalytics(S.deep.pr);return}
-  el.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Loading PRs…</p>';
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">â³ Loading PRsâ€¦</p>';
   try{
     const prs=await api('/repos/'+S.repo.full_name+'/pulls?state=all&per_page=100&sort=created&direction=desc');
     if(!Array.isArray(prs))throw new Error('Bad PR response');
@@ -2970,7 +2975,7 @@ function renderPRAnalytics(d){
 async function loadFixRate(){
   const el=$('#fixRateContent');if(!el)return;
   if(S.deep.fix){renderFixRate(S.deep.fix);return}
-  el.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Analyzing commits…</p>';
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">â³ Analyzing commitsâ€¦</p>';
   try{
     const commits=await api('/repos/'+S.repo.full_name+'/commits?per_page=100');
     if(!Array.isArray(commits))throw new Error('Bad commits response');
@@ -2994,7 +2999,7 @@ async function loadFixRate(){
 function renderFixRate(d){
   const el=$('#fixRateContent');if(!el)return;
   const total=d.total||1;
-  const verdict=d.fixes/total>0.4?'🔴 High bug pressure':d.fixes/total>0.2?'🟡 Moderate bug pressure':'🟢 Low bug pressure';
+  const verdict=d.fixes/total>0.4?'ðŸ”´ High bug pressure':d.fixes/total>0.2?'ðŸŸ¡ Moderate bug pressure':'ðŸŸ¢ Low bug pressure';
   el.innerHTML=
     pctBar('Fixes / reverts',d.fixes,total,'#ef4444')+
     pctBar('Features',d.feats,total,'#a855f7')+
@@ -3008,7 +3013,7 @@ function renderFixRate(d){
 async function loadChurn(){
   const el=$('#churnContent');if(!el)return;
   if(S.deep.churn){renderChurn(S.deep.churn);return}
-  el.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Computing churn…</p>';
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">â³ Computing churnâ€¦</p>';
   try{
     const commits=await api('/repos/'+S.repo.full_name+'/commits?per_page=60');
     if(!Array.isArray(commits))throw new Error('Bad commits response');
@@ -3038,11 +3043,11 @@ function renderChurn(d){
   if(!d.hot.length){el.innerHTML='<p style="color:var(--text3);font-size:12px">No file changes found in recent commits.</p>';return}
   const max=d.hot[0].changes||1;
   el.innerHTML=
-    '<p style="color:var(--text3);font-size:11px;margin-bottom:8px">Based on '+d.examined+'/'+d.commits+' recent commits (each file listing costs one API call — a token raises the depth).</p>'+
+    '<p style="color:var(--text3);font-size:11px;margin-bottom:8px">Based on '+d.examined+'/'+d.commits+' recent commits (each file listing costs one API call â€” a token raises the depth).</p>'+
     d.hot.map(h=>{
       const pct=Math.round(h.changes/max*100);
-      const short=h.path.length>44?'…'+h.path.slice(-43):h.path;
-      return '<div class="langrow"><span class="ln" style="width:44%" title="'+esc(h.path)+'">'+esc(short)+'</span><span class="lb"><i style="width:'+pct+'%;background:'+(h.changes>=max*0.8?'#ef4444':h.changes>=max*0.5?'#f59e0b':'#22d3ee')+'"></i></span><span class="lp">'+h.changes+'×</span></div>';
+      const short=h.path.length>44?'â€¦'+h.path.slice(-43):h.path;
+      return '<div class="langrow"><span class="ln" style="width:44%" title="'+esc(h.path)+'">'+esc(short)+'</span><span class="lb"><i style="width:'+pct+'%;background:'+(h.changes>=max*0.8?'#ef4444':h.changes>=max*0.5?'#f59e0b':'#22d3ee')+'"></i></span><span class="lp">'+h.changes+'Ã—</span></div>';
     }).join('');
 }
 
@@ -3070,8 +3075,8 @@ async function runOsvScan(){
   const el=$('#osvContent'),badge=$('#osvBadge');
   if(S.deep.osv){renderOsv(S.deep.osv);return}
   if(!FILEMAP.size){toast('Load a repository first','err');return}
-  const btn=$('#osvScanBtn');if(btn){btn.disabled=true;btn.textContent='⏳ Scanning…'}
-  if(badge)badge.textContent='…';
+  const btn=$('#osvScanBtn');if(btn){btn.disabled=true;btn.textContent='â³ Scanningâ€¦'}
+  if(badge)badge.textContent='â€¦';
   try{
     const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
     const branch=(S.repo&&S.repo.default_branch)||'main';
@@ -3092,7 +3097,7 @@ async function runOsvScan(){
     if(!entries.length){
       el.innerHTML='<p style="color:var(--text3);font-size:12px">No supported manifest files (package.json, requirements.txt, pyproject.toml, Cargo.toml, go.mod) found in the tree.</p>';
       if(badge)badge.textContent='0';
-      if(btn){btn.disabled=false;btn.textContent='🛡️ Scan dependencies'}
+      if(btn){btn.disabled=false;btn.textContent='ðŸ›¡ï¸ Scan dependencies'}
       return;
     }
     const results=entries.map(()=>[]);
@@ -3121,7 +3126,7 @@ async function runOsvScan(){
     el.innerHTML='<p style="color:var(--red);font-size:12px">Scan failed: '+esc(e.message||'error')+'</p>';
     if(badge)badge.textContent='!';
   }finally{
-    if(btn){btn.disabled=false;btn.textContent='🛡️ Scan dependencies'}
+    if(btn){btn.disabled=false;btn.textContent='ðŸ›¡ï¸ Scan dependencies'}
   }
 }
 function renderOsv(d){
@@ -3133,6 +3138,150 @@ function renderOsv(d){
     '<div class="kv"><span>Packages with known advisories</span><b style="color:'+color+'">'+d.vulnerable+'</b></div>'+
     (d.vulnList.length?'<div style="margin-top:10px;font-size:11px;color:var(--text3)">Flagged packages</div>'+
       d.vulnList.map(v=>'<div class="kv"><span>'+esc(v.name)+' <span style="color:var(--text3)">('+esc(v.eco)+')</span></span><b style="color:var(--red)">'+v.count+' advisory'+(v.count>1?'ies':'')+'</b></div>').join(''):'')+
-    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Advisory counts include all severities. Verify details on <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> before acting — version pinning info is not sent in this batch scan.</p>';
+    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Advisory counts include all severities. Verify details on <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> before acting â€” version pinning info is not sent in this batch scan.</p>';
   if(d.vulnerable)toast(d.vulnerable+' packages have known advisories','err');
 }
+
+/* ============================================================
+   Digest upgrades â€” presets, output formats, model context,
+   signatures-only mode
+   ============================================================ */
+const DIGEST_PRESETS={
+  general:{label:'General',task:'You are given the source of a software repository. Use this context to answer questions about the codebase accurately and concisely.'},
+  review:{label:'Code review',task:'You are a senior code reviewer. Analyze the repository below: flag bugs, security issues, performance problems, and style violations. Suggest concrete improvements with file references. Structure the review by severity (critical / major / minor).'},
+  learn:{label:'Learn codebase',task:'You are a senior engineer mentoring a new team member. Explain the repository below: architecture, main modules and how they interact, entry points, data flow, and key design patterns. Suggest a reading order for the files.'},
+  migrate:{label:'Migration',task:'You are a migration expert. Analyze the repository below and produce a migration plan: inventory of frameworks and versions, dependency risks, suggested target stack, step-by-step migration phases, and a risk assessment.'},
+  docs:{label:'Docs writing',task:'You are a technical writer. Using the repository below, draft up-to-date documentation: a README outline, API reference from exported functions/routes, and a getting-started guide. Match the tone to the existing docs.'}
+};
+const DIGEST_FORMATS=['md','xml','json'];
+let digestPreset=LS.get('repodest_preset','general');
+let digestFormat=LS.get('repodest_format','md');
+let sigOnly=LS.get('repodest_sigonly',false);
+const MODEL_CTX={gpt5:128000,claude:200000,gemini:1000000,llama:8000};
+const MODEL_CHARS_PER_TOK={gpt5:4,claude:3.6,gemini:3.8,llama:4.2};
+
+function selectDigestPreset(p){
+  if(!DIGEST_PRESETS[p])return;
+  digestPreset=p;LS.set('repodest_preset',p);
+  $$('.rec-btn[data-preset]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.preset===p));
+  toast('Preset: '+DIGEST_PRESETS[p].label,'ok');
+}
+function selectDigestFormat(f){
+  if(!DIGEST_FORMATS.includes(f))return;
+  digestFormat=f;LS.set('repodest_format',f);
+  $$('.rec-btn[data-format]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.format===f));
+  toast('Output format: '+f.toUpperCase(),'ok');
+}
+function toggleSigOnly(){
+  sigOnly=!sigOnly;LS.set('repodest_sigonly',sigOnly);
+  const b=$('#sigBtn');if(b)b.classList.toggle('preset-sel',sigOnly);
+  toast(sigOnly?'Signatures-only mode ON':'Signatures-only mode OFF','ok');
+}
+function initDigestControls(){
+  $$('.rec-btn[data-preset]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.preset===digestPreset));
+  $$('.rec-btn[data-format]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.format===digestFormat));
+  const sb=$('#sigBtn');if(sb)sb.classList.toggle('preset-sel',sigOnly);
+}
+
+/* Strip bodies from source code, keeping signatures, types & comments */
+function extractSignatures(src,ext){
+  const keepExt=['js','ts','jsx','tsx','mjs','cjs','py','java','cs','go','rs','rb','php','c','h','cpp','hpp','kt','swift','dart','lua','scala'];
+  if(!keepExt.includes(ext))return src;
+  const lines=src.split('\n');
+  const out=[];let skipDepth=0,blockComment=false;
+  const isPy=ext==='py';
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i],trimmed=line.trim();
+    if(blockComment){
+      out.push(line);
+      if(trimmed.includes('*/'))blockComment=false;
+      continue;
+    }
+    if(trimmed.startsWith('/*')){
+      out.push(line);
+      if(!trimmed.includes('*/'))blockComment=true;
+      continue;
+    }
+    if(trimmed.startsWith('#')||trimmed.startsWith('//')){out.push(line);continue}
+    if(isPy){
+      if(/(^\s*|^\s*)(async\s+)?def\s/.test(line)||/^\s*@/.test(line)){
+        out.push(line);
+        const indent=line.match(/^\s*/)[0];
+        let j=i+1;
+        while(j<lines.length&&!lines[j].trim())j++;
+        if(j<lines.length&&lines[j].startsWith(indent+' ')||j<lines.length&&indent===''&&lines[j].match(/^\s/)){
+          i=j-1;out.push(indent+'    â€¦');
+        }
+        continue;
+      }
+      out.push(line);continue;
+    }
+    if(skipDepth>0){
+      for(const ch of line){
+        if(ch==='{')skipDepth++;
+        else if(ch==='}')skipDepth--;
+      }
+      if(skipDepth<=0){skipDepth=0;out.push((line.match(/^\s*/)||[''])[0]+'}')}
+      continue;
+    }
+    const open=(line.match(/\{/g)||[]).length,close=(line.match(/\}/g)||[]).length;
+    const isDecl=/\b(class|function|fn|func|interface|struct|impl|enum|extension)\b/.test(line)||/^\s*(export\s+)?(default\s+)?(async\s+)?[A-Za-z_$][\w$]*\s*\([^;{}]*\)\s*\{?\s*$/.test(line);
+    if(isDecl){
+      out.push(line);
+      if(open>close){skipDepth=open-close;out.push((line.match(/^\s*/)||[''])[0]+'  â€¦')}
+      continue;
+    }
+    if(/^(import|export\s+default|package|using|namespace|mod|use|from|@)/.test(trimmed)||trimmed===''||/^(const|let|var)\s+[A-Za-z_$][\w$]*\s*=\s*(require|import)/.test(trimmed)){
+      out.push(line);continue;
+    }
+    if(/^\s*(public|private|protected|static|final|abstract|override|async|const|let|var|type)/.test(line)&&/[(;=]/.test(line)&&trimmed.length<200){out.push(line);continue}
+  }
+  const dedup=[];
+  for(const l of out){
+    if(dedup.length>1&&dedup[dedup.length-1]==='  â€¦'&&l==='  â€¦')continue;
+    dedup.push(l);
+  }
+  return dedup.join('\n').replace(/\n{3,}/g,'\n\n');
+}
+
+function buildDigestHeader(m,branch){
+  if(digestFormat==='xml'){
+    return ['# Repository Context','<repository name="'+esc(m&&m.full_name)+'" platform="'+esc(S.platform||'github')+'" branch="'+esc(branch)+'">',
+      '  <meta>','    <description>'+esc(m&&m.description)+'</description>','    <language>'+esc(m&&m.language)+'</language>',
+      '    <stars>'+fmt(m&&m.stargazers_count)+'</stars>','    <forks>'+fmt(m&&m.forks_count)+'</forks>',
+      '    <license>'+(m&&m.license?esc(m.license.spdx_id):'none')+'</license>','    <generated>'+new Date().toISOString().slice(0,10)+'</generated>',
+      '  </meta>','  <task>'+esc(DIGEST_PRESETS[digestPreset].task)+'</task>'].join('\n');
+  }
+  if(digestFormat==='json'){
+    return ['{','  "repository": "'+(m&&m.full_name)+'",','  "platform": "'+(S.platform||'github')+'",','  "branch": "'+branch+'",',
+      '  "meta": '+JSON.stringify({description:m&&m.description,primary_language:m&&m.language,stars:m&&m.stargazers_count,forks:m&&m.forks_count,license:m&&m.license?m.license.spdx_id:null,generated:new Date().toISOString().slice(0,10)})+',',
+      '  "task": '+JSON.stringify(DIGEST_PRESETS[digestPreset].task)+','].join('\n');
+  }
+  return ['# Repository Context: '+(m&&m.full_name),
+    'Source: '+(m&&m.html_url),'Platform: '+(S.platform||'github'),'Branch: '+branch,
+    'Description: '+(m&&m.description||'N/A'),'Primary language: '+(m&&m.language||'N/A'),
+    'Stars: '+fmt(m&&m.stargazers_count)+' Â· Forks: '+fmt(m&&m.forks_count)+' Â· License: '+(m&&m.license?m.license.spdx_id:'none'),
+    'Generated by Repodest on '+new Date().toISOString().slice(0,10),
+    '','## Task',''+DIGEST_PRESETS[digestPreset].task].join('\n');
+}
+
+function wrapFileSection(p,ext,content){
+  if(digestFormat==='xml')return '  <file path="'+esc(p)+'">\n<![CDATA[\n'+content+'\n]]>\n  </file>';
+  if(digestFormat==='json')return '    '+JSON.stringify({path:p,content})+',';
+  return '\n# File: '+p+'\n\n````'+ext+'\n'+content+'\n````';
+}
+
+function finalizeDigestFooter(parts){
+  if(digestFormat==='xml')parts.push('</repository>');
+  else if(digestFormat==='json'){
+    let s=parts.join('\n');
+    if(s.endsWith(','))s=s.slice(0,-1);
+    parts.length=0;
+    parts.push(s,'\n}');
+    return;
+  }
+  parts.push('\n---\nEnd of repository digest. Use this context to answer questions about the codebase.');
+}
+
+document.addEventListener('DOMContentLoaded',()=>{initDigestControls();updateSelMeta()});
+
