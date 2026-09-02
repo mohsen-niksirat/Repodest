@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run unit tests
+        run: node tests.test.js
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate HTML
+        run: |
+          # Check that index.html has proper structure
+          grep -q '<!DOCTYPE html>' index.html
+          grep -q '<link rel="stylesheet" href="styles.css">' index.html
+          grep -q '<script src="app.js">' index.html
+          echo "HTML structure OK ✓"
+
+      - name: Validate CSS
+        run: |
+          # Basic CSS validation - check for balanced braces
+          OPEN=$(grep -o '{' styles.css | wc -l)
+          CLOSE=$(grep -o '}' styles.css | wc -l)
+          if [ "$OPEN" -ne "$CLOSE" ]; then
+            echo "CSS brace mismatch: { = $OPEN, } = $CLOSE"
+            exit 1
+          fi
+          echo "CSS validation OK ✓"
+
+      - name: Validate JS syntax
+        run: node -e "require('fs').readFileSync('app.js','utf8'); new Function(require('fs').readFileSync('app.js','utf8')); console.log('JS syntax OK ✓')"
+
+  deploy:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
