@@ -2717,6 +2717,9 @@ function openBattle(){
 /* Fix: closeExplainModal was overwritten — restore correct implementation */
 function closeExplainModal(){$('#explainModalBg').classList.add('hidden')}
 
+/* Fix: closeBattleModal was never defined */
+function closeBattleModal(){$('#battleModalBg').classList.add('hidden')}
+
 /* Fix: runBattle was overwritten to call loadBattle() which doesn't exist — restore */
 async function runBattle(){
   const v=$('#battleInput').value.trim();
