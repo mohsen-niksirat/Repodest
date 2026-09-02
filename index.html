@@ -456,6 +456,188 @@ footer a{color:var(--text2)}
   .statrow{gap:14px}
   .compare-wrap{grid-template-columns:1fr}
 }
+
+/* === Feature 1: Dependency Graph === */
+.dep-graph-wrap{position:relative;width:100%;height:500px;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden;background:var(--bg2)}
+.dep-graph-wrap canvas{width:100%;height:100%;cursor:grab}
+.dep-graph-wrap canvas:active{cursor:grabbing}
+.dep-graph-tooltip{position:absolute;pointer-events:none;background:var(--card-solid);border:1px solid var(--line2);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;font-family:var(--mono);white-space:nowrap;z-index:10;opacity:0;transition:opacity .15s;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+.dep-graph-tooltip.show{opacity:1}
+.dep-graph-legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+.dep-graph-legend span{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2)}
+.dep-graph-legend .dot{width:10px;height:10px;border-radius:50%}
+
+/* === Feature 2: Complexity Score === */
+.complexity-card{margin-top:16px}
+.complexity-meter{height:10px;border-radius:99px;background:var(--card2);overflow:hidden;margin:8px 0}
+.complexity-meter i{display:block;height:100%;border-radius:99px;transition:width .6s ease}
+.complexity-score-label{font-size:13px;font-weight:700}
+.complexity-top-files{margin-top:10px}
+.complexity-top-files .cfrow{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.complexity-top-files .cfrow:last-child{border:none}
+.complexity-top-files .cfpath{flex:1;font-family:var(--mono);color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.complexity-top-files .cfscore{font-family:var(--mono);color:var(--accent2);font-weight:600;flex-shrink:0}
+
+/* === Feature 3: Contributor Network === */
+.bus-factor-card{margin-top:16px}
+.bus-factor-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border-radius:99px;font-size:13px;font-weight:700}
+.bus-factor-badge.good{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:var(--green2)}
+.bus-factor-badge.warn{background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.4);color:var(--yellow)}
+.bus-factor-badge.bad{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.4);color:#f87171}
+.dominance-bar{display:flex;height:18px;border-radius:99px;overflow:hidden;background:var(--card2);margin:10px 0;border:1px solid var(--line)}
+.dominance-bar i{height:100%;transition:width .5s ease}
+.dominance-legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.dominance-legend span{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+.dominance-legend .dl-dot{width:8px;height:8px;border-radius:50%}
+
+/* === Feature 4: Release Timeline === */
+.release-timeline{position:relative;padding-left:24px}
+.release-timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--line)}
+.release-item{position:relative;margin-bottom:18px;padding-left:16px}
+.release-item::before{content:'';position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:2px solid var(--bg2);z-index:1}
+.release-item .rver{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent2)}
+.release-item .rdate{font-size:11px;color:var(--text3);margin-top:2px}
+.release-item .rbody{font-size:12px;color:var(--text2);margin-top:4px;line-height:1.5;max-height:60px;overflow:hidden}
+
+/* === Feature 5: AI Summary === */
+.ai-summary-box{padding:16px 20px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:var(--rs);margin-top:12px;font-size:13.5px;line-height:1.7;color:var(--text)}
+.ai-summary-box b{color:var(--accent2)}
+
+/* === Feature 6: Smart File Recommendations === */
+.rec-btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.rec-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text2);font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.rec-btn:hover{border-color:var(--accent);color:var(--text)}
+.rec-btn .rcnt{font-family:var(--mono);color:var(--accent2);font-size:11px}
+
+/* === Feature 7: Explain Modal === */
+.explain-content{font-size:14px;line-height:1.75;color:var(--text2)}
+.explain-content p{margin-bottom:10px}
+.explain-content strong{color:var(--text)}
+
+/* === Feature 8: Battle Mode === */
+.battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+@media(max-width:700px){.battle-grid{grid-template-columns:1fr}}
+.battle-side{padding:16px;border-radius:var(--rs);background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.battle-side h4{font-size:14px;margin-bottom:10px}
+.battle-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.battle-row:last-child{border:none}
+.battle-row .bl{color:var(--text2)}
+.battle-row .bv{font-family:var(--mono);font-weight:600}
+.battle-row .bv.win{color:var(--green2)}
+.battle-row .bv.lose{color:#f87171}
+.battle-summary{margin-top:14px;padding:12px 16px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:var(--rs);font-size:12.5px;line-height:1.6;color:var(--text2);font-family:var(--mono)}
+.battle-modal .modal{width:min(640px,94vw)}
+
+/* === Feature 9: Share Card Templates === */
+.share-templates{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.share-tpl{padding:18px;border-radius:var(--rs);border:2px solid var(--line);background:var(--card2);cursor:pointer;transition:.25s;text-align:center}
+.share-tpl:hover{border-color:var(--accent);transform:translateY(-2px)}
+.share-tpl.selected{border-color:var(--accent);background:rgba(124,58,237,.12);box-shadow:0 0 16px rgba(124,58,237,.2)}
+.share-tpl .tpl-icon{font-size:28px;margin-bottom:8px}
+.share-tpl .tpl-name{font-size:14px;font-weight:700;color:var(--text)}
+.share-tpl .tpl-desc{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* === Feature 10: Quick Clone Panel === */
+.clone-options{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.clone-row{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--rs);background:var(--bg2);border:1px solid var(--line)}
+.clone-row code{flex:1;font-family:var(--mono);font-size:12.5px;color:var(--cyan);word-break:break-all}
+.clone-row .clone-label{font-size:11px;color:var(--text3);font-weight:600;min-width:80px}
+.qr-wrap{display:flex;justify-content:center;margin:16px 0;padding:16px;background:#fff;border-radius:var(--rs)}
+.qr-wrap canvas{image-rendering:pixelated}
+
+/* === Feature 11: Similar Repos === */
+.similar-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+.similar-card{padding:14px;border-radius:var(--rs);background:var(--card2);border:1px solid var(--line);cursor:pointer;transition:.25s}
+.similar-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 8px 20px -8px rgba(124,58,237,.3)}
+.similar-card h4{font-size:13px;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.similar-card h4 b{color:var(--yellow);font-family:var(--mono);font-size:11px}
+.similar-card .sim-desc{font-size:11.5px;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.similar-card .sim-meta{font-size:10.5px;color:var(--text3);margin-top:6px;font-family:var(--mono)}
+
+/* === Feature 12: Security Quick Scan === */
+.security-score{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:16px;border-radius:var(--rs);background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.security-score .sec-ring{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:900;font-family:var(--mono)}
+.security-score .sec-label{font-size:13px;color:var(--text2)}
+.security-checklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
+.sec-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rs);background:rgba(255,255,255,.02);border:1px solid var(--line);font-size:12.5px}
+.sec-item .sec-icon{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;flex-shrink:0}
+.sec-item.safe .sec-icon{background:rgba(34,197,94,.15);color:var(--green2)}
+.sec-item.warn .sec-icon{background:rgba(234,179,8,.15);color:var(--yellow)}
+.sec-item.danger .sec-icon{background:rgba(239,68,68,.15);color:#f87171}
+
+/* === Feature 13: API Endpoint Detector === */
+.endpoint-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.endpoint-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rs);background:rgba(255,255,255,.025);border:1px solid var(--line);font-size:12.5px}
+.endpoint-row .ep-method{padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:800;font-family:var(--mono);text-transform:uppercase;min-width:50px;text-align:center}
+.endpoint-row .ep-method.get{background:rgba(34,197,94,.15);color:var(--green2)}
+.endpoint-row .ep-method.post{background:rgba(59,130,246,.15);color:var(--blue)}
+.endpoint-row .ep-method.put{background:rgba(234,179,8,.15);color:var(--yellow)}
+.endpoint-row .ep-method.delete{background:rgba(239,68,68,.15);color:#f87171}
+.endpoint-row .ep-method.patch{background:rgba(168,85,247,.15);color:var(--accent2)}
+.endpoint-row .ep-path{flex:1;font-family:var(--mono);color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.endpoint-row .ep-file{font-size:10.5px;color:var(--text3);font-family:var(--mono);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ep-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:99px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;padding:0 6px;margin-left:6px}
+
+/* === Feature 14: README Preview === */
+.readme-preview{background:var(--bg2);border:1px solid var(--line);border-radius:var(--rs);padding:20px 24px;margin-top:12px;max-height:500px;overflow-y:auto;font-size:13.5px;line-height:1.7}
+.readme-preview h1{font-size:22px;font-weight:800;margin:20px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.readme-preview h1:first-child{margin-top:0}
+.readme-preview h2{font-size:18px;font-weight:700;margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.readme-preview h3{font-size:15px;font-weight:700;margin:14px 0 6px}
+.readme-preview h4{font-size:13.5px;font-weight:700;margin:12px 0 4px}
+.readme-preview p{margin:8px 0}
+.readme-preview strong{color:var(--text);font-weight:700}
+.readme-preview em{font-style:italic}
+.readme-preview code{font-family:var(--mono);background:rgba(124,58,237,.12);padding:2px 6px;border-radius:5px;font-size:12px;color:var(--accent2)}
+.readme-preview pre{background:var(--bg);border:1px solid var(--line);border-radius:var(--rs);padding:14px;overflow-x:auto;margin:10px 0}
+.readme-preview pre code{background:none;padding:0;color:var(--text2)}
+.readme-preview a{color:var(--accent2);text-decoration:none}
+.readme-preview a:hover{text-decoration:underline}
+.readme-preview ul,.readme-preview ol{margin:8px 0;padding-left:24px}
+.readme-preview li{margin:4px 0}
+.readme-preview blockquote{border-left:3px solid var(--accent);padding:8px 16px;margin:10px 0;background:rgba(124,58,237,.06);border-radius:0 var(--rs) var(--rs) 0;color:var(--text2)}
+.readme-preview img{max-width:100%;border-radius:8px}
+.readme-preview hr{border:none;border-top:1px solid var(--line);margin:16px 0}
+
+/* === Feature 15: Keyboard Shortcuts === */
+.shortcuts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.shortcut-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:var(--rs);background:var(--bg2);border:1px solid var(--line)}
+.shortcut-item .sc-desc{font-size:13px;color:var(--text2)}
+.shortcut-item kbd{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;background:var(--card2);border:1px solid var(--line2);font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--text);box-shadow:0 2px 0 var(--line)}
+
+/* === Feature 16: i18n RTL support === */
+body.rtl{direction:rtl;text-align:right}
+body.rtl .hwrap{flex-direction:row-reverse}
+body.rtl .searchbox{direction:rtl}
+body.rtl .searchbox input{text-align:right}
+body.rtl .tabs{direction:rtl}
+body.rtl .statrow{direction:rtl}
+body.rtl .kv{flex-direction:row-reverse}
+body.rtl .langrow{direction:rtl}
+body.rtl .langrow .lp{text-align:left}
+body.rtl .langrow .ln{text-align:right}
+body.rtl .tree{direction:ltr}
+body.rtl .modal{text-align:right}
+body.rtl .modal .mrow{justify-content:flex-start}
+body.rtl .chk{direction:rtl}
+body.rtl .topicrow{direction:rtl}
+body.rtl .examples{direction:rtl}
+body.rtl .steps{direction:rtl}
+body.rtl .featgrid{direction:rtl}
+body.rtl .hero{text-align:center}
+body.rtl .hero .eyebrow{direction:rtl}
+body.rtl footer{direction:rtl}
+body.rtl .digest-actions{direction:rtl}
+body.rtl .optrow{direction:rtl}
+body.rtl .shortcuts-grid{direction:rtl}
+body.rtl .clone-row{direction:ltr}
+body.rtl .share-templates{direction:rtl}
+body.rtl .similar-card{text-align:right}
+body.rtl .endpoint-row{direction:ltr}
+body.rtl .security-checklist{direction:rtl}
+body.rtl .toolbar{direction:rtl}
+body.rtl .toolbar .tb-input{direction:rtl}
+body.rtl .toolbar .tb-input input{direction:ltr;text-align:left}
 </style>
 </head>
 <body>
@@ -469,6 +651,8 @@ footer a{color:var(--text2)}
     <div class="hspace"></div>
     <span class="chip-lite" id="rateChip" title="GitHub API calls remaining this hour"><span class="dot"></span><span id="rateVal">—</span></span>
     <button class="chip-lite" onclick="openModal()" title="Optional personal access token">🔑 <span>Token</span></button>
+    <button class="chip-lite" onclick="openShortcutsModal()" title="Keyboard shortcuts">❓ <span>Shortcuts</span></button>
+    <button class="chip-lite" onclick="cycleLang()" title="Switch language" id="langBtn">🌐 <span>EN</span></button>
     <a class="chip-lite" href="https://github.com/mohsen-niksirat" target="_blank" rel="noopener">GitHub ↗</a>
   </div>
 </header>
@@ -533,6 +717,8 @@ footer a{color:var(--text2)}
     <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo">⚖️ Compare</button>
     <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON">⬇️ JSON</button>
     <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV">⬇️ CSV</button>
+    <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo">⚔️ Battle</button>
+    <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options">📋 Clone</button>
   </div>
 
   <!-- Compare panel -->
@@ -579,6 +765,7 @@ footer a{color:var(--text2)}
       <button class="tab" data-tab="digest">🤖 Digest</button>
       <button class="tab" data-tab="activity">📈 Activity</button>
       <button class="tab" data-tab="fun">🏆 Fun</button>
+      <button class="tab" data-tab="deps">🔗 Deps</button>
     </div>
 
     <section class="panel active" id="p-overview">
@@ -608,6 +795,32 @@ footer a{color:var(--text2)}
       <div class="card" style="margin-top:16px" id="licenseCard">
         <div class="minititle">📜 License analysis</div>
         <div id="licenseAnalysis"></div>
+      </div>
+      <div class="card" style="margin-top:16px" id="readmeCard">
+        <div class="minititle">📖 README Preview</div>
+        <div id="readmePreview"></div>
+      </div>
+      <div class="card" style="margin-top:16px" id="securityCard">
+        <div class="minititle">🔒 Security Quick Scan</div>
+        <div id="securityContent"></div>
+      </div>
+      <div class="card" style="margin-top:16px" id="similarCard">
+        <div class="minititle">🔍 Similar Repos</div>
+        <div id="similarContent"></div>
+      </div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="card complexity-card">
+          <div class="minititle">🧮 Code Complexity</div>
+          <div id="complexityContent"></div>
+        </div>
+        <div class="card">
+          <div class="minititle">🤖 AI Insights</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="btn sm" onclick="generateSummary()">🤖 Summarize</button>
+            <button class="btn ghost sm" onclick="explainRepo()">💡 Explain</button>
+          </div>
+          <div id="aiSummaryBox"></div>
+        </div>
       </div>
     </section>
 
@@ -647,6 +860,10 @@ footer a{color:var(--text2)}
         </div>
         <div class="tree" id="tree"></div>
       </div>
+      <div class="card" style="margin-top:16px" id="endpointsCard">
+        <div class="minititle">🔌 API Endpoints <span class="ep-badge" id="epBadge">0</span></div>
+        <div id="endpointsContent"></div>
+      </div>
     </section>
 
     <section class="panel" id="p-digest">
@@ -659,6 +876,14 @@ footer a{color:var(--text2)}
             <label class="optrow"><input type="checkbox" id="optMeta" checked> Repo metadata header</label>
           </div>
           <div class="card">
+            <div class="minititle">⚡ Smart Recommendations</div>
+            <div class="rec-btns">
+              <button class="rec-btn" onclick="selectRecCategory('core')">📁 Core files <span class="rcnt" id="recCoreCnt"></span></button>
+              <button class="rec-btn" onclick="selectRecCategory('config')">⚙️ Config files <span class="rcnt" id="recConfigCnt"></span></button>
+              <button class="rec-btn" onclick="selectRecCategory('docs')">📝 Docs <span class="rcnt" id="recDocsCnt"></span></button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:16px">
             <div class="minititle">Selection</div>
             <div class="digest-meta" id="selMeta"></div>
             <div class="digest-actions">
@@ -704,6 +929,16 @@ footer a{color:var(--text2)}
           <div id="recentCommits"></div>
         </div>
       </div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="card bus-factor-card">
+          <div class="minititle">🚌 Bus Factor & Contributor Dominance</div>
+          <div id="busFactorContent"></div>
+        </div>
+        <div class="card">
+          <div class="minititle">📦 Release Timeline</div>
+          <div id="releaseTimeline"></div>
+        </div>
+      </div>
     </section>
 
     <section class="panel" id="p-fun">
@@ -722,6 +957,18 @@ footer a{color:var(--text2)}
       <div class="card">
         <div class="minititle">Trophies</div>
         <div class="achgrid" id="achFull"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-deps">
+      <div class="card">
+        <div class="minititle">🔗 Dependency Graph</div>
+        <p style="color:var(--text3);font-size:12px;margin-bottom:10px">Force-directed graph of dependencies parsed from manifest files. Click a node for details.</p>
+        <div class="dep-graph-wrap" id="depGraphWrap">
+          <canvas id="depGraphCanvas"></canvas>
+          <div class="dep-graph-tooltip" id="depGraphTooltip"></div>
+        </div>
+        <div class="dep-graph-legend" id="depGraphLegend"></div>
       </div>
     </section>
   </div>
@@ -747,6 +994,90 @@ footer a{color:var(--text2)}
 
 <div id="shareCard"></div>
 <div id="printReport"></div>
+
+<!-- Battle Modal -->
+<div class="modal-bg hidden battle-modal" id="battleModalBg">
+  <div class="modal">
+    <h3>⚔️ Repo Battle</h3>
+    <p>Enter another repo to compare side-by-side. We'll highlight the winner for each metric.</p>
+    <input id="battleInput" type="text" placeholder="owner/repo" spellcheck="false" onkeydown="if(event.key==='Enter')runBattle()">
+    <div id="battleResult"></div>
+    <div class="mrow">
+      <button class="btn ghost sm" onclick="closeBattleModal()">Close</button>
+      <button class="btn sm" onclick="runBattle()">⚔️ Battle!</button>
+    </div>
+  </div>
+</div>
+
+<!-- Explain Modal -->
+<div class="modal-bg hidden" id="explainModalBg">
+  <div class="modal" style="width:min(560px,94vw)">
+    <h3>💡 Explain this repo</h3>
+    <div class="explain-content" id="explainContent"></div>
+    <div class="mrow" style="margin-top:14px">
+      <button class="btn ghost sm" onclick="closeExplainModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Share Card Template Modal -->
+<div class="modal-bg hidden" id="shareTplModalBg">
+  <div class="modal">
+    <h3>📸 Choose Share Card Template</h3>
+    <p>Select a template for your shareable card.</p>
+    <div class="share-templates">
+      <div class="share-tpl selected" data-tpl="minimal" onclick="selectShareTpl(this)">
+        <div class="tpl-icon">✨</div>
+        <div class="tpl-name">Minimal</div>
+        <div class="tpl-desc">Name, score & stars only</div>
+      </div>
+      <div class="share-tpl" data-tpl="detailed" onclick="selectShareTpl(this)">
+        <div class="tpl-icon">📊</div>
+        <div class="tpl-name">Detailed</div>
+        <div class="tpl-desc">All stats + languages</div>
+      </div>
+      <div class="share-tpl" data-tpl="fun" onclick="selectShareTpl(this)">
+        <div class="tpl-icon">🏆</div>
+        <div class="tpl-name">Fun</div>
+        <div class="tpl-desc">Persona + trophy count</div>
+      </div>
+    </div>
+    <div class="mrow">
+      <button class="btn ghost sm" onclick="closeShareTplModal()">Cancel</button>
+      <button class="btn sm" onclick="confirmShareTpl()">Generate Card</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clone Modal -->
+<div class="modal-bg hidden" id="cloneModalBg">
+  <div class="modal" style="width:min(560px,94vw)">
+    <h3>📋 Clone Repository</h3>
+    <p>Choose a clone method. Click to copy the command.</p>
+    <div class="clone-options" id="cloneOptions"></div>
+    <div class="qr-wrap" id="qrWrap"></div>
+    <div class="mrow">
+      <button class="btn ghost sm" onclick="closeCloneModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shortcuts Modal -->
+<div class="modal-bg hidden" id="shortcutsModalBg">
+  <div class="modal" style="width:min(560px,94vw)">
+    <h3>⌨️ Keyboard Shortcuts</h3>
+    <div class="shortcuts-grid">
+      <div class="shortcut-item"><span class="sc-desc">Focus search</span><kbd>Ctrl+K</kbd></div>
+      <div class="shortcut-item"><span class="sc-desc">Focus search</span><kbd>/</kbd></div>
+      <div class="shortcut-item"><span class="sc-desc">Switch tabs</span><kbd>1 – 9</kbd></div>
+      <div class="shortcut-item"><span class="sc-desc">Close modal</span><kbd>Esc</kbd></div>
+      <div class="shortcut-item"><span class="sc-desc">Show shortcuts</span><kbd>?</kbd></div>
+    </div>
+    <div class="mrow" style="margin-top:14px">
+      <button class="btn ghost sm" onclick="closeShortcutsModal()">Close</button>
+    </div>
+  </div>
+</div>
 
 <script>
 'use strict';
@@ -1620,6 +1951,7 @@ function renderDash(){
       '</div></div>';
     renderOverview();renderLanguages();renderFiles();resetDigest();renderActivity();renderFun();
     renderLicenseAnalysis();
+    computeComplexity();
     switchTab('overview');
   }catch(e){console.warn('renderDash error:',e)}
 }
@@ -1627,11 +1959,21 @@ function renderDash(){
 function switchTab(name){
   $$('#tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
   $$('#dash .panel').forEach(p=>p.classList.toggle('active',p.id==='p-'+name));
+  if(name==='overview'){
+    renderComplexity();
+    renderSecurity();
+    findSimilarRepos();
+    loadReadmePreview();
+    renderEndpoints();
+  }
   if(name==='activity'){
     ensureChartJs().then(()=>drawActChart());
     renderStarHistory();
+    renderBusFactor();
+    renderReleaseTimeline();
   }
   if(name==='languages')ensureChartJs().then(()=>drawLangChart());
+  if(name==='deps')buildDepGraph();
 }
 document.addEventListener('DOMContentLoaded',()=>{
   $$('#tabs .tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
@@ -1864,6 +2206,7 @@ function renderFiles(){
     if(root)renderNode(tree,root);
     $('#treeInfo').textContent=fmt(FILEMAP.size)+' files · tick boxes to select for the Digest';
     updateSelMeta();
+    updateRecCounts();
   }catch(e){console.warn('renderFiles error:',e)}
 }
 
@@ -2033,21 +2376,25 @@ async function generateDigest(){
   if($('#optTree').checked){
     parts.push('\n# File Tree\n\n```text\n'+asciiTree(paths)+'\n```');
   }
-  let fetched=0,skipped=0;
+  let fetched=0,skipped=0,binSkipped=0;
   for(const p of paths){
     fetched++;
     btn.textContent='⏳ '+fetched+'/'+paths.length+' files…';
     const f=FILEMAP.get(p);
-    if(!f||(f.size||0)>200*1024){skipped++;continue}
+    if(!f){skipped++;continue}
+    const ext=extOf(p);
+    if(BINARY_EXT.has(ext)){binSkipped++;skipped++;continue}
+    if((f.size||0)>200*1024){skipped++;continue}
+    if(!isText(f)){binSkipped++;skipped++;continue}
     try{
       const r=await fetch('https://raw.githubusercontent.com/'+(m&&m.full_name)+'/'+branch+'/'+p);
       if(!r.ok){skipped++;continue}
       const t=await r.text();
-      const lang=extOf(p);
-      parts.push('\n# File: '+p+'\n\n````'+lang+'\n'+t+'\n````');
+      if(t.includes('\0')||/[ --]{5,}/.test(t)){binSkipped++;skipped++;continue}
+      parts.push('\n# File: '+p+'\n\n````'+ext+'\n'+t+'\n````');
     }catch(e){skipped++}
   }
-  if(skipped)parts.push('\n('+skipped+' files skipped: too large or unfetchable)');
+  if(skipped)parts.push('\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable)');
   parts.push('\n---\nEnd of repository digest. Use this context to answer questions about the codebase.');
   S.digestText=parts.join('\n');
   $('#digestOut').value=S.digestText;
@@ -2186,10 +2533,527 @@ function savePat(){
   refreshRate();
 }
 $('#modalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
+$('#explainModalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeExplainModal()});
+$('#battleModalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeBattleModal()});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')closeModal();
+  if(e.key==='Escape'){closeModal();closeExplainModal();closeBattleModal()};
   if(e.key==='Enter'&&document.activeElement===$('#inp'))submitInput();
 });
+
+/* ============================================================
+   Feature 9: Share Card Templates
+   ============================================================ */
+let selectedShareTpl='minimal';
+function shareCard(){
+  const m=S.repo;if(!m)return;
+  $('#shareTplModalBg').classList.remove('hidden');
+}
+function selectShareTpl(el){
+  $$('.share-tpl').forEach(t=>t.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedShareTpl=el.dataset.tpl;
+}
+function closeShareTplModal(){$('#shareTplModalBg').classList.add('hidden')}
+function confirmShareTpl(){
+  closeShareTplModal();
+  ensureHtml2canvas().then(()=>{
+    try{
+      const m=S.repo;if(!m)return;
+      const hc=healthCheck();
+      const langs=Object.entries(S.langs).sort((a,b)=>b[1]-a[1]).slice(0,4);
+      const total=Object.values(S.langs).reduce((a,b)=>a+b,0)||1;
+      let statsHTML='';
+      let footHTML='';
+      if(selectedShareTpl==='minimal'){
+        statsHTML=
+          '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
+          '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>';
+        footHTML='<span class="sc-badge">🧪 Repodest</span>';
+      }else if(selectedShareTpl==='detailed'){
+        statsHTML=
+          '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
+          '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
+          '<div class="sc-st"><b>⑂ '+fmt(m.forks_count)+'</b><span>Forks</span></div>'+
+          '<div class="sc-st"><b>'+fmt(FILEMAP.size)+'</b><span>Files</span></div>';
+        footHTML='<span style="display:flex;gap:10px;align-items:center">'+langs.map(e=>'<span style="display:flex;gap:6px;align-items:center"><span style="width:11px;height:11px;border-radius:3px;display:inline-block;background:'+langColor(e[0])+'"></span>'+esc(e[0])+' '+(e[1]/total*100).toFixed(0)+'%</span>').join('')+'</span><span class="sc-badge">🧪 Repodest</span>';
+      }else{
+        const p=personaFor();
+        const trophyCount=getAch().filter(a=>a.on).length;
+        statsHTML=
+          '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
+          '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
+          '<div class="sc-st"><b>'+p.i+'</b><span>'+esc(p.n)+'</span></div>'+
+          '<div class="sc-st"><b>🏆 '+trophyCount+'</b><span>Trophies</span></div>';
+        footHTML='<span class="sc-badge">🧪 Repodest</span>';
+      }
+      $('#shareCard').innerHTML=
+        '<div class="sc-top"><img src="'+esc(m.owner&&m.owner.avatar_url)+'" crossorigin="anonymous"><div><h2>'+esc(m.name||'')+'</h2><div class="sc-u">'+esc(m.full_name||'')+'</div><div class="sc-desc">'+esc(m.description||'')+'</div></div></div>'+
+        '<div class="sc-stats">'+statsHTML+'</div>'+
+        '<div class="sc-foot">'+footHTML+'</div>';
+      html2canvas($('#shareCard'),{scale:2,useCORS:true,backgroundColor:'#12121f'}).then(canvas=>{
+        const a=document.createElement('a');
+        a.href=canvas.toDataURL('image/png');
+        a.download=(m.full_name||'repo').replace('/','-')+'-repodest.png';
+        a.click();
+        toast('Card downloaded ('+selectedShareTpl+')','ok');
+      }).catch(()=>toast('Could not render the card','err'));
+    }catch(e){toast('Could not render the card','err')}
+  }).catch(()=>toast('Could not load card renderer','err'));
+}
+
+/* ============================================================
+   Feature 10: Quick Clone Panel
+   ============================================================ */
+function openCloneModal(){
+  const m=S.repo;if(!m)return;
+  const url=m.html_url||('https://github.com/'+m.full_name);
+  const opts=[
+    {label:'Standard',cmd:'git clone '+url},
+    {label:'Shallow',cmd:'git clone --depth 1 '+url},
+    {label:'Recursive',cmd:'git clone --recursive '+url}
+  ];
+  $('#cloneOptions').innerHTML=opts.map(o=>
+    '<div class="clone-row">'+
+      '<span class="clone-label">'+esc(o.label)+'</span>'+
+      '<code>'+esc(o.cmd)+'</code>'+
+      '<button class="btn ghost sm" onclick="copyCloneCmd(this,\''+esc(o.cmd)+'\')">📋</button>'+
+    '</div>'
+  ).join('');
+  generateQR(url);
+  $('#cloneModalBg').classList.remove('hidden');
+}
+function closeCloneModal(){$('#cloneModalBg').classList.add('hidden')}
+function copyCloneCmd(btn,cmd){
+  navigator.clipboard.writeText(cmd).then(()=>{
+    btn.textContent='✓';
+    setTimeout(()=>btn.textContent='📋',1500);
+    toast('Copied to clipboard','ok');
+  }).catch(()=>toast('Copy failed','err'));
+}
+function generateQR(url){
+  const wrap=$('#qrWrap');
+  const size=180;
+  const canvas=document.createElement('canvas');
+  canvas.width=size;canvas.height=size;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#fff';
+  ctx.fillRect(0,0,size,size);
+  /* Simple QR-like visual: encode URL as a grid of modules */
+  const modules=21;
+  const cellSize=Math.floor(size/modules);
+  const offset=Math.floor((size-cellSize*modules)/2);
+  /* Generate a deterministic pattern from the URL */
+  const hash=simpleHash(url);
+  ctx.fillStyle='#000';
+  /* Draw finder patterns (3 corners) */
+  drawFinderPattern(ctx,offset,offset,cellSize);
+  drawFinderPattern(ctx,offset+cellSize*(modules-7),offset,cellSize);
+  drawFinderPattern(ctx,offset,offset+cellSize*(modules-7),cellSize);
+  /* Draw data modules from hash */
+  for(let i=0;i<modules;i++){
+    for(let j=0;j<modules;j++){
+      if(isFinderArea(i,j,modules))continue;
+      const idx=(i*modules+j)%hash.length;
+      if(hash.charCodeAt(idx)%3!==0){
+        ctx.fillStyle='#000';
+        ctx.fillRect(offset+j*cellSize,offset+i*cellSize,cellSize-1,cellSize-1);
+      }
+    }
+  }
+  wrap.innerHTML='';
+  wrap.appendChild(canvas);
+  const label=document.createElement('div');
+  label.style.cssText='text-align:center;font-size:11px;color:#666;margin-top:8px;font-family:var(--mono)';
+  label.textContent=url;
+  wrap.appendChild(label);
+}
+function simpleHash(s){
+  let h='';
+  for(let i=0;i<s.length;i++){
+    h+=((s.charCodeAt(i)*31+i*17)%256).toString(16).padStart(2,'0');
+  }
+  return h+h+h; /* repeat to fill grid */
+}
+function drawFinderPattern(ctx,x,y,cs){
+  ctx.fillStyle='#000';
+  ctx.fillRect(x,y,cs*7,cs*7);
+  ctx.fillStyle='#fff';
+  ctx.fillRect(x+cs,y+cs,cs*5,cs*5);
+  ctx.fillStyle='#000';
+  ctx.fillRect(x+cs*2,y+cs*2,cs*3,cs*3);
+}
+function isFinderArea(i,j,ms){
+  if(i<8&&j<8)return true;
+  if(i<8&&j>=ms-8)return true;
+  if(i>=ms-8&&j<8)return true;
+  return false;
+}
+
+/* ============================================================
+   Feature 11: Similar Repos Finder
+   ============================================================ */
+async function renderSimilarRepos(){
+  const el=$('#similarContent');
+  const card=$('#similarCard');
+  if(!el||!card)return;
+  const m=S.repo;
+  if(!m||S.platform!=='github'){card.style.display='none';return}
+  card.style.display='';
+  const topics=(m.topics||[]).slice(0,3);
+  const lang=m.language||'';
+  if(!topics.length&&!lang){
+    el.innerHTML='<span style="color:var(--text3);font-size:12.5px">No topics or language to find similar repos.</span>';
+    return;
+  }
+  el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Searching…</span>';
+  try{
+    let queryParts=[];
+    if(topics.length)queryParts.push('topic:'+topics[0]);
+    if(lang)queryParts.push('language:'+lang);
+    const q=encodeURIComponent(queryParts.join('+')+' in:name,description');
+    const data=await api('/search/repositories?q='+q+'&per_page=7&sort=stars');
+    const repos=(data.items||[]).filter(r=>r.full_name!==m.full_name).slice(0,6);
+    if(!repos.length){
+      el.innerHTML='<span style="color:var(--text3);font-size:12.5px">No similar repos found.</span>';
+      return;
+    }
+    el.innerHTML='<div class="similar-grid">'+repos.map(r=>
+      '<div class="similar-card" onclick="loadRepo(\''+esc((r.owner&&r.owner.login)||'')+'\',\''+esc(r.name||'')+'\',\'github\')">'+
+        '<h4>'+esc(r.name||'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4>'+
+        '<div class="sim-desc">'+esc(r.description||'No description')+'</div>'+
+        '<div class="sim-meta">'+esc(r.full_name||'')+(r.language?' · '+esc(r.language):'')+'</div>'+
+      '</div>'
+    ).join('')+'</div>';
+  }catch(e){
+    el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Could not fetch similar repos.</span>';
+  }
+}
+
+/* ============================================================
+   Feature 12: Security Quick Scan
+   ============================================================ */
+function renderSecurityScan(){
+  const el=$('#securityContent');
+  const card=$('#securityCard');
+  if(!el||!card)return;
+  card.style.display='';
+  const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
+  const checks=[
+    {name:'.env file',found:paths.some(p=>/(^|\/)\.env(\.|$)/i.test(p)),type:'danger'},
+    {name:'credentials file',found:paths.some(p=>/credentials/i.test(p)),type:'danger'},
+    {name:'*.pem files',found:paths.some(p=>/\.pem$/i.test(p)),type:'danger'},
+    {name:'*.key files',found:paths.some(p=>/\.key$/i.test(p)),type:'danger'},
+    {name:'id_rsa / id_ed25519',found:paths.some(p=>/(^|\/)id_(rsa|ed25519|dsa)($|\.)/i.test(p)),type:'danger'},
+    {name:'.npmrc with tokens',found:paths.some(p=>/(^|\/)\.npmrc$/i.test(p)),type:'warn'},
+    {name:'AWS credentials',found:paths.some(p=>/(^|\/)\.aws\/credentials$/i.test(p)),type:'danger'},
+    {name:'SECURITY.md',found:paths.some(p=>/(^|\/)security\.md$/i.test(p)),type:'safe'},
+    {name:'.github/dependabot.yml',found:paths.some(p=>p==='.github/dependabot.yml'||p==='.github/dependabot.yaml'),type:'safe'},
+    {name:'.gitignore present',found:paths.some(p=>/(^|\/)\.gitignore$/i.test(p)),type:'safe'},
+    {name:'No hardcoded secrets (basic)',found:!paths.some(p=>/secret|password|api[_-]?key/i.test(p)),type:'safe'}
+  ];
+  const safeCount=checks.filter(c=>c.type==='safe'&&c.found).length;
+  const dangerCount=checks.filter(c=>c.type==='danger'&&c.found).length;
+  const totalSafe=checks.filter(c=>c.type==='safe').length;
+  const score=Math.round(((safeCount+1)/(totalSafe+1))*100);
+  const scoreColor=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--red)';
+  el.innerHTML=
+    '<div class="security-score">'+
+      '<div class="sec-ring" style="border:3px solid '+scoreColor+';color:'+scoreColor+'">'+score+'</div>'+
+      '<div><div style="font-weight:700;font-size:15px">Security Score</div>'+
+      '<div class="sec-label">'+dangerCount+' potential issue'+(dangerCount!==1?'s':'')+' found · '+safeCount+'/'+totalSafe+' best practices</div></div>'+
+    '</div>'+
+    '<div class="security-checklist">'+checks.map(c=>{
+      const cls=c.found?(c.type==='safe'?'safe':c.type==='warn'?'warn':'danger'):(c.type==='safe'?'warn':'safe');
+      const icon=c.found?(c.type==='safe'?'✓':'!'):(c.type==='safe'?'✕':'✓');
+      return '<div class="sec-item '+cls+'"><span class="sec-icon">'+icon+'</span><span>'+esc(c.name)+' · '+(c.found?'found':'not found')+'</span></div>';
+    }).join('')+'</div>';
+}
+
+/* ============================================================
+   Feature 13: API Endpoint Detector
+   ============================================================ */
+function renderEndpoints(){
+  const el=$('#endpointsContent');
+  const badge=$('#epBadge');
+  const card=$('#endpointsCard');
+  if(!el||!card)return;
+  card.style.display='';
+  const endpoints=[];
+  const scanned=new Set();
+  /* Scan text files for route patterns */
+  const routePatterns=[
+    {re:/\bapp\s*\.\s*(get|post|put|delete|patch|all)\s*\(\s*['"`]([^'"`]+)/gi,framework:'Express'},
+    {re:/\brouter\s*\.\s*(get|post|put|delete|patch|all)\s*\(\s*['"`]([^'"`]+)/gi,framework:'Express'},
+    {re:/@(app|router)\s*\.\s*(get|post|put|delete|patch)\s*\(\s*['"`]([^'"`]+)/gi,framework:'Flask/FastAPI'},
+    {re:/@(app|router)\s*\.\s*route\s*\(\s*['"`]([^'"`]+)/gi,framework:'Flask'}
+  ];
+  /* Check for Next.js API routes by file path */
+  FILEMAP.forEach((f,p)=>{
+    if(/^(pages|app)\/api\//.test(p)||/^src\/(pages|app)\/api\//.test(p)){
+      const cleanPath=p.replace(/^src\//,'').replace(/^(pages|app)\/api/,'/api').replace(/\/index\.(js|ts|jsx|tsx)$/,'').replace(/\.(js|ts|jsx|tsx)$/,'');
+      endpoints.push({method:'*',path:cleanPath||'/api',file:p,framework:'Next.js'});
+    }
+  });
+  /* Scan first 50 text files for route patterns */
+  let count=0;
+  FILEMAP.forEach((f,p)=>{
+    if(count>=50)return;
+    const ext=extOf(p);
+    if(!['js','ts','jsx','tsx','py','rb','go','java','php'].includes(ext))return;
+    if(scanned.has(p))return;
+    scanned.add(p);
+    count++;
+    /* We can't read file contents here, but we can check file paths for API patterns */
+    if(/routes?\//i.test(p)||/api\//i.test(p)||/controller/i.test(p)){
+      endpoints.push({method:'?',path:'(detected via path)',file:p,framework:'Unknown'});
+    }
+  });
+  badge.textContent=endpoints.length;
+  if(!endpoints.length){
+    el.innerHTML='<span style="color:var(--text3);font-size:12.5px">No API endpoints detected from file paths. Generate a digest and scan the code for route patterns.</span>';
+    return;
+  }
+  el.innerHTML='<div class="endpoint-list">'+endpoints.slice(0,30).map(ep=>{
+    const methodClass=(ep.method||'get').toLowerCase();
+    return '<div class="endpoint-row">'+
+      '<span class="ep-method '+esc(methodClass)+'">'+esc(ep.method)+'</span>'+
+      '<span class="ep-path">'+esc(ep.path)+'</span>'+
+      '<span class="ep-file">'+esc(ep.file)+'</span>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+/* ============================================================
+   Feature 14: README Preview (Rendered Markdown)
+   ============================================================ */
+function parseMarkdown(md){
+  if(!md)return'';
+  let html=md;
+  /* Code blocks (fenced) */
+  html=html.replace(/```(\w*)\n([\s\S]*?)```/g,(m,lang,code)=>'<pre><code>'+esc(code)+'</code></pre>');
+  /* Inline code */
+  html=html.replace(/`([^`]+)`/g,(m,code)=>'<code>'+esc(code)+'</code>');
+  /* Headings */
+  html=html.replace(/^######\s+(.+)$/gm,'<h6>$1</h6>');
+  html=html.replace(/^#####\s+(.+)$/gm,'<h5>$1</h5>');
+  html=html.replace(/^####\s+(.+)$/gm,'<h4>$1</h4>');
+  html=html.replace(/^###\s+(.+)$/gm,'<h3>$1</h3>');
+  html=html.replace(/^##\s+(.+)$/gm,'<h2>$1</h2>');
+  html=html.replace(/^#\s+(.+)$/gm,'<h1>$1</h1>');
+  /* Bold and italic */
+  html=html.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  html=html.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  /* Links */
+  html=html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  /* Images */
+  html=html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1">');
+  /* Blockquotes */
+  html=html.replace(/^>\s+(.+)$/gm,'<blockquote>$1</blockquote>');
+  /* Horizontal rules */
+  html=html.replace(/^---+$/gm,'<hr>');
+  /* Unordered lists */
+  html=html.replace(/^[\-*]\s+(.+)$/gm,'<li>$1</li>');
+  html=html.replace(/(<li>[^<]*<\/li>\n?)+/g,(m)=>'<ul>'+m+'</ul>');
+  /* Paragraphs (lines that aren't already wrapped) */
+  html=html.replace(/^(?!<[a-z/])(.+)$/gm,'<p>$1</p>');
+  /* Clean up empty paragraphs */
+  html=html.replace(/<p>\s*<\/p>/g,'');
+  return html;
+}
+async function renderReadmePreview(){
+  const el=$('#readmePreview');
+  const card=$('#readmeCard');
+  if(!el||!card)return;
+  const m=S.repo;if(!m){card.style.display='none';return}
+  card.style.display='';
+  const readmePath=Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p));
+  if(!readmePath){
+    el.innerHTML='<span style="color:var(--text3);font-size:12.5px">No README.md found in this repository.</span>';
+    return;
+  }
+  el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Loading README…</span>';
+  try{
+    const branch=(m.default_branch)||'main';
+    const raw='https://raw.githubusercontent.com/'+m.full_name+'/'+branch+'/'+readmePath;
+    const resp=await fetch(raw);
+    if(!resp.ok)throw new Error('Failed to fetch');
+    const md=await resp.text();
+    el.innerHTML='<div class="readme-preview">'+parseMarkdown(md.slice(0,30000))+'</div>';
+  }catch(e){
+    el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Could not load README content.</span>';
+  }
+}
+
+/* ============================================================
+   Feature 15: Keyboard Shortcuts
+   ============================================================ */
+function openShortcutsModal(){$('#shortcutsModalBg').classList.remove('hidden')}
+function closeShortcutsModal(){$('#shortcutsModalBg').classList.add('hidden')}
+
+/* ============================================================
+   Feature 16: Multi-language UI (i18n)
+   ============================================================ */
+const I18N={
+  en:{
+    tabOverview:'🩺 Overview',tabLanguages:'📊 Languages',tabFiles:'🗂️ Files',
+    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',
+    btnHome:'← Home',btnCard:'📸 Card',btnReport:'📄 Report',btnLink:'🔗 Link',
+    btnCompare:'⚖️ Compare',btnBattle:'⚔️ Battle',btnClone:'📋 Clone',
+    btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
+    searchPlaceholder:'owner/repo, a GitHub URL, or a username…',
+    jumpPlaceholder:'scope another repo…',
+    toastHistoryCleared:'History cleared',
+    toastCardDownloaded:'Card downloaded',
+    toastCopied:'Copied to clipboard',
+    toastDigestReady:'Digest ready',
+    toastExported:'JSON exported',
+    toastCsvExported:'CSV exported',
+    toastLinkCopied:'Deep link copied',
+    heroTitle:'Know a GitHub repo',
+    heroSub:'in seconds, not hours.',
+    heroDesc:'Paste any repository or profile. Repodest gives you a health score, language breakdown, file explorer, commit insights and fun trophies — then packs the whole thing into an <b>LLM-ready digest</b> you can feed to ChatGPT, Claude or Gemini.',
+    scopeBtn:'Scope it',
+    recentRepos:'🕘 Recent repos',
+    clearHistory:'Clear history',
+    healthScore:'Health score',
+    healthChecks:'Health checks',
+    repoFacts:'Repo facts',
+    trophiesPreview:'Trophies preview',
+    licenseAnalysis:'📜 License analysis',
+    readmePreview:'📖 README Preview',
+    securityScan:'🔒 Security Quick Scan',
+    similarRepos:'🔍 Similar Repos',
+    apiEndpoints:'🔌 API Endpoints',
+    langBreakdown:'Language breakdown (bytes)',
+    detectedStack:'Detected stack',
+    typeDistribution:'Type distribution',
+    heaviestFiles:'Heaviest files',
+    fileTree:'File tree',
+    whatGoesIn:'What goes into the prompt',
+    generatedPrompt:'Generated prompt',
+    commitActivity:'Commit activity — last 52 weeks',
+    starHistory:'⭐ Star history',
+    topContributors:'Top contributors',
+    recentCommits:'Recent commits',
+    roastMode:'🔥 Roast mode',
+    trophies:'Trophies',
+    recentReposTitle:'🕘 Recent repos',
+    step1:'Paste',step2:'Explore',step3:'Feed your AI',
+    step1Desc:'Any repo URL, owner/repo, or username.',
+    step2Desc:'Health score, languages, files, activity — all in one dashboard.',
+    step3Desc:'Pick files, hit generate, copy the digest into any LLM chat.',
+    feat1:'Health Score',feat2:'LLM Digest',feat3:'File Explorer',
+    feat4:'Deep Stats',feat5:'Fun Mode',feat6:'Shareable',
+    footer:'Built by',
+    excellentShape:'Excellent shape 🟢',
+    decentShape:'Decent shape 🟡',
+    needsLove:'Needs love 🟠',
+    needsCare:'Needs serious care 🔴'
+  },
+  fa:{
+    tabOverview:'🩺 نمای کلی',tabLanguages:'📊 زبان‌ها',tabFiles:'🗂️ فایل‌ها',
+    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',
+    btnHome:'← خانه',btnCard:'📸 کارت',btnReport:'📄 گزارش',btnLink:'🔗 لینک',
+    btnCompare:'⚖️ مقایسه',btnBattle:'⚔️ نبرد',btnClone:'📋 کلون',
+    btnToken:'🔑 توکن',btnShortcuts:'❓ میانبرها',
+    searchPlaceholder:'مالک/رپو، آدرس گیت‌هاب، یا نام کاربری…',
+    jumpPlaceholder:'رپوی دیگری را بررسی کنید…',
+    toastHistoryCleared:'تاریخچه پاک شد',
+    toastCardDownloaded:'کارت دانلود شد',
+    toastCopied:'در کلیپ‌بورد کپی شد',
+    toastDigestReady:'دایجست آماده است',
+    toastExported:'JSON صادر شد',
+    toastCsvExported:'CSV صادر شد',
+    toastLinkCopied:'لینک کپی شد',
+    heroTitle:'یک رپوی گیت‌هاب را',
+    heroSub:'در چند ثانیه بشناسید.',
+    heroDesc:'هر مخزن یا پروفایلی را وارد کنید. رپودست امتیاز سلامت، تفکیک زبان‌ها، مرورگر فایل، بینش‌های کامیت و جوایز سرگرم‌کننده را به شما می‌دهد — و سپس همه چیز را در یک <b>خلاصه آماده LLM</b> بسته‌بندی می‌کند.',
+    scopeBtn:'بررسی کن',
+    recentRepos:'🕘 رپوهای اخیر',
+    clearHistory:'پاک کردن تاریخچه',
+    healthScore:'امتیاز سلامت',
+    healthChecks:'بررسی‌های سلامت',
+    repoFacts:'اطلاعات رپو',
+    trophiesPreview:'پیش‌نمایش جوایز',
+    licenseAnalysis:'📜 تحلیل مجوز',
+    readmePreview:'📖 پیش‌نمایش README',
+    securityScan:'🔒 اسکن امنیتی سریع',
+    similarRepos:'🔍 رپوهای مشابه',
+    apiEndpoints:'🔌 نقاط پایانی API',
+    langBreakdown:'تفکیک زبان‌ها (بایت)',
+    detectedStack:'استک شناسایی شده',
+    typeDistribution:'توزیع نوع فایل',
+    heaviestFiles:'سنگین‌ترین فایل‌ها',
+    fileTree:'درخت فایل',
+    whatGoesIn:'چه چیزی در پرامپت قرار می‌گیرد',
+    generatedPrompt:'پرامپت تولید شده',
+    commitActivity:'فعالیت کامیت — ۵۲ هفته اخیر',
+    starHistory:'⭐ تاریخچه ستاره‌ها',
+    topContributors:'مشارکت‌کنندگان برتر',
+    recentCommits:'کامیت‌های اخیر',
+    roastMode:'🔥 حالت مسخره کردن',
+    trophies:'جوایز',
+    recentReposTitle:'🕘 رپوهای اخیر',
+    step1:'جایگذاری',step2:'کاوش',step3:'تغذیه AI شما',
+    step1Desc:'هر آدرس رپو، مالک/رپو، یا نام کاربری.',
+    step2Desc:'امتیاز سلامت، زبان‌ها، فایل‌ها، فعالیت — همه در یک داشبورد.',
+    step3Desc:'فایل‌ها را انتخاب کنید، تولید را بزنید، خلاصه را در هر LLM کپی کنید.',
+    feat1:'امتیاز سلامت',feat2:'خلاصه LLM',feat3:'مرورگر فایل',
+    feat4:'آمار عمیق',feat5:'حالت سرگرمی',feat6:'قابل اشتراک',
+    footer:'ساخته شده توسط',
+    excellentShape:'وضعیت عالی 🟢',
+    decentShape:'وضعیت خوب 🟡',
+    needsLove:'نیاز به توجه 🟠',
+    needsCare:'نیاز به مراقبت جدی 🔴'
+  }
+};
+let currentLang=LS.get('repodest_lang','en');
+function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||(I18N.en[key]||key)}
+function cycleLang(){
+  currentLang=currentLang==='en'?'fa':'en';
+  LS.set('repodest_lang',currentLang);
+  applyLang();
+  toast(currentLang==='en'?'English':'فارسی','ok');
+}
+function applyLang(){
+  const isFa=currentLang==='fa';
+  document.body.classList.toggle('rtl',isFa);
+  document.documentElement.lang=currentLang;
+  const langBtn=$('#langBtn');
+  if(langBtn)langBtn.querySelector('span').textContent=isFa?'FA':'EN';
+  /* Update tab names */
+  const tabMap={
+    'overview':t('tabOverview'),'languages':t('tabLanguages'),'files':t('tabFiles'),
+    'digest':t('tabDigest'),'activity':t('tabActivity'),'fun':t('tabFun'),'deps':t('tabDeps')
+  };
+  $$('#tabs .tab').forEach(b=>{const k=b.dataset.tab;if(tabMap[k])b.textContent=tabMap[k]});
+  /* Update search placeholders */
+  const inp=$('#inp');if(inp)inp.placeholder=t('searchPlaceholder');
+  const jump=$('#jump');if(jump)jump.placeholder=t('jumpPlaceholder');
+  /* Update hero */
+  const heroH1=$('.hero h1');
+  if(heroH1)heroH1.innerHTML=t('heroTitle')+'<br><span class="g">'+t('heroSub')+'</span>';
+  const heroSub=$('.hero p.sub');
+  if(heroSub)heroSub.innerHTML=t('heroDesc');
+  const scopeBtn=$('.searchbox .btn');
+  if(scopeBtn)scopeBtn.textContent=t('scopeBtn');
+  /* Update minititles if dash is visible */
+  if($('#dash')&&$('#dash').style.display!=='none'){
+    renderDash();
+  }
+}
+
+/* ============================================================
+   Hook features into renderDash
+   ============================================================ */
+const _origRenderDash=renderDash;
+renderDash=function(){
+  _origRenderDash();
+  try{renderSimilarRepos()}catch(e){}
+  try{renderSecurityScan()}catch(e){}
+  try{renderEndpoints()}catch(e){}
+  try{renderReadmePreview()}catch(e){}
+};
 
 /* ============================================================
    Particles animation — enhanced with connecting lines
@@ -2231,6 +3095,949 @@ document.addEventListener('keydown',e=>{
   resize();init();tick();
   addEventListener('resize',()=>{resize();init()});
 })();
+
+/* ============================================================
+   Feature: Code Complexity Score
+   ============================================================ */
+function calcComplexity(){
+  const results=[];
+  const patterns=[/function\s/g,/=>\s*[{(]/g,/class\s/g,/def\s/g,/if\s*\(/g,/for\s*\(/g,/while\s*\(/g,/switch\s*\(/g,/try\s*\{/g,/catch\s*\(/g,/async\s/g,/await\s/g];
+  FILEMAP.forEach((f,p)=>{
+    if(!isText(f)||isLock(f))return;
+    const ext=extOf(p);
+    if(!['js','ts','jsx','tsx','py','java','kt','go','rs','rb','php','c','cpp','cs','swift','dart','lua','r','jl','ex','exs','hs','ml','clj','groovy','scala','vue','svelte'].includes(ext))return;
+    let score=0;
+    /* Estimate complexity from file size and type */
+    const size=f.size||0;
+    score=Math.min(100,Math.round(size/200));
+    results.push({path:p,score:score,size:size});
+  });
+  results.sort((a,b)=>b.score-a.score);
+  return results.slice(0,5);
+}
+function renderComplexity(){
+  const el=$('#complexityContent');
+  if(!el)return;
+  const top=calcComplexity();
+  const totalFiles=FILEMAP.size;
+  const avgScore=top.length?Math.round(top.reduce((a,c)=>a+c.score,0)/top.length):0;
+  const level=avgScore>60?'Very High':avgScore>40?'High':avgScore>20?'Medium':'Low';
+  const color=avgScore>60?'var(--red)':avgScore>40?'var(--orange)':avgScore>20?'var(--yellow)':'var(--green)';
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'+
+      '<span class="complexity-score-label" style="color:'+color+'">'+level+'</span>'+
+      '<span style="color:var(--text3);font-size:11px">'+totalFiles+' files analyzed</span>'+
+    '</div>'+
+    '<div class="complexity-meter"><i style="width:'+avgScore+'%;background:'+color+'"></i></div>'+
+    '<div class="complexity-top-files">'+
+      top.map(f=>'<div class="cfrow"><span class="cfpath" title="'+esc(f.path)+'">'+esc(f.path.split('/').pop())+'</span><span class="cfscore">'+f.score+'</span></div>').join('')+
+    '</div>';
+}
+
+/* ============================================================
+   Feature: AI Repo Summary
+   ============================================================ */
+function generateSummary(){
+  const m=S.repo;if(!m)return;
+  const hc=healthCheck();
+  const langs=Object.keys(S.langs).sort((a,b)=>S.langs[b]-S.langs[a]);
+  const mainLang=m.language||langs[0]||'unknown';
+  const topics=(m.topics||[]).slice(0,3).join(', ');
+  const lines=[];
+  lines.push('This is a '+mainLang+' project'+(m.description?': '+m.description:'')+'.');
+  lines.push('It has '+fmt(m.stargazers_count)+' stars, '+fmt(m.forks_count)+' forks, and '+fmt(FILEMAP.size)+' tracked files across '+Object.keys(S.langs).length+' languages.');
+  lines.push('Health score: '+hc.score+'/100'+(hc.score>=80?' (excellent)':hc.score>=60?' (good)':hc.score>=40?' (needs work)':' (needs attention)')+'.');
+  if(topics)lines.push('Topics: '+topics+'.');
+  const box=$('#summaryBox');
+  if(box)box.innerHTML='<div style="padding:16px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.3);border-radius:var(--rs);font-size:13.5px;line-height:1.7;color:var(--text2)">'+lines.map(l=>'<p>'+esc(l)+'</p>').join('')+'</div>';
+}
+
+/* ============================================================
+   Feature: Explain This Repo
+   ============================================================ */
+function explainRepo(){
+  const m=S.repo;if(!m)return;
+  const langs=Object.keys(S.langs).sort((a,b)=>S.langs[b]-S.langs[a]);
+  const mainLang=m.language||langs[0]||'unknown';
+  const desc=m.description||'No description provided.';
+  const stars=m.stargazers_count;
+  const files=FILEMAP.size;
+  let explanation='';
+  explanation+='<p><b>What is this?</b> '+esc(desc)+'</p>';
+  explanation+='<p><b>Language:</b> Primarily '+esc(mainLang)+(langs.length>1?', also uses '+langs.slice(1,4).map(esc).join(', '):'')+'.</p>';
+  explanation+='<p><b>Size:</b> '+fmt(files)+' files. '+(files>1000?'This is a large project.':files>100?'Medium-sized project.':'Small project.')+'</p>';
+  explanation+='<p><b>Popularity:</b> '+fmt(stars)+' stars. '+(stars>10000?'Very popular!':stars>1000?'Well-known.':stars>100?'Gaining traction.':'New or niche.')+'</p>';
+  const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
+  if(readme)explanation+='<p><b>Has README:</b> Yes — check the Overview tab for details.</p>';
+  showModal('💡 Explain: '+esc(m.name),explanation);
+}
+
+/* ============================================================
+   Feature: Smart File Recommendations
+   ============================================================ */
+function getSmartRecommendations(){
+  const corePatterns=[/^index\.[jt]sx?$/i,/^main\.[a-z]+$/i,/^app\.[jt]sx?$/i,/^server\.[jt]s$/i,/^src\//i,/^lib\//i];
+  const configPatterns=[/^package\.json$/i,/^tsconfig/i,/^\.env\.example$/i,/^vite\.config/i,/^webpack\.config/i,/^next\.config/i,/^nuxt\.config/i,/^tailwind\.config/i,/^babel\.config/i,/^jest\.config/i,/^\.eslintrc/i,/^\.prettierrc/i,/^pyproject\.toml$/i,/^setup\.cfg$/i,/^Cargo\.toml$/i,/^go\.mod$/i];
+  const docPatterns=[/(^|\/)readme\.md$/i,/(^|\/)changelog/i,/(^|\/)contributing/i,/(^|\/)license/i,/(^|\/)security\.md$/i];
+  const core=[],config=[],docs=[];
+  FILEMAP.forEach((f,p)=>{
+    if(!isText(f)||isLock(f))return;
+    const name=p.split('/').pop();
+    if(corePatterns.some(rx=>rx.test(p)||rx.test(name)))core.push(p);
+    if(configPatterns.some(rx=>rx.test(p)||rx.test(name)))config.push(p);
+    if(docPatterns.some(rx=>rx.test(p)))docs.push(p);
+  });
+  return{core:core.slice(0,10),config:config.slice(0,10),docs:docs.slice(0,5)};
+}
+function selectSmartCategory(cat){
+  const recs=getSmartRecommendations();
+  const list=recs[cat]||[];
+  list.forEach(p=>S.sel.add(p));
+  $$('#tree .fcb').forEach(cb=>cb.checked=S.sel.has(cb.dataset.path));
+  updateSelMeta();
+  toast(list.length+' '+cat+' files selected','ok');
+}
+
+/* ============================================================
+   Feature: Security Quick Scan
+   ============================================================ */
+function securityScan(){
+  const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
+  const checks=[
+    {n:'.env file',ok:!paths.some(p=>/(^|\/)\.env$/i.test(p)),critical:true},
+    {n:'No credentials files',ok:!paths.some(p=>/(credentials|secret|apikey|api_key)/i.test(p)),critical:true},
+    {n:'No private keys',ok:!paths.some(p=>/\.(pem|key|p12|pfx|jks)$/i.test(p)),critical:true},
+    {n:'No SSH keys',ok:!paths.some(p=>/(id_rsa|id_ed25519|id_dsa)$/i.test(p)),critical:true},
+    {n:'SECURITY.md exists',ok:paths.some(p=>/(^|\/)security\.md$/i.test(p)),critical:false},
+    {n:'.gitignore present',ok:paths.some(p=>/(^|\/)\.gitignore$/i.test(p)),critical:false},
+    {n:'No hardcoded passwords',ok:!paths.some(p=>/(password|passwd|pwd)\s*[=:]\s*['"][^'"]+['"]/i.test(p)),critical:false},
+    {n:'Dependabot config',ok:paths.some(p=>p.includes('.github/dependabot')),critical:false}
+  ];
+  const score=Math.round(checks.filter(c=>c.ok).length/checks.length*100);
+  return{checks,score};
+}
+function renderSecurity(){
+  const el=$('#securityContent');if(!el)return;
+  const{checks,score}=securityScan();
+  const color=score>=80?'var(--green)':score>=60?'var(--yellow)':score>=40?'var(--orange)':'var(--red)';
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
+      '<span style="font-size:28px;font-weight:900;color:'+color+'">'+score+'%</span>'+
+      '<span style="color:var(--text3);font-size:12px">Security score</span>'+
+    '</div>'+
+    checks.map(c=>'<div class="chk '+(c.ok?'ok':'bad')+'"><span class="ic">'+(c.ok?'✓':'✕')+'</span><span><b>'+esc(c.n)+'</b>'+(c.critical&&!c.ok?' <span style="color:var(--red);font-size:10px">CRITICAL</span>':'')+'</span></div>').join('');
+}
+
+/* ============================================================
+   Feature: API Endpoint Detector
+   ============================================================ */
+function detectEndpoints(){
+  const endpoints=[];
+  const routePatterns=[
+    {rx:/\bapp\.(get|post|put|delete|patch|all)\s*\(\s*['"`]([^'"`]+)/g,framework:'Express'},
+    {rx:/\brouter\.(get|post|put|delete|patch|all)\s*\(\s*['"`]([^'"`]+)/g,framework:'Express Router'},
+    {rx:/@app\.(get|post|put|delete|patch|route)\s*\(\s*['"`]([^'"`]+)/g,framework:'Flask/FastAPI'},
+    {rx:/@blueprint\.(get|post|put|delete|patch|route)\s*\(\s*['"`]([^'"`]+)/g,framework:'Flask Blueprint'}
+  ];
+  let scanned=0;
+  FILEMAP.forEach((f,p)=>{
+    if(scanned>=50)return;
+    if(!isText(f)||isLock(f))return;
+    const ext=extOf(p);
+    if(!['js','ts','jsx','tsx','py','mjs','cjs'].includes(ext))return;
+    scanned++;
+    /* We can't read file content here, so detect from path */
+    if(p.includes('pages/api/')||p.includes('app/api/')){
+      endpoints.push({method:'ANY',path:'/'+p.replace(/.*(?:pages|app)\/api\//,'api/').replace(/\.(js|ts|tsx|jsx)$/,''),framework:'Next.js',file:p});
+    }
+  });
+  return endpoints;
+}
+function renderEndpoints(){
+  const el=$('#endpointContent');if(!el)return;
+  const eps=detectEndpoints();
+  if(!eps.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No API endpoints detected from file paths. Route detection requires file content analysis.</p>';return}
+  el.innerHTML=eps.map(e=>'<div class="kv"><span>'+esc(e.framework)+'</span><b>'+esc(e.method)+' '+esc(e.path)+'</b></div>').join('');
+}
+
+/* ============================================================
+   Feature: Similar Repos
+   ============================================================ */
+async function findSimilarRepos(){
+  const el=$('#similarContent');if(!el)return;
+  const m=S.repo;if(!m)return;
+  const topics=(m.topics||[]).slice(0,3);
+  const lang=m.language||'';
+  if(!topics.length&&!lang){el.innerHTML='<p style="color:var(--text3);font-size:13px">No topics or language to find similar repos.</p>';return}
+  el.innerHTML='<p style="color:var(--text3);font-size:13px">Searching…</p>';
+  try{
+    const q=topics.length?'topic:'+topics[0]:'language:'+lang;
+    const data=await api('/search/repositories?q='+encodeURIComponent(q)+'&per_page=6&sort=stars');
+    const list=(data.items||[]).filter(r=>r.full_name!==m.full_name).slice(0,5);
+    if(!list.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No similar repos found.</p>';return}
+    el.innerHTML=list.map(r=>
+      '<div class="ucard" style="margin-bottom:8px" onclick="loadRepo(\''+esc(r.owner.login)+'\',\''+esc(r.name)+'\')">'+
+        '<h4>'+esc(r.name)+'<b>★ '+fmt(r.stargazers_count)+'</b></h4>'+
+        '<div class="d">'+esc(r.description||'No description')+'</div>'+
+        '<div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span></div>'+
+      '</div>'
+    ).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not fetch similar repos.</p>'}
+}
+
+/* ============================================================
+   Feature: Release Timeline
+   ============================================================ */
+async function loadReleases(){
+  const el=$('#releaseTimeline');if(!el)return;
+  if(S.platform!=='github'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available on GitHub.</p>';return}
+  el.innerHTML='<p style="color:var(--text3);font-size:13px">Loading releases…</p>';
+  try{
+    const releases=await api('/repos/'+S.repo.full_name+'/releases?per_page=10');
+    if(!Array.isArray(releases)||!releases.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No releases found.</p>';return}
+    el.innerHTML=releases.map(r=>
+      '<div style="padding:12px 0;border-bottom:1px dashed var(--line)">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<span style="background:var(--grad);color:#fff;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700">'+esc(r.tag_name||'v?')+'</span>'+
+          '<span style="color:var(--text);font-weight:600;font-size:13px">'+esc(r.name||r.tag_name)+'</span>'+
+          '<span style="color:var(--text3);font-size:11px;margin-left:auto">'+esc(timeAgo(r.published_at||r.created_at))+'</span>'+
+        '</div>'+
+        (r.body?'<p style="color:var(--text2);font-size:12px;margin-top:6px;line-height:1.5;max-height:60px;overflow:hidden">'+esc(r.body.slice(0,200))+(r.body.length>200?'…':'')+'</p>':'')+
+      '</div>'
+    ).join('');
+  }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not load releases.</p>'}
+}
+
+/* ============================================================
+   Feature: Repo Battle Mode
+   ============================================================ */
+function toggleBattle(){
+  const modal=$('#battleModal');
+  if(!modal)return;
+  modal.classList.toggle('hidden');
+}
+async function loadBattle(){
+  const input=$('#battleInput');
+  if(!input)return;
+  const v=input.value.trim();
+  const p=parseRepoInput(v);
+  if(!p){toast('Enter owner/repo','err');return}
+  const result=$('#battleResult');
+  if(!result)return;
+  result.innerHTML='<p style="color:var(--text3)">Loading…</p>';
+  try{
+    const meta=await api('/repos/'+p.owner+'/'+p.repo);
+    const m1=S.repo,m2=meta;
+    const hc1=healthCheck();
+    /* Simple health check for m2 */
+    const m2Score=Math.min(100,
+      (m2.description?10:0)+
+      ((m2.topics||[]).length?10:0)+
+      (m2.license?15:0)+
+      (m2.stargazers_count>100?10:m2.stargazers_count>10?5:0)+
+      (m2.forks_count>10?10:0)+
+      (m2.open_issues_count<100?10:0)+
+      ((Date.now()-new Date(m2.pushed_at))<180*864e5?15:0)+
+      20
+    );
+    const metrics=[
+      {l:'Stars',v1:m1.stargazers_count,v2:m2.stargazers_count},
+      {l:'Forks',v1:m1.forks_count,v2:m2.forks_count},
+      {l:'Health',v1:hc1.score,v2:m2Score},
+      {l:'Files',v1:FILEMAP.size,v2:'?'},
+      {l:'Open Issues',v1:m1.open_issues_count,v2:m2.open_issues_count,lower:true}
+    ];
+    result.innerHTML=
+      '<div class="battle-grid">'+
+        '<div class="battle-side"><h4>'+esc(m1.name)+'</h4>'+
+          metrics.map(m=>'<div class="battle-row"><span class="bl">'+esc(m.l)+'</span><span class="bv '+(m.lower?(m.v1<=m.v2?'win':'lose'):(m.v1>=m.v2?'win':'lose'))+'">'+fmt(m.v1)+'</span></div>').join('')+
+        '</div>'+
+        '<div class="battle-side"><h4>'+esc(m2.name)+'</h4>'+
+          metrics.map(m=>'<div class="battle-row"><span class="bl">'+esc(m.l)+'</span><span class="bv '+(m.lower?(m.v2<=m.v1?'win':'lose'):(m.v2>=m.v1?'win':'lose'))+'">'+fmt(m.v2)+'</span></div>').join('')+
+        '</div>'+
+      '</div>'+
+      '<div class="battle-summary">'+esc(m1.name)+' vs '+esc(m2.name)+' — compared by Repodest 🧪</div>';
+  }catch(e){result.innerHTML='<p style="color:var(--red)">Could not load '+esc(v)+'</p>'}
+}
+
+/* ============================================================
+   Feature: Quick Clone Panel
+   ============================================================ */
+function showCloneModal(){
+  const m=S.repo;if(!m)return;
+  const url=m.html_url;
+  const modal=$('#cloneModal');
+  if(!modal)return;
+  const content=$('#cloneContent');
+  if(content)content.innerHTML=
+    '<div style="display:flex;flex-direction:column;gap:10px">'+
+      ['git clone '+url,'git clone --depth 1 '+url,'git clone --recursive '+url].map(cmd=>
+        '<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--line)">'+
+          '<code style="flex:1;font-size:12px;color:var(--text2);word-break:break-all">'+esc(cmd)+'</code>'+
+          '<button class="btn sm ghost" onclick="copyText(this,\''+esc(cmd)+'\')">📋</button>'+
+        '</div>'
+      ).join('')+
+      '<div style="text-align:center;margin-top:10px">'+
+        '<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">Open on GitHub ↗</a>'+
+      '</div>'+
+    '</div>';
+  modal.classList.remove('hidden');
+}
+function copyText(btn,text){
+  (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>{
+    btn.textContent='✅';
+    setTimeout(()=>btn.textContent='📋',1500);
+  }).catch(()=>toast('Copy failed','err'));
+}
+
+/* ============================================================
+   Feature: Share Card Templates
+   ============================================================ */
+let shareTemplate='detailed';
+function showShareTemplateModal(){
+  showModal('📸 Share Card Template',
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">'+
+      [['minimal','Minimal'],['detailed','Detailed'],['fun','Fun']].map(([k,l])=>
+        '<button class="btn '+(shareTemplate===k?'':'ghost')+' sm" onclick="shareTemplate=\''+k+'\';closeModal();shareCard()">'+esc(l)+'</button>'
+      ).join('')+
+    '</div>'
+  );
+}
+
+/* ============================================================
+   Feature: Keyboard Shortcuts
+   ============================================================ */
+function showShortcuts(){
+  const shortcuts=[
+    ['Ctrl+K /','Focus search'],['1-6','Switch tabs'],['Esc','Close modal'],['?','Show shortcuts'],['Ctrl+Enter','Submit']
+  ];
+  showModal('⌨️ Keyboard Shortcuts',
+    shortcuts.map(([k,d])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)"><span style="font-family:var(--mono);color:var(--accent2);font-size:12px">'+esc(k)+'</span><span style="color:var(--text2);font-size:13px">'+esc(d)+'</span></div>').join('')
+  );
+}
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  if(e.key==='?'||e.key==='/'){e.preventDefault();showShortcuts();return}
+  if(e.key>='1'&&e.key<='6'){
+    const tabs=$$('#tabs .tab');
+    const idx=parseInt(e.key)-1;
+    if(tabs[idx]){e.preventDefault();switchTab(tabs[idx].dataset.tab)}
+  }
+});
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();const inp=$('#inp');if(inp)inp.focus()}
+});
+
+/* ============================================================
+   Feature: i18n (Multi-language)
+   ============================================================ */
+const I18N={
+  en:{
+    tabs:{overview:'Overview',languages:'Languages',files:'Files',digest:'Digest',activity:'Activity',fun:'Fun',deps:'Deps',security:'Security'},
+    btns:{scope:'Scope it',home:'Home',card:'Card',compare:'Compare',battle:'Battle',clone:'Clone',explain:'Explain',summarize:'Summarize'},
+    search:'owner/repo, a GitHub URL, or a username…'
+  },
+  fa:{
+    tabs:{overview:'\u062F\u0631\u0628\u0627\u0631\u0647',languages:'\u0632\u0628\u0627\u0646\u0647\u0627',files:'\u0641\u0627\u06CC\u0644\u0647\u0627',digest:'\u062E\u0644\u0627\u0635\u0647',activity:'\u0641\u0639\u0627\u0644\u06CC\u062A',fun:'\u0633\u0631\u06AF\u0631\u0645\u06CC',deps:'\u0648\u0627\u0628\u0633\u062A\u06AF\u06CC\u0647\u0627',security:'\u0627\u0645\u0646\u06CC\u062A'},
+    btns:{scope:'\u0628\u0631\u0631\u0633\u06CC',home:'\u062E\u0627\u0646\u0647',card:'\u06A9\u0627\u0631\u062A',compare:'\u0645\u0642\u0627\u06CC\u0633\u0647',battle:'\u0646\u0628\u0631\u062F',clone:'\u06A9\u0644\u0648\u0646',explain:'\u062A\u0648\u0636\u06CC\u062D',summarize:'\u062E\u0644\u0627\u0635\u0647'},
+    search:'\u0646\u0627\u0645 \u06A9\u0627\u0631\u0628\u0631\u06CC/\u0631\u06CC\u067E\u0648 \u06CC\u0627 URL \u06AF\u06CC\u062A\u0647\u0627\u0628…'
+  }
+};
+let currentLang=LS.get('repodest_lang','en');
+function t(key){
+  const keys=key.split('.');
+  let v=I18N[currentLang];
+  for(const k of keys){v=v&&v[k]}
+  return v||key;
+}
+function toggleLang(){
+  currentLang=currentLang==='en'?'fa':'en';
+  LS.set('repodest_lang',currentLang);
+  document.documentElement.dir=currentLang==='fa'?'rtl':'ltr';
+  document.documentElement.lang=currentLang;
+  /* Update tab labels */
+  $$('#tabs .tab').forEach(b=>{
+    const key=b.dataset.tab;
+    const label=t('tabs.'+key);
+    if(label&&label!==key)b.textContent=b.textContent.replace(/[^ ]+$/,label);
+  });
+  toast(currentLang==='fa'?'\u0641\u0627\u0631\u0633\u06CC':'English','ok');
+}
+
+/* ============================================================
+   Feature: README Preview
+   ============================================================ */
+function renderMarkdown(md){
+  if(!md)return'';
+  let html=md
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code class="lang-$1">$2</code></pre>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s,'<ul>$1</ul>')
+    .replace(/\n{2,}/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+  return'<div class="md-preview">'+html+'</div>';
+}
+async function loadReadmePreview(){
+  const el=$('#readmePreview');if(!el)return;
+  const m=S.repo;if(!m)return;
+  const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
+  if(!readme){el.innerHTML='<p style="color:var(--text3);font-size:13px">No README found.</p>';return}
+  el.innerHTML='<p style="color:var(--text3);font-size:13px">Loading README…</p>';
+  try{
+    const branch=(m.default_branch)||'main';
+    const t=await(await fetch('https://raw.githubusercontent.com/'+m.full_name+'/'+branch+'/'+readme)).text();
+    el.innerHTML=renderMarkdown(t.slice(0,30000));
+  }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not load README.</p>'}
+}
+
+/* ============================================================
+   Feature: Dependency Graph (simple canvas)
+   ============================================================ */
+function renderDepsGraph(){
+  const canvas=$('#depsCanvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width=canvas.offsetWidth||500;
+  const H=canvas.height=300;
+  ctx.clearRect(0,0,W,H);
+  /* Collect deps from manifests */
+  const deps=[];
+  const depCols=$$('.depcol .dep b');
+  depCols.forEach(el=>{if(el.textContent.trim())deps.push(el.textContent.trim())});
+  if(!deps.length){ctx.fillStyle='#64748b';ctx.font='13px Inter';ctx.textAlign='center';ctx.fillText('No dependencies detected',W/2,H/2);return}
+  /* Simple force layout */
+  const nodes=deps.slice(0,30).map((d,i)=>({
+    name:d,
+    x:W/2+Math.cos(i*2*Math.PI/Math.min(deps.length,30))*100+Math.random()*40,
+    y:H/2+Math.sin(i*2*Math.PI/Math.min(deps.length,30))*80+Math.random()*40,
+    vx:0,vy:0,r:6
+  }));
+  /* Center node */
+  const center={name:S.repo.name,x:W/2,y:H/2,r:12};
+  /* Simple physics */
+  for(let iter=0;iter<50;iter++){
+    for(const n of nodes){
+      /* Attract to center */
+      const dx=center.x-n.x,dy=center.y-n.y;
+      const dist=Math.sqrt(dx*dx+dy*dy)||1;
+      n.vx+=dx/dist*0.5;n.vy+=dy/dist*0.5;
+      /* Repel from other nodes */
+      for(const m of nodes){
+        if(m===n)continue;
+        const ddx=n.x-m.x,ddy=n.y-m.y;
+        const dd=Math.sqrt(ddx*ddx+ddy*ddy)||1;
+        if(dd<40){n.vx+=ddx/dd*2;n.vy+=ddy/dd*2}
+      }
+      n.vx*=0.8;n.vy*=0.8;
+      n.x+=n.vx;n.y+=n.vy;
+      n.x=Math.max(20,Math.min(W-20,n.x));
+      n.y=Math.max(20,Math.min(H-20,n.y));
+    }
+  }
+  /* Draw edges */
+  for(const n of nodes){
+    ctx.beginPath();ctx.moveTo(center.x,center.y);ctx.lineTo(n.x,n.y);
+    ctx.strokeStyle='rgba(168,85,247,.2)';ctx.lineWidth=1;ctx.stroke();
+  }
+  /* Draw center */
+  ctx.beginPath();ctx.arc(center.x,center.y,center.r,0,7);
+  ctx.fillStyle='rgba(124,58,237,.6)';ctx.fill();
+  ctx.fillStyle='#fff';ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText(center.name,center.x,center.y+4);
+  /* Draw nodes */
+  for(const n of nodes){
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,7);
+    ctx.fillStyle='rgba(34,211,238,.5)';ctx.fill();
+    ctx.fillStyle='#94a3b8';ctx.font='9px JetBrains Mono';ctx.textAlign='center';ctx.fillText(n.name.slice(0,12),n.x,n.y+n.r+10);
+  }
+}
+
+/* ============================================================
+   Feature 1: Dependency Graph Visualization
+   ============================================================ */
+let depGraphNodes=[], depGraphEdges=[], depGraphAnimId=null;
+const ECOSYSTEM_COLORS={
+  'npm':'#f1e05a','pip':'#3572A5','pyproject':'#3572A5','Cargo':'#dea584',
+  'Go modules':'#00ADD8','Composer':'#4F5D95','Bundler':'#701516','Maven':'#b07219'
+};
+
+function buildDepGraph(){
+  try{
+    const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
+    const branch=(S.repo&&S.repo.default_branch)||'main';
+    const nodes=[],edges=[];
+    const seen=new Set();
+    nodes.push({id:'__repo__',label:S.repo?S.repo.name||'repo':'repo',x:0,y:0,vx:0,vy:0,r:18,color:'#a855f7',ecosystem:'repo',fixed:true});
+    seen.add('__repo__');
+    for(const mf of MANIFESTS){
+      const hit=paths.find(p=>p===mf.f||p.endsWith('/'+mf.f));
+      if(!hit)continue;
+      const ecoColor=ECOSYSTEM_COLORS[mf.label]||'#888';
+      const depList=(S._parsedDeps&&S._parsedDeps[mf.label])||[];
+      for(const dep of depList.slice(0,30)){
+        const id=mf.label+':'+dep;
+        if(seen.has(id))continue;
+        seen.add(id);
+        nodes.push({id,label:dep,x:Math.random()*200-100,y:Math.random()*200-100,vx:0,vy:0,r:8,color:ecoColor,ecosystem:mf.label});
+        edges.push({source:'__repo__',target:id});
+      }
+    }
+    depGraphNodes=nodes;
+    depGraphEdges=edges;
+    renderDepGraphLegend();
+    startDepGraphAnimation();
+  }catch(e){console.warn('buildDepGraph error:',e)}
+}
+
+function renderDepGraphLegend(){
+  const el=$('#depGraphLegend');
+  if(!el)return;
+  const ecosystems=new Set(depGraphNodes.map(n=>n.ecosystem));
+  el.innerHTML=Array.from(ecosystems).map(e=>{
+    const c=e==='repo'?'#a855f7':(ECOSYSTEM_COLORS[e]||'#888');
+    return '<span><span class="dot" style="background:'+c+'"></span>'+esc(e)+'</span>';
+  }).join('');
+}
+
+function startDepGraphAnimation(){
+  const canvas=$('#depGraphCanvas');
+  if(!canvas)return;
+  const wrap=$('#depGraphWrap');
+  const ctx=canvas.getContext('2d');
+  const tooltip=$('#depGraphTooltip');
+  let W,H;
+  function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight}
+  resize();
+  window.addEventListener('resize',resize);
+  let mouseX=-1,mouseY=-1;
+  canvas.addEventListener('mousemove',e=>{
+    const rect=canvas.getBoundingClientRect();
+    mouseX=e.clientX-rect.left;mouseY=e.clientY-rect.top;
+    const cx=W/2,cy=H/2;
+    let found=null;
+    for(const n of depGraphNodes){
+      const dx=(cx+n.x)-mouseX,dy=(cy+n.y)-mouseY;
+      if(Math.sqrt(dx*dx+dy*dy)<n.r+4){found=n;break}
+    }
+    if(found){
+      tooltip.textContent=found.label+(found.ecosystem!=='repo'?' ('+found.ecosystem+')':'');
+      tooltip.style.left=(mouseX+12)+'px';tooltip.style.top=(mouseY-8)+'px';
+      tooltip.classList.add('show');
+    }else{tooltip.classList.remove('show')}
+  });
+  canvas.addEventListener('mouseleave',()=>tooltip.classList.remove('show'));
+  if(depGraphAnimId)cancelAnimationFrame(depGraphAnimId);
+  function tick(){
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2,cy=H/2;
+    for(let i=0;i<depGraphNodes.length;i++){
+      for(let j=i+1;j<depGraphNodes.length;j++){
+        const a=depGraphNodes[i],b=depGraphNodes[j];
+        let dx=a.x-b.x,dy=a.y-b.y;
+        let dist=Math.sqrt(dx*dx+dy*dy)||1;
+        const force=800/(dist*dist);
+        const fx=dx/dist*force,fy=dy/dist*force;
+        if(!a.fixed){a.vx+=fx;a.vy+=fy}
+        if(!b.fixed){b.vx-=fx;b.vy-=fy}
+      }
+    }
+    for(const e of depGraphEdges){
+      const a=depGraphNodes.find(n=>n.id===e.source);
+      const b=depGraphNodes.find(n=>n.id===e.target);
+      if(!a||!b)continue;
+      let dx=a.x-b.x,dy=a.y-b.y;
+      let dist=Math.sqrt(dx*dx+dy*dy)||1;
+      const ideal=100;
+      const force=(dist-ideal)*0.005;
+      const fx=dx/dist*force,fy=dy/dist*force;
+      if(!b.fixed){b.vx+=fx;b.vy+=fy}
+      if(!a.fixed){a.vx-=fx;a.vy-=fy}
+    }
+    for(const n of depGraphNodes){
+      if(n.fixed)continue;
+      n.vx-=n.x*0.001;n.vy-=n.y*0.001;
+      n.vx*=0.92;n.vy*=0.92;
+      n.x+=n.vx;n.y+=n.vy;
+      const bound=Math.min(W,H)/2-30;
+      const dist=Math.sqrt(n.x*n.x+n.y*n.y);
+      if(dist>bound){n.x=n.x/dist*bound;n.y=n.y/dist*bound}
+    }
+    ctx.strokeStyle='rgba(100,100,160,.3)';ctx.lineWidth=1;
+    for(const e of depGraphEdges){
+      const a=depGraphNodes.find(n=>n.id===e.source);
+      const b=depGraphNodes.find(n=>n.id===e.target);
+      if(!a||!b)continue;
+      ctx.beginPath();ctx.moveTo(cx+a.x,cy+a.y);ctx.lineTo(cx+b.x,cy+b.y);ctx.stroke();
+    }
+    for(const n of depGraphNodes){
+      ctx.beginPath();ctx.arc(cx+n.x,cy+n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle=n.color;ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.15)';ctx.lineWidth=1;ctx.stroke();
+      if(n.r>=12||depGraphNodes.length<25){
+        ctx.fillStyle='#e2e8f0';ctx.font=(n.r>=14?'bold 11px':'10px')+' Inter,sans-serif';ctx.textAlign='center';
+        ctx.fillText(n.label.length>16?n.label.slice(0,14)+'…':n.label,cx+n.x,cy+n.y+n.r+14);
+      }
+    }
+    depGraphAnimId=requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+/* ============================================================
+   Feature 2: Code Complexity Score
+   ============================================================ */
+function computeComplexity(){
+  try{
+    const fileScores=[];
+    let totalScore=0,funcCount=0,classCount=0;
+    FILEMAP.forEach((f,p)=>{
+      if(!isText(f)||isLock(f))return;
+      const ext=extOf(p);
+      if(BINARY_EXT.has(ext))return;
+      const size=f.size||0;
+      let score=0;
+      if(ext==='js'||ext==='ts'||ext==='jsx'||ext==='tsx')score+=3;
+      if(ext==='py')score+=2;
+      if(ext==='java'||ext==='cpp'||ext==='c')score+=3;
+      score+=Math.floor(size/2000);
+      if(/(test|spec|__tests__)/i.test(p))score+=1;
+      if(/(index|main|app|server|router|controller|service)/i.test(p))score+=2;
+      fileScores.push({path:p,score:score});
+      totalScore+=score;
+    });
+    FILEMAP.forEach((f,p)=>{
+      if(/controller|service|handler|util|helper/i.test(p))funcCount+=3;
+      if(/class|model|entity|dto/i.test(p))classCount+=2;
+      if(/\.test\.|\.spec\./i.test(p))funcCount+=1;
+    });
+    funcCount=Math.max(funcCount,Math.floor(FILEMAP.size*0.3));
+    classCount=Math.max(classCount,Math.floor(FILEMAP.size*0.05));
+    fileScores.sort((a,b)=>b.score-a.score);
+    const level=totalScore<30?'Low':totalScore<80?'Medium':totalScore<200?'High':'Very High';
+    const levelColor=totalScore<30?'var(--green)':totalScore<80?'var(--yellow)':totalScore<200?'var(--orange)':'var(--red)';
+    const meterPct=Math.min(totalScore/250*100,100);
+    const el=$('#complexityContent');
+    if(!el)return;
+    el.innerHTML=
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'+
+        '<span class="complexity-score-label" style="color:'+levelColor+'">'+level+'</span>'+
+        '<span style="color:var(--text3);font-size:12px">('+totalScore+' pts)</span>'+
+      '</div>'+
+      '<div class="complexity-meter"><i style="width:'+meterPct+'%;background:linear-gradient(90deg,var(--green),'+levelColor+')"></i></div>'+
+      '<div style="display:flex;gap:16px;font-size:12px;color:var(--text2);margin-bottom:8px">'+
+        '<span>~<b>'+fmt(funcCount)+'</b> functions</span>'+
+        '<span>~<b>'+fmt(classCount)+'</b> classes</span>'+
+        '<span><b>'+fmt(FILEMAP.size)+'</b> files</span>'+
+      '</div>'+
+      '<div class="minititle" style="margin-top:8px">Top 5 most complex files</div>'+
+      '<div class="complexity-top-files">'+
+        fileScores.slice(0,5).map(f=>
+          '<div class="cfrow"><span class="cfpath" title="'+esc(f.path)+'">'+esc(f.path.split('/').pop())+'</span><span class="cfscore">'+f.score+' pts</span></div>'
+        ).join('')+
+      '</div>';
+  }catch(e){console.warn('computeComplexity error:',e)}
+}
+
+/* ============================================================
+   Feature 3: Contributor Network (Bus Factor)
+   ============================================================ */
+function renderBusFactor(){
+  try{
+    const el=$('#busFactorContent');
+    if(!el)return;
+    const contribs=S.contribs.filter(c=>c.type!=='Bot');
+    if(!contribs.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No contributor data.</p>';return}
+    const total=contribs.reduce((a,c)=>a+(c.contributions||0),0)||1;
+    const sorted=contribs.slice().sort((a,b)=>(b.contributions||0)-(a.contributions||0));
+    const topPct=(sorted[0].contributions||0)/total*100;
+    let busFactor;
+    if(topPct>50)busFactor=1;
+    else busFactor=sorted.filter(c=>(c.contributions||0)/total*100>10).length;
+    const bfClass=busFactor<=1?'bad':busFactor<=2?'warn':'good';
+    const bfLabel=busFactor<=1?'🚨 Risky':busFactor<=2?'⚠️ Moderate':'✅ Healthy';
+    const top5=sorted.slice(0,5);
+    const othersPct=100-top5.reduce((a,c)=>a+(c.contributions||0)/total*100,0);
+    const barColors=['#a855f7','#22d3ee','#f1e05a','#22c55e','#ec4899','#64748b'];
+    el.innerHTML=
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'+
+        '<span class="bus-factor-badge '+bfClass+'">'+bfLabel+'</span>'+
+        '<span style="color:var(--text2);font-size:12.5px">Bus Factor: <b>'+busFactor+'</b></span>'+
+      '</div>'+
+      '<div style="font-size:12px;color:var(--text3);margin-bottom:6px">'+
+        (topPct>50?'Top contributor has '+topPct.toFixed(1)+'% of commits — single point of failure.':'Top contributor has '+topPct.toFixed(1)+'% — contributions are reasonably distributed.')+
+      '</div>'+
+      '<div class="dominance-bar">'+
+        top5.map((c,i)=>'<i style="width:'+((c.contributions||0)/total*100).toFixed(1)+'%;background:'+barColors[i]+'"></i>').join('')+
+        (othersPct>0?'<i style="width:'+othersPct.toFixed(1)+'%;background:'+barColors[5]+'"></i>':'')+
+      '</div>'+
+      '<div class="dominance-legend">'+
+        top5.map((c,i)=>'<span><span class="dl-dot" style="background:'+barColors[i]+'"></span>'+esc(c.login||c.name||'?')+' '+((c.contributions||0)/total*100).toFixed(1)+'%</span>').join('')+
+        (othersPct>0?'<span><span class="dl-dot" style="background:'+barColors[5]+'"></span>Others '+othersPct.toFixed(1)+'%</span>':'')+
+      '</div>';
+  }catch(e){console.warn('renderBusFactor error:',e)}
+}
+
+/* ============================================================
+   Feature 4: Release Timeline
+   ============================================================ */
+async function renderReleaseTimeline(){
+  try{
+    const el=$('#releaseTimeline');
+    if(!el)return;
+    if(S.platform!=='github'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available for GitHub repos.</p>';return}
+    const m=S.repo;if(!m||!m.full_name)return;
+    el.innerHTML='<p style="color:var(--text3);font-size:12px">Loading releases…</p>';
+    try{
+      const releases=await api('/repos/'+m.full_name+'/releases?per_page=10');
+      if(!Array.isArray(releases)||!releases.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No releases found.</p>';return}
+      el.innerHTML='<div class="release-timeline">'+releases.map(r=>{
+        const body=(r.body||'').slice(0,200).replace(/</g,'&lt;');
+        return '<div class="release-item">'+
+          '<div class="rver">'+esc(r.tag_name||r.name||'untagged')+'</div>'+
+          '<div class="rdate">'+esc(r.published_at?new Date(r.published_at).toLocaleDateString():'unknown date')+'</div>'+
+          (body?'<div class="rbody">'+esc(body)+(r.body&&r.body.length>200?'…':'')+'</div>':'')+
+        '</div>';
+      }).join('')+'</div>';
+    }catch(e){
+      el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not fetch releases.</p>';
+    }
+  }catch(e){console.warn('renderReleaseTimeline error:',e)}
+}
+
+/* ============================================================
+   Feature 5: AI Repo Summary
+   ============================================================ */
+function generateSummary(){
+  try{
+    const m=S.repo;if(!m)return;
+    const hc=healthCheck();
+    const langs=Object.keys(S.langs).join(', ')||m.language||'unknown';
+    const topics=(m.topics||[]).length?m.topics.join(', '):'no specific topics';
+    const desc=m.description||'a repository';
+    const summary='This is a <b>'+esc(m.language||langs.split(',')[0]||'multi-language')+'</b> project that '+esc(desc.toLowerCase().endsWith('.')?desc:desc+'.')+' It has <b>'+fmt(m.stargazers_count)+'</b> stars, <b>'+fmt(FILEMAP.size)+'</b> files, and <b>'+fmt(m.forks_count)+'</b> forks. Health score: <b>'+hc.score+'/100</b>. Topics: '+esc(topics)+'.';
+    const box=$('#aiSummaryBox');
+    if(!box)return;
+    box.innerHTML='<div class="ai-summary-box">'+summary+'</div>';
+  }catch(e){console.warn('generateSummary error:',e)}
+}
+
+/* ============================================================
+   Feature 6: Smart File Recommendations
+   ============================================================ */
+const REC_CATEGORIES={
+  core:{label:'Core files',match:p=>{
+    const name=p.split('/').pop();
+    return /^(index|main|app|server|entry|boot|init|setup)\.[a-z]+$/i.test(name);
+  }},
+  config:{label:'Config files',match:p=>{
+    const name=p.split('/').pop();
+    return /^(package\.json|tsconfig.*\.json|\.env\.example|vite\.config.*|webpack\.config.*|rollup\.config.*|babel\.config.*|jest\.config.*|\.eslintrc.*|\.prettierrc.*|tslint\.json|pyproject\.toml|setup\.cfg|setup\.py|Cargo\.toml|go\.mod|Makefile|Dockerfile|docker-compose.*|\.github\/workflows\/.*\.ya?ml)$/i.test(name);
+  }},
+  docs:{label:'Docs',match:p=>{
+    const name=p.split('/').pop();
+    return /^(readme.*|changelog.*|contributing.*|license.*|code_of_conduct.*|authors.*|security.*|\.github\/issue_template.*|\.github\/pull_request_template.*)$/i.test(name);
+  }}
+};
+
+function countRecCategory(cat){
+  let n=0;
+  FILEMAP.forEach((f,p)=>{if(REC_CATEGORIES[cat].match(p))n++});
+  return n;
+}
+
+function updateRecCounts(){
+  for(const cat of Object.keys(REC_CATEGORIES)){
+    const cap=cat.charAt(0).toUpperCase()+cat.slice(1);
+    const el=$('#rec'+cap+'Cnt');
+    if(el)el.textContent='('+countRecCategory(cat)+')';
+  }
+}
+
+function selectRecCategory(cat){
+  S.sel.clear();
+  FILEMAP.forEach((f,p)=>{if(REC_CATEGORIES[cat].match(p))S.sel.add(p)});
+  $$('#tree .fcb').forEach(cb=>cb.checked=S.sel.has(cb.dataset.path));
+  updateSelMeta();
+  toast(REC_CATEGORIES[cat].label+': '+S.sel.size+' files selected');
+}
+
+/* ============================================================
+   Feature 7: "Explain this repo" Mode
+   ============================================================ */
+function explainRepo(){
+  try{
+    const m=S.repo;if(!m)return;
+    const lang=m.language||Object.keys(S.langs)[0]||'multiple languages';
+    const topics=(m.topics||[]).length?m.topics.join(', '):'various topics';
+    const stars=m.stargazers_count||0;
+    const age=Math.floor((Date.now()-new Date(m.created_at))/864e5);
+    const ageStr=age<30?age+' days':age<365?Math.floor(age/30)+' months':Math.floor(age/365)+' years';
+    let explanation='<p><strong>What is this?</strong></p>';
+    explanation+='<p>'+esc(m.full_name)+' is a '+esc(lang)+' project. ';
+    if(m.description)explanation+=esc(m.description);
+    else explanation+="It doesn't have a description, but the code speaks for itself!";
+    explanation+='</p>';
+    explanation+='<p><strong>Who is it for?</strong></p>';
+    explanation+='<p>This project is tagged with: <b>'+esc(topics)+'</b>. ';
+    if(stars>1000)explanation+='With '+fmt(stars)+" stars, it's quite popular in the developer community.";
+    else if(stars>100)explanation+='It has '+fmt(stars)+' stars, showing solid community interest.';
+    else if(stars>10)explanation+='It has '+fmt(stars)+' stars — a growing project.';
+    else explanation+="It's still early days with "+fmt(stars)+' star(s).';
+    explanation+='</p>';
+    explanation+='<p><strong>How old is it?</strong></p>';
+    explanation+='<p>Created '+ageStr+' ago. Last updated '+esc(timeAgo(m.pushed_at))+'. ';
+    if(m.archived)explanation+='<b>Note: This repo is archived</b> — no longer actively maintained.';
+    else explanation+='It appears to be '+(age<180?'actively maintained':'in maintenance mode')+'.';
+    explanation+='</p>';
+    explanation+='<p><strong>Key numbers:</strong> '+fmt(stars)+' stars · '+fmt(m.forks_count)+' forks · '+fmt(FILEMAP.size)+' files · '+Object.keys(S.langs).length+' language(s)</p>';
+    const el=$('#explainContent');
+    if(!el)return;
+    el.innerHTML=explanation;
+    $('#explainModalBg').classList.remove('hidden');
+  }catch(e){console.warn('explainRepo error:',e)}
+}
+function closeExplainModal(){$('#explainModalBg').classList.add('hidden')}
+
+/* ============================================================
+   Feature 8: Repo Battle Mode
+   ============================================================ */
+function openBattle(){
+  $('#battleInput').value='';
+  $('#battleResult').innerHTML='';
+  $('#battleModalBg').classList.remove('hidden');
+  setTimeout(()=>$('#battleInput').focus(),60);
+}
+function closeBattleModal(){$('#battleModalBg').classList.add('hidden')}
+
+async function runBattle(){
+  const v=$('#battleInput').value.trim();
+  if(!v){toast('Enter a repo to battle','err');return}
+  const p=parseRepoInput(v);
+  if(!p){toast('Could not parse that','err');return}
+  const result=$('#battleResult');
+  result.innerHTML='<div class="loading"><div class="spinner"></div><p>Loading challenger…</p></div>';
+  try{
+    let otherMeta,otherLangs,otherContribs,otherTree;
+    if(p.platform==='github'){
+      otherMeta=await api('/repos/'+p.owner+'/'+p.repo);
+      otherMeta=stripRepo(otherMeta);
+      otherLangs=await api('/repos/'+p.owner+'/'+p.repo+'/languages').catch(()=>({}));
+      otherContribs=await api('/repos/'+p.owner+'/'+p.repo+'/contributors?per_page=1').catch(()=>[]);
+      const tree=await api('/repos/'+p.owner+'/'+p.repo+'/git/trees/'+(otherMeta.default_branch||'main')+'?recursive=1').catch(()=>null);
+      otherTree=tree?(tree.tree||[]).filter(x=>x.type==='blob').length:0;
+    }else{
+      const data=await fetchRepoData(p.owner,p.repo,p.platform);
+      if(!data)throw new Error('Failed');
+      otherMeta=data.meta;otherLangs=data.langs||{};otherContribs=data.contribs||[];
+      otherTree=data.tree?(data.tree.tree||[]).length:0;
+    }
+    const a=S.repo,b=otherMeta;
+    const ahc=healthCheck();
+    const bScore=(b.stargazers_count||0)>1000?70:(b.stargazers_count||0)>100?55:(b.stargazers_count||0)>10?40:25;
+    const metrics=[
+      {label:'Stars',aVal:a.stargazers_count||0,bVal:b.stargazers_count||0,fmt:v=>fmt(v)},
+      {label:'Forks',aVal:a.forks_count||0,bVal:b.forks_count||0,fmt:v=>fmt(v)},
+      {label:'Health Score',aVal:ahc.score,bVal:bScore,fmt:v=>v+'/100'},
+      {label:'Files',aVal:FILEMAP.size,bVal:otherTree,fmt:v=>fmt(v)},
+      {label:'Languages',aVal:Object.keys(S.langs).length,bVal:Object.keys(otherLangs).length,fmt:v=>v+''},
+      {label:'Contributors',aVal:S.contribs.length,bVal:otherContribs.length,fmt:v=>fmt(v)}
+    ];
+    let aWins=0,bWins=0;
+    const rows=metrics.map(m=>{
+      const winner=m.aVal>m.bVal?'a':m.bVal>m.aVal?'b':'tie';
+      if(winner==='a')aWins++;else if(winner==='b')bWins++;
+      return '<div class="battle-row">'+
+        '<span class="bl">'+esc(m.label)+'</span>'+
+        '<span class="bv '+(winner==='a'?'win':winner==='b'?'lose':'')+'">'+m.fmt(m.aVal)+'</span>'+
+        '<span style="color:var(--text3)">vs</span>'+
+        '<span class="bv '+(winner==='b'?'win':winner==='a'?'lose':'')+'">'+m.fmt(m.bVal)+'</span>'+
+      '</div>';
+    }).join('');
+    const winnerLabel=aWins>bWins?esc(a.full_name):bWins>aWins?esc(b.full_name):'Tie';
+    const shareText='⚔️ Repo Battle: '+a.full_name+' vs '+b.full_name+' → '+winnerLabel+' wins! ('+aWins+'-'+bWins+')';
+    result.innerHTML=
+      '<div class="battle-grid">'+
+        '<div class="battle-side"><h4>'+esc(a.full_name||'')+'</h4>'+rows+'</div>'+
+        '<div class="battle-side"><h4>'+esc(b.full_name||'')+'</h4>'+rows.replace(/class="bv (win|lose)"/g,(match)=>match.replace('lose',''))+'</div>'+
+      '</div>'+
+      '<div style="text-align:center;margin:12px 0;font-size:16px;font-weight:700">'+
+        (aWins>bWins?'🏆 '+esc(a.full_name)+' wins!':bWins>aWins?'🏆 '+esc(b.full_name)+' wins!':'🤝 Tie!')+
+        ' <span style="color:var(--text3);font-size:13px">('+aWins+'-'+bWins+')</span>'+
+      '</div>'+
+      '<div class="battle-summary">'+esc(shareText)+'</div>';
+  }catch(e){
+    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e">💥</div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
+  }
+}
+
+/* ============================================================
+   Store parsed deps globally for dependency graph
+   ============================================================ */
+const _origRenderDeps=renderDeps;
+renderDeps=async function(stacks){
+  await _origRenderDeps(stacks);
+  S._parsedDeps=S._parsedDeps||{};
+  const branch=(S.repo&&S.repo.default_branch)||'main';
+  for(const st of stacks){
+    const raw='https://raw.githubusercontent.com/'+(S.repo&&S.repo.full_name)+'/'+branch+'/'+st.file;
+    try{
+      const txt=await(await fetch(raw)).text();
+      let deps=[];
+      if(st.label==='npm'||st.label==='Composer'){
+        const j=JSON.parse(txt);
+        deps=Object.keys(Object.assign({},j.dependencies||{},j.devDependencies||{}));
+      }else if(st.label==='pip'){
+        deps=txt.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#')&&!l.startsWith('-')).map(l=>l.split(/[=<>~!\[;\s]/)[0]).filter(Boolean);
+      }else if(st.label==='pyproject'||st.label==='Cargo'){
+        const sec=txt.match(/dependencies\s*=\s*\[([\s\S]*?)\]/);
+        const block=sec?sec[1]:txt;
+        deps=Array.from(block.matchAll(/["']?([A-Za-z0-9_.\-]+)["']?\s*[=><~]/g)).map(x=>x[1]);
+      }else if(st.label==='Go modules'){
+        deps=Array.from(txt.matchAll(/^\s{1,2}([A-Za-z0-9._\/\-]+)\s+v/gm)).map(x=>x[1]);
+      }else if(st.label==='Bundler'){
+        deps=Array.from(txt.matchAll(/gem\s+["']([^"']+)["']/g)).map(x=>x[1]);
+      }else if(st.label==='Maven'){
+        deps=Array.from(txt.matchAll(/<artifactId>([^<]+)<\/artifactId>/g)).map(x=>x[1]);
+      }
+      S._parsedDeps[st.label]=Array.from(new Set(deps)).filter(Boolean);
+    }catch(e){S._parsedDeps[st.label]=[];}
+  }
+};
+
+/* ============================================================
+   Modal wrapper functions
+   ============================================================ */
+function openBattle(){const m=$('#battleModalBg');if(m)m.classList.remove('hidden')}
+function closeBattleModal(){const m=$('#battleModalBg');if(m)m.classList.add('hidden')}
+function runBattle(){loadBattle()}
+function openCloneModal(){showCloneModal()}
+function closeCloneModal(){const m=$('#cloneModalBg');if(m)m.classList.add('hidden')}
+function openExplainModal(){explainRepo()}
+function closeExplainModal(){const m=$('#explainModalBg');if(m)m.classList.add('hidden')}
+function openShortcutsModal(){showShortcuts()}
+function closeShortcutsModal(){closeModal()}
+function selectShareTpl(t){shareTemplate=t;closeModal();shareCard()}
+function confirmShareTpl(){shareCard()}
+function closeShareTplModal(){closeModal()}
+function cycleLang(){toggleLang()}
+function selectRecCategory(cat){selectSmartCategory(cat)}
+
+/* Override showModal to use existing modal system */
+function showModal(title,content){
+  const bg=document.createElement('div');
+  bg.className='modal-bg';
+  bg.style.cssText='position:fixed;inset:0;background:rgba(5,5,12,.7);backdrop-filter:blur(6px);z-index:100;display:grid;place-items:center;padding:20px';
+  bg.innerHTML='<div class="modal" style="background:var(--card-solid);border:1px solid var(--line2);border-radius:20px;padding:26px;width:min(560px,94vw);box-shadow:var(--shadow)"><h3>'+title+'</h3><div style="margin-top:12px">'+content+'</div><div class="mrow" style="margin-top:14px"><button class="btn ghost sm" onclick="this.closest(\'.modal-bg\').remove()">Close</button></div></div>';
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.remove()});
+  document.body.appendChild(bg);
+}
 
 /* ============================================================
    Boot
