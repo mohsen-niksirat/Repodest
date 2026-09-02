@@ -842,6 +842,7 @@ function switchTab(name){
   }
   if(name==='languages')ensureChartJs().then(()=>drawLangChart());
   if(name==='deps')buildDepGraph();
+  if(name==='deep')renderDeepPanel();
 }
 document.addEventListener('DOMContentLoaded',()=>{
   $$('#tabs .tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
@@ -2890,4 +2891,248 @@ renderFiles=function(){
     const info=$('#treeInfo');
     if(info)info.textContent=visible+' visible · '+FILEMAP.size+' total';
   }
+}
+
+/* ============================================================
+   Deep Analysis tab — PR analytics, fix rate, churn, OSV scan
+   ============================================================ */
+S.deep={pr:null,fix:null,churn:null,osv:null,loaded:false};
+
+function renderDeepPanel(){
+  if(S.deep.loaded)return;
+  S.deep.loaded=true;
+  if(S.platform!=='github'){
+    const note='<p style="color:var(--text3);font-size:13px">Deep Analysis currently requires a GitHub repository.</p>';
+    $('#prAnalyticsContent').innerHTML=note;$('#fixRateContent').innerHTML=note;
+    $('#churnContent').innerHTML=note;return;
+  }
+  runDeepScan();
+}
+
+function fmtHours(h){
+  if(h==null)return'—';
+  if(h<1)return Math.round(h*60)+' min';
+  if(h<48)return h.toFixed(1)+' h';
+  if(h<24*60)return Math.round(h/24)+' days';
+  return Math.round(h/24/30)+' months';
+}
+function pctBar(label,val,total,color){
+  const pct=total?Math.round(val/total*100):0;
+  return '<div class="langrow"><span class="ln" style="width:120px">'+esc(label)+'</span><span class="lb"><i style="width:'+pct+'%;background:'+color+'"></i></span><span class="lp">'+pct+'%</span></div>';
+}
+
+async function runDeepScan(){
+  const m=S.repo;if(!m||!m.full_name)return;
+  loadPRAnalytics();
+  loadFixRate();
+  loadChurn();
+}
+
+/* ---------- PR Analytics ---------- */
+async function loadPRAnalytics(){
+  const el=$('#prAnalyticsContent');if(!el)return;
+  if(S.deep.pr){renderPRAnalytics(S.deep.pr);return}
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Loading PRs…</p>';
+  try{
+    const prs=await api('/repos/'+S.repo.full_name+'/pulls?state=all&per_page=100&sort=created&direction=desc');
+    if(!Array.isArray(prs))throw new Error('Bad PR response');
+    const open=prs.filter(p=>p.state==='open');
+    const merged=prs.filter(p=>p.merged_at);
+    const closedNo=prs.filter(p=>p.state==='closed'&&!p.merged_at);
+    const hours=merged.map(p=>(new Date(p.merged_at)-new Date(p.created_at))/36e5).filter(h=>h>=0);
+    const avgH=hours.length?hours.reduce((a,b)=>a+b,0)/hours.length:null;
+    const sortedH=hours.slice().sort((a,b)=>a-b);
+    const medianH=sortedH.length?sortedH[Math.floor(sortedH.length/2)]:null;
+    const stale=open.filter(p=>(Date.now()-new Date(p.created_at))>30*864e5);
+    const authors={};prs.forEach(p=>{const l=p.user&&p.user.login;if(l)authors[l]=(authors[l]||0)+1});
+    const topAuthors=Object.entries(authors).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    S.deep.pr={scanned:prs.length,open:open.length,merged:merged.length,closedNo:closedNo.length,avgH,medianH,stale:stale.length,stalePct:open.length?Math.round(stale.length/open.length*100):0,oldestStaleDays:stale.length?Math.max(...stale.map(p=>(Date.now()-new Date(p.created_at))/864e5)):0,topAuthors};
+    renderPRAnalytics(S.deep.pr);
+  }catch(e){
+    el.innerHTML='<p style="color:var(--red);font-size:12px">Failed to load PRs: '+esc(e.message||'error')+'</p>';
+  }
+}
+function renderPRAnalytics(d){
+  const el=$('#prAnalyticsContent');if(!el)return;
+  const total=d.scanned||1;
+  el.innerHTML=
+    '<div class="langrow"><span class="ln" style="width:120px">Scanned</span><span class="lb"><i style="width:100%;background:#334155"></i></span><span class="lp">'+d.scanned+' PRs</span></div>'+
+    pctBar('Merged',d.merged,total,'#22c55e')+
+    pctBar('Open',d.open,total,'#22d3ee')+
+    pctBar('Closed w/o merge',d.closedNo,total,'#ef4444')+
+    '<div class="kv"><span>Avg time to merge</span><b>'+fmtHours(d.avgH)+'</b></div>'+
+    '<div class="kv"><span>Median time to merge</span><b>'+fmtHours(d.medianH)+'</b></div>'+
+    '<div class="kv"><span>Stale open PRs (&gt;30d)</span><b style="color:'+(d.stale>5?'var(--red)':d.stale>0?'var(--yellow)':'var(--green)')+'">'+d.stale+(d.open?' ('+d.stalePct+'% of open)':'')+'</b></div>'+
+    (d.topAuthors.length?'<div style="margin-top:10px;font-size:11px;color:var(--text3)">Top PR authors</div>'+d.topAuthors.map(a=>'<div class="kv"><span>'+esc(a[0])+'</span><b>'+a[1]+' PRs</b></div>').join(''):'');
+}
+
+/* ---------- Fix rate ---------- */
+async function loadFixRate(){
+  const el=$('#fixRateContent');if(!el)return;
+  if(S.deep.fix){renderFixRate(S.deep.fix);return}
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Analyzing commits…</p>';
+  try{
+    const commits=await api('/repos/'+S.repo.full_name+'/commits?per_page=100');
+    if(!Array.isArray(commits))throw new Error('Bad commits response');
+    const FIX_RE=/^(fix|fixes|fixed|bugfix|hotfix|patch|revert)\b/i;
+    const CHORE_RE=/^(chore|refactor|test|docs?|style|ci|build)\b/i;
+    const FEAT_RE=/^(feat|feature|add|create)\b/i;
+    let fixes=0,feats=0,chores=0,other=0;
+    commits.forEach(c=>{
+      const msg=((c.commit&&c.commit.message)||'').trim();
+      if(FIX_RE.test(msg))fixes++;
+      else if(FEAT_RE.test(msg))feats++;
+      else if(CHORE_RE.test(msg))chores++;
+      else other++;
+    });
+    S.deep.fix={total:commits.length,fixes,feats,chores,other};
+    renderFixRate(S.deep.fix);
+  }catch(e){
+    el.innerHTML='<p style="color:var(--red);font-size:12px">Failed to load commits: '+esc(e.message||'error')+'</p>';
+  }
+}
+function renderFixRate(d){
+  const el=$('#fixRateContent');if(!el)return;
+  const total=d.total||1;
+  const verdict=d.fixes/total>0.4?'🔴 High bug pressure':d.fixes/total>0.2?'🟡 Moderate bug pressure':'🟢 Low bug pressure';
+  el.innerHTML=
+    pctBar('Fixes / reverts',d.fixes,total,'#ef4444')+
+    pctBar('Features',d.feats,total,'#a855f7')+
+    pctBar('Chores / docs',d.chores,total,'#64748b')+
+    pctBar('Other',d.other,total,'#334155')+
+    '<div class="kv" style="margin-top:8px"><span>Verdict</span><b>'+verdict+'</b></div>'+
+    '<p style="color:var(--text3);font-size:11px;margin-top:6px">Share of the last '+d.total+' commits starting with fix/hotfix/patch/revert. High fix share may indicate instability; low with steady features suggests a healthy codebase.</p>';
+}
+
+/* ---------- Code churn hotspots ---------- */
+async function loadChurn(){
+  const el=$('#churnContent');if(!el)return;
+  if(S.deep.churn){renderChurn(S.deep.churn);return}
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Computing churn…</p>';
+  try{
+    const commits=await api('/repos/'+S.repo.full_name+'/commits?per_page=60');
+    if(!Array.isArray(commits))throw new Error('Bad commits response');
+    const counts={};let examined=0;
+    const list=commits.slice(0,40);
+    for(const c of list){
+      try{
+        const detail=await api('/repos/'+S.repo.full_name+'/commits/'+c.sha);
+        examined++;
+        ((detail.files)||[]).forEach(f=>{
+          const path=f.filename||'';
+          if(!path)return;
+          const entry=counts[path]||(counts[path]={n:0,add:0,del:0});
+          entry.n++;entry.add+=f.additions||0;entry.del+=f.deletions||0;
+        });
+      }catch(err){/* skip this commit */}
+    }
+    const hot=Object.entries(counts).map(([p,v])=>({path:p,changes:v.n,touches:v.add+v.del})).sort((a,b)=>b.changes-a.changes||b.touches-a.touches).slice(0,10);
+    S.deep.churn={examined,commits:list.length,hot};
+    renderChurn(S.deep.churn);
+  }catch(e){
+    el.innerHTML='<p style="color:var(--red);font-size:12px">Failed to compute churn: '+esc(e.message||'error')+'</p>';
+  }
+}
+function renderChurn(d){
+  const el=$('#churnContent');if(!el)return;
+  if(!d.hot.length){el.innerHTML='<p style="color:var(--text3);font-size:12px">No file changes found in recent commits.</p>';return}
+  const max=d.hot[0].changes||1;
+  el.innerHTML=
+    '<p style="color:var(--text3);font-size:11px;margin-bottom:8px">Based on '+d.examined+'/'+d.commits+' recent commits (each file listing costs one API call — a token raises the depth).</p>'+
+    d.hot.map(h=>{
+      const pct=Math.round(h.changes/max*100);
+      const short=h.path.length>44?'…'+h.path.slice(-43):h.path;
+      return '<div class="langrow"><span class="ln" style="width:44%" title="'+esc(h.path)+'">'+esc(short)+'</span><span class="lb"><i style="width:'+pct+'%;background:'+(h.changes>=max*0.8?'#ef4444':h.changes>=max*0.5?'#f59e0b':'#22d3ee')+'"></i></span><span class="lp">'+h.changes+'×</span></div>';
+    }).join('');
+}
+
+/* ---------- OSV vulnerability scan ---------- */
+const OSV_ECO={'npm':'npm','PyPI':'PyPI','crates.io':'crates.io','Go':'Go'};
+function parseDepsFromManifest(label,txt){
+  let deps=[];
+  try{
+    if(label==='npm'||label==='Composer'){
+      const j=JSON.parse(txt);
+      deps=Object.keys(Object.assign({},j.dependencies||{},j.devDependencies||{}));
+    }else if(label==='pip'){
+      deps=txt.split('\n').map(l=>l.trim()).filter(l=>l&&!l.startsWith('#')&&!l.startsWith('-')).map(l=>l.split(/[=<>~!\[;\s]/)[0]).filter(Boolean);
+    }else if(label==='pyproject'||label==='Cargo'){
+      const sec=txt.match(/dependencies\s*=\s*\[([\s\S]*?)\]/);
+      const block=sec?sec[1]:txt;
+      deps=Array.from(block.matchAll(/["']?([A-Za-z0-9_.\-]+)["']?\s*[=><~]/g)).map(x=>x[1]);
+    }else if(label==='Go modules'){
+      deps=Array.from(txt.matchAll(/^\s{1,2}([A-Za-z0-9._\/\-]+)\s+v/gm)).map(x=>x[1]);
+    }
+  }catch(e){}
+  return Array.from(new Set(deps)).filter(Boolean);
+}
+async function runOsvScan(){
+  const el=$('#osvContent'),badge=$('#osvBadge');
+  if(S.deep.osv){renderOsv(S.deep.osv);return}
+  if(!FILEMAP.size){toast('Load a repository first','err');return}
+  const btn=$('#osvScanBtn');if(btn){btn.disabled=true;btn.textContent='⏳ Scanning…'}
+  if(badge)badge.textContent='…';
+  try{
+    const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
+    const branch=(S.repo&&S.repo.default_branch)||'main';
+    const plans=[{f:'package.json',label:'npm',eco:'npm'},{f:'requirements.txt',label:'pip',eco:'PyPI'},{f:'pyproject.toml',label:'pyproject',eco:'PyPI'},{f:'Cargo.toml',label:'Cargo',eco:'crates.io'},{f:'go.mod',label:'Go modules',eco:'Go'}];
+    const ecoDeps={};
+    for(const pl of plans){
+      const hit=paths.find(p=>p===pl.f||p.endsWith('/'+pl.f));
+      if(!hit)continue;
+      try{
+        const r=await fetch('https://raw.githubusercontent.com/'+(S.repo&&S.repo.full_name)+'/'+branch+'/'+hit);
+        if(!r.ok)continue;
+        const deps=parseDepsFromManifest(pl.label,await r.text()).slice(0,100);
+        if(deps.length)ecoDeps[pl.eco]=(ecoDeps[pl.eco]||[]).concat(deps);
+      }catch(e){}
+    }
+    const entries=[];
+    Object.keys(ecoDeps).forEach(eco=>{ecoDeps[eco].forEach(name=>entries.push({name,eco}))});
+    if(!entries.length){
+      el.innerHTML='<p style="color:var(--text3);font-size:12px">No supported manifest files (package.json, requirements.txt, pyproject.toml, Cargo.toml, go.mod) found in the tree.</p>';
+      if(badge)badge.textContent='0';
+      if(btn){btn.disabled=false;btn.textContent='🛡️ Scan dependencies'}
+      return;
+    }
+    const results=entries.map(()=>[]);
+    const CHUNK=100;
+    for(let i=0;i<entries.length;i+=CHUNK){
+      const chunk=entries.slice(i,i+CHUNK);
+      const resp=await fetch('https://api.osv.dev/v1/querybatch',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({queries:chunk.map(e=>({package:{name:e.name,ecosystem:e.eco}}))})
+      });
+      if(!resp.ok)throw new Error('OSV API '+resp.status);
+      const data=await resp.json();
+      ((data&&data.results)||[]).forEach((r,j)=>{
+        const idx=i+j;
+        if(r&&Array.isArray(r.vulns))results[idx]=r.vulns.map(v=>v.id||'');
+      });
+    }
+    let vulnerable=0,vulnList=[];
+    entries.forEach((e,i)=>{
+      if(results[i].length){vulnerable++;vulnList.push({name:e.name,eco:e.eco,count:results[i].length,sample:results[i].slice(0,3)})}
+    });
+    S.deep.osv={total:entries.length,vulnerable,vulnList:vulnList.slice(0,12),ecos:Object.keys(ecoDeps)};
+    renderOsv(S.deep.osv);
+  }catch(e){
+    el.innerHTML='<p style="color:var(--red);font-size:12px">Scan failed: '+esc(e.message||'error')+'</p>';
+    if(badge)badge.textContent='!';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🛡️ Scan dependencies'}
+  }
+}
+function renderOsv(d){
+  const el=$('#osvContent'),badge=$('#osvBadge');
+  if(badge)badge.textContent=d.vulnerable+'/'+d.total;
+  const color=d.vulnerable===0?'var(--green)':d.vulnerable<4?'var(--yellow)':'var(--red)';
+  el.innerHTML=
+    '<div class="kv"><span>Dependencies scanned</span><b>'+d.total+' (via OSV.dev)</b></div>'+
+    '<div class="kv"><span>Packages with known advisories</span><b style="color:'+color+'">'+d.vulnerable+'</b></div>'+
+    (d.vulnList.length?'<div style="margin-top:10px;font-size:11px;color:var(--text3)">Flagged packages</div>'+
+      d.vulnList.map(v=>'<div class="kv"><span>'+esc(v.name)+' <span style="color:var(--text3)">('+esc(v.eco)+')</span></span><b style="color:var(--red)">'+v.count+' advisory'+(v.count>1?'ies':'')+'</b></div>').join(''):'')+
+    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Advisory counts include all severities. Verify details on <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> before acting — version pinning info is not sent in this batch scan.</p>';
+  if(d.vulnerable)toast(d.vulnerable+' packages have known advisories','err');
 }

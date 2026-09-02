@@ -144,6 +144,7 @@
       <button class="tab" data-tab="activity">📈 Activity</button>
       <button class="tab" data-tab="fun">🏆 Fun</button>
       <button class="tab" data-tab="deps">🔗 Deps</button>
+      <button class="tab" data-tab="deep">🔬 Deep</button>
     </div>
 
     <section class="panel active" id="p-overview">
@@ -392,6 +393,35 @@
           <div class="dep-graph-tooltip" id="depGraphTooltip"></div>
         </div>
         <div class="dep-graph-legend" id="depGraphLegend"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-deep">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Deep Analysis</b> goes beyond the surface: PR throughput (merge rate, open/closed, avg time-to-merge), fix-vs-feature commit ratio (bug pressure), code churn hotspots (files that change most often — bug magnets), and a dependency vulnerability scan powered by the open <a href="https://osv.dev" target="_blank" rel="noopener">OSV API</a>.
+        </p>
+      </div>
+      <div class="grid2" style="margin-bottom:16px">
+        <div class="card">
+          <div class="minititle">🔀 Pull Request Analytics</div>
+          <div id="prAnalyticsContent"><p style="color:var(--text3);font-size:12px">Click "Run deep scan" to fetch PR data.</p></div>
+        </div>
+        <div class="card">
+          <div class="minititle">🐛 Commit Fix Rate</div>
+          <div id="fixRateContent"><p style="color:var(--text3);font-size:12px">Click "Run deep scan" to analyze commits.</p></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="minititle">🔥 Code Churn Hotspots</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Files changed most frequently across recent commits — high churn often correlates with bugs and design debt.</p>
+        <div id="churnContent"></div>
+      </div>
+      <div class="card">
+        <div class="minititle">🛡️ Dependency Vulnerability Scan <span class="ep-badge" id="osvBadge">—</span></div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Checks parsed dependencies against the OSV.dev database. No API key needed.</p>
+        <div style="margin-bottom:10px"><button class="btn sm" onclick="runOsvScan()" id="osvScanBtn">🛡️ Scan dependencies</button></div>
+        <div id="osvContent"><p style="color:var(--text3);font-size:12px">Not scanned yet.</p></div>
       </div>
     </section>
   </div>
