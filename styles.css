@@ -482,6 +482,14 @@ footer a{color:var(--text2)}
 .rec-btn .rcnt{font-family:var(--mono);color:var(--accent2);font-size:11px}
 .rec-btn.preset-sel{border-color:var(--accent);background:rgba(168,85,247,.12);color:var(--text);box-shadow:0 0 0 1px var(--accent) inset}
 
+/* === Command palette === */
+.cmd-item.sel{background:var(--card2);color:var(--text)}
+body.light .cmd-item{color:#475569}
+body.light .cmd-item.sel{color:#0f172a}
+
+/* === Offline banner === */
+#offlineBanner{animation:fadeInUp .3s ease}
+
 /* === Feature 7: Explain Modal === */
 .explain-content{font-size:14px;line-height:1.75;color:var(--text2)}
 .explain-content p{margin-bottom:10px}
