@@ -61,12 +61,13 @@ Toggle between dark and light themes with persistent preference in localStorage.
 
 ```
 repodest/
-├── index.html          # HTML structure (462 lines)
-├── styles.css          # All CSS styles (694 lines)
-├── app.js              # All JavaScript (2910 lines)
+├── index.html          # HTML structure
+├── styles.css          # All CSS styles
+├── core.js             # Shared pure functions & data (browser + Node)
+├── app.js              # Application logic / DOM code
 ├── sw.js               # Service worker for PWA caching
 ├── manifest.json       # PWA manifest
-├── tests.test.js       # Unit tests (71 tests)
+├── tests.test.js       # Unit tests (72 tests, runs against core.js)
 ├── docs/               # Documentation
 ├── .github/workflows/  # CI/CD pipeline
 ├── LICENSE             # MIT License
@@ -82,19 +83,20 @@ repodest/
 
 ## API Reference
 
-### Core Functions (app.js)
+### Core Functions (core.js — shared between app & tests)
 
 | Function | Description |
 |----------|-------------|
-| `healthCheck(paths, meta)` | Calculate repo health score |
+| `healthCheckPaths(paths, meta)` | Calculate repo health score |
 | `parseRepoInput(v)` | Parse repo URL/owner/repo input |
 | `detectPlatform(input)` | Detect GitHub/GitLab/Bitbucket |
-| `parseTree(apiTree)` | Parse Git tree API response |
 | `asciiTree(paths)` | Render file tree as ASCII art |
-| `generateDigest()` | Generate LLM-ready prompt |
 | `esc(s)` | HTML entity escaping |
 | `fmt(n)` | Number formatting (1.5k, 2.5M) |
 | `fmtSize(b)` | Byte formatting (1.5 KB, 2.0 MB) |
+| `SPDX_MAP` | License database (21 SPDX licenses) |
+
+### App Functions (app.js)
 
 ### Event Handlers
 

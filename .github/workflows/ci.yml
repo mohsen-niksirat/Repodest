@@ -53,7 +53,9 @@ jobs:
           echo "CSS validation OK ✓"
 
       - name: Validate JS syntax
-        run: node -e "require('fs').readFileSync('app.js','utf8'); new Function(require('fs').readFileSync('app.js','utf8')); console.log('JS syntax OK ✓')"
+        run: |
+          node -e "new Function(require('fs').readFileSync('core.js','utf8')); console.log('core.js syntax OK ✓')"
+          node -e "new Function(require('fs').readFileSync('app.js','utf8')); console.log('app.js syntax OK ✓')"
 
   deploy:
     needs: [test, lint]

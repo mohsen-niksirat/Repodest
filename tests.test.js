@@ -1,7 +1,10 @@
 /**
  * Repodest Unit Tests — core analysis functions
  * Run: node tests.test.js
+ * Tests run against core.js (single source of truth shared with app.js)
  */
+
+const core=require('./core.js');
 
 /* ============================================================
    Minimal test runner
@@ -15,88 +18,11 @@ function it(name,fn){
 }
 function expect(val){return{toEqual(e){if(val!==e)throw new Error('Expected '+JSON.stringify(e)+' but got '+JSON.stringify(val))},toBeCloseTo(e,d=2){if(Math.abs(val-e)>Math.pow(10,-d))throw new Error('Expected ~'+e+' but got '+val)},toBeTruthy(){if(!val)throw new Error('Expected truthy, got '+JSON.stringify(val))},toBeFalsy(){if(val)throw new Error("Expected falsy, got "+JSON.stringify(val))},toContain(s){if(!String(val).includes(s))throw new Error('Expected '+JSON.stringify(val)+' to contain '+JSON.stringify(s))},toHaveLength(n){if(val.length!==n)throw new Error('Expected length '+n+' but got '+val.length)}}}
 
-/* ============================================================
-   Extract pure functions from app.js (DOM-free subset)
-   ============================================================ */
-function esc(s){return String(s==null?'':s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]))}
-function fmt(n){n=Number(n)||0;if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'k';return String(n)}
-function fmtSize(b){b=Number(b)||0;if(b>=1048576)return(b/1048576).toFixed(1)+' MB';if(b>=1024)return(b/1024).toFixed(1)+' KB';return b+' B'}
-function timeAgo(iso){if(!iso)return'unknown';const d=(Date.now()-new Date(iso))/864e5;if(d<1)return'today';if(d<2)return'yesterday';if(d<30)return Math.floor(d)+'d ago';if(d<365)return Math.floor(d/30)+'mo ago';return Math.floor(d/365)+'y ago'}
-const LANG_COLORS={'JavaScript':'#f1e05a','TypeScript':'#3178c6','Python':'#3572A5','HTML':'#e34c26','CSS':'#563d7c'};
-const PALETTE=['#a855f7','#22d3ee','#f1e05a','#3178c6','#3572A5'];
-function langColor(l){return LANG_COLORS[l]||PALETTE[((l||'').length*7)%PALETTE.length]}
-function extOf(p){const b=(p||'').split('/').pop();const i=b.lastIndexOf('.');return i>0?b.slice(i+1).toLowerCase():b.toLowerCase()}
-const TEXT_EXT=new Set(['js','ts','jsx','tsx','py','html','css','md','json','yml','yaml','toml','xml','sh','go','rs','rb','java']);
-const BINARY_EXT=new Set(['png','jpg','jpeg','gif','webp','zip','tar','gz','pdf','exe','dll']);
-function isText(f){const e=extOf(f.path||'');if(TEXT_EXT.has(e))return true;if(!(f.path||'').includes('/'))return /^(dockerfile|makefile|license|readme|changelog|contributing|code_of_conduct|notice|vagrantfile|procfile|gemfile|rakefile|justfile)/i.test(f.path||'');return false}
-function isLock(f){return /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|poetry\.lock|Cargo\.lock|composer\.lock|Gemfile\.lock|go\.sum|npm-shrinkwrap\.json|flake\.lock)$/i.test(f.path||'')}
-
-function parseRepoInput(v){
-  if(!v)return null;
-  v=v.trim().replace(/\.git+$/,'');
-  let m=v.match(/github\.com[\/:]([^\s\/]+)\/([^\s\/#?]+)/i);
-  if(m)return{owner:m[1],repo:m[2],platform:'github'};
-  m=v.match(/gitlab\.com\/([^\s\/]+)\/([^\s\/#?]+)/i);
-  if(m)return{owner:m[1],repo:m[2],platform:'gitlab'};
-  m=v.match(/bitbucket\.org\/([^\s\/]+)\/([^\s\/#?]+)/i);
-  if(m)return{owner:m[1],repo:m[2],platform:'bitbucket'};
-  m=v.match(/^([\w.-]+)\/([\w.-]+)$/);
-  if(m)return{owner:m[1],repo:m[2],platform:'github'};
-  return null;
-}
-
-function detectPlatform(input){
-  input=input||'';input=input.trim();
-  if(/gitlab\.com/i.test(input))return 'gitlab';
-  if(/bitbucket\.org/i.test(input))return 'bitbucket';
-  return 'github';
-}
-
-/* asciiTree */
-function asciiTree(paths){
-  const root={};
-  for(const p of paths){let n=root;for(const part of (p||'').split('/')){n[part]=n[part]||{};n=n[part]}}
-  const lines=[];
-  (function walk(node,prefix){
-    const keys=Object.keys(node).sort((a,b)=>{
-      const aD=!!Object.keys(node[a]).length,bD=!!Object.keys(node[b]).length;
-      if(aD!==bD)return aD?-1:1;
-      return (a||'').localeCompare(b||'');
-    });
-    keys.forEach((k,i)=>{
-      const last=i===keys.length-1;
-      lines.push(prefix+(last?'└── ':'├── ')+k+(Object.keys(node[k]).length?'/':''));
-      walk(node[k],prefix+(last?'    ':'│   '));
-    });
-  })(root,'');
-  return lines.join('\n');
-}
-
-/* SPDX License Map */
-const SPDX_MAP={
-  'MIT':{name:'MIT License',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license'],lims:['Liability','Warranty']},
-  'GPL-3.0':{name:'GNU GPL v3',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Disclose source','Same license','Include install instructions'],lims:['Liability','Warranty']},
-  'Apache-2.0':{name:'Apache License 2.0',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Include notice'],lims:['Liability','Trademark use','Warranty']},
-};
-
-/* Health check (standalone version for testing) */
-function healthCheck(paths,m){
-  const now=Date.now();
-  const items=[
-    {n:'Description',ok:!!(m&&m.description),w:5},
-    {n:'Topics',ok:m&&(m.topics||[]).length>0,w:10},
-    {n:'License',ok:!!(m&&m.license),w:15},
-    {n:'README',ok:paths.some(p=>/(^|\/)readme/i.test(p)),w:15},
-    {n:'.gitignore',ok:paths.some(p=>/(^|\/)\.gitignore$/i.test(p)),w:5},
-    {n:'CI workflows',ok:paths.some(p=>p.startsWith('.github/workflows/')),w:15},
-    {n:'Tests',ok:paths.some(p=>/(^|\/)(tests?|spec|__tests__)(\/|$)/i.test(p)||/\.(test|spec)\.[a-z]+$/i.test(p)),w:15},
-    {n:'Docs folder',ok:paths.some(p=>/(^|\/)docs?\//i.test(p)),w:5},
-    {n:'Contributing guide',ok:paths.some(p=>/contribut/i.test(p)),w:5},
-    {n:'Active (≤6 mo)',ok:m&&(now-new Date(m.pushed_at))<180*864e5,w:10}
-  ];
-  const score=items.reduce((a,c)=>a+(c.ok?c.w:0),0);
-  return{items,score};
-}
+/* Bind the pure functions under test */
+const esc=core.esc,fmt=core.fmt,fmtSize=core.fmtSize,timeAgo=core.timeAgo;
+const langColor=core.langColor,extOf=core.extOf,isText=core.isText,isLock=core.isLock;
+const parseRepoInput=core.parseRepoInput,detectPlatform=core.detectPlatform;
+const asciiTree=core.asciiTree,SPDX_MAP=core.SPDX_MAP,healthCheck=core.healthCheckPaths;
 
 /* ============================================================
    Tests
@@ -227,7 +153,7 @@ describe('detectPlatform() — platform detection', () => {
   it('defaults to github for empty input', () => expect(detectPlatform('')).toEqual('github'));
 });
 
-describe('healthCheck() — repository health scoring', () => {
+describe('healthCheckPaths() — repository health scoring', () => {
   it('gives high score for well-maintained repo', () => {
     const paths=['README.md','.gitignore','.github/workflows/ci.yml','tests/app.test.js','docs/api.md','CONTRIBUTING.md'];
     const m={description:'A great repo',topics:['web','js'],license:{spdx_id:'MIT'},pushed_at:new Date().toISOString()};
@@ -292,6 +218,9 @@ describe('SPDX License Map', () => {
   });
   it('has Apache-2.0 license info', () => {
     if(SPDX_MAP["Apache-2.0"].conds.length<=0)throw new Error("Expected conds length > 0");
+  });
+  it('covers 20+ licenses', () => {
+    if(Object.keys(SPDX_MAP).length<20)throw new Error('Expected 20+ SPDX entries, got '+Object.keys(SPDX_MAP).length);
   });
 });
 
