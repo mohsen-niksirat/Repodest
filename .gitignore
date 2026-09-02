@@ -37,3 +37,6 @@ coverage/
 *.tgz
 *.tar.gz
 .cache/
+
+# Tool artifacts
+.freebuff/
