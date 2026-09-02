@@ -2908,3 +2908,64 @@ if(typeof _origSwitchTab==='function'){
     if(panel){panel.setAttribute('tabindex','0');panel.focus()}
   };
 }
+
+/* ============================================================
+   Enhanced File Tree Features
+   ============================================================ */
+
+/* Copy tree as plain text (Gitingest-style) */
+function copyTreeAsText(){
+  const paths=Array.from(FILEMAP.keys()).sort();
+  if(!paths.length){toast('No files to copy','err');return}
+  const tree=asciiTree(paths);
+  (navigator.clipboard?navigator.clipboard.writeText(tree):Promise.reject()).then(()=>{
+    toast('Tree copied to clipboard ('+paths.length+' files)','ok');
+  }).catch(()=>toast('Copy failed','err'));
+}
+
+/* Filter state */
+let filterHidden=true, filterBinary=true, searchText='';
+
+function toggleFilterHidden(){
+  filterHidden=!filterHidden;
+  const btn=$('#filterHiddenBtn');
+  if(btn)btn.style.opacity=filterHidden?'0.5':'1';
+  renderFiles();
+  toast(filterHidden?'Hidden files hidden':'Hidden files shown','ok');
+}
+
+function toggleFilterBinary(){
+  filterBinary=!filterBinary;
+  const btn=$('#filterBinaryBtn');
+  if(btn)btn.style.opacity=filterBinary?'0.5':'1';
+  renderFiles();
+  toast(filterBinary?'Binary files hidden':'Binary files shown','ok');
+}
+
+function filterTree(val){
+  searchText=(val||'').toLowerCase();
+  renderFiles();
+}
+
+/* Override renderFiles to support filtering */
+const _origRenderFiles=renderFiles;
+renderFiles=function(){
+  _origRenderFiles();
+  if(filterHidden||filterBinary||searchText){
+    $$('#tree .trow').forEach(row=>{
+      const path=row.dataset.path||row.querySelector('.fname')?.textContent||'';
+      const isHidden=path.split('/').some(p=>p.startsWith('.')&&p!=='.');
+      const isBinary=path.split('.').pop()&&BINARY_EXT.has(path.split('.').pop().toLowerCase());
+      const matchesSearch=!searchText||path.toLowerCase().includes(searchText);
+      let show=true;
+      if(filterHidden&&isHidden)show=false;
+      if(filterBinary&&isBinary)show=false;
+      if(!matchesSearch)show=false;
+      row.style.display=show?'':'none';
+    });
+    /* Update info text */
+    const visible=$$('#tree .trow:not([style*="display: none"])').length;
+    const info=$('#treeInfo');
+    if(info)info.textContent=visible+' visible · '+FILEMAP.size+' total';
+  }
+}

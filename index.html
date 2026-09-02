@@ -147,6 +147,11 @@
     </div>
 
     <section class="panel active" id="p-overview">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Health Score</b> rates the repository on 10 criteria: description, topics, license, README, .gitignore, CI workflows, tests, docs, contributing guide, and recent activity. A score of <b>80+</b> means excellent project hygiene. Use the <b>Files</b> tab to select code, then <b>Digest</b> to generate an LLM-ready prompt.
+        </p>
+      </div>
       <div class="hgrid">
         <div class="card scorebox">
           <div class="ring" id="scoreRing">
@@ -203,8 +208,13 @@
     </section>
 
     <section class="panel" id="p-languages">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Languages</b> shows the byte-accurate composition of the codebase. Below, <b>Detected stack</b> lists manifest files (package.json, requirements.txt, etc.) and their dependencies. The doughnut chart visualizes the language mix.
+        </p>
+      </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">Language breakdown (bytes)</div>
+        <div class="minititle">📊 Language breakdown (bytes)</div>
         <div class="langbar" id="langBar"></div>
         <div class="grid2">
           <div id="langRows"></div>
@@ -219,27 +229,43 @@
     </section>
 
     <section class="panel" id="p-files">
+      <div class="card" style="margin-bottom:16px;background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>How to use the file tree:</b> Browse the repository structure below. <b>Tick checkboxes</b> to select files for the LLM Digest, then go to the <b>Digest</b> tab to generate a prompt. Use <b>Expand/Collapse</b> to navigate, and the toolbar buttons to copy the tree as text or filter files.
+        </p>
+      </div>
       <div class="filestats" id="fileStats"></div>
       <div class="grid2" style="margin-bottom:16px">
         <div class="card">
-          <div class="minititle">Type distribution</div>
+          <div class="minititle">📊 Type distribution</div>
+          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Shows how many files of each type exist in the repo.</p>
           <div id="extRows"></div>
         </div>
         <div class="card bigfiles">
-          <div class="minititle">Heaviest files</div>
+          <div class="minititle">📦 Heaviest files</div>
+          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">The largest files by size — good candidates to exclude from digests.</p>
           <div id="bigFiles"></div>
         </div>
       </div>
       <div class="card">
+        <div class="minititle">📁 File tree</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Interactive tree with checkboxes. Select files → go to Digest tab → generate an LLM-ready prompt.</p>
         <div class="tree-tools">
-          <button class="btn ghost sm" onclick="expandAll(true)">Expand</button>
-          <button class="btn ghost sm" onclick="expandAll(false)">Collapse</button>
+          <button class="btn ghost sm" onclick="expandAll(true)">📂 Expand all</button>
+          <button class="btn ghost sm" onclick="expandAll(false)">📁 Collapse all</button>
+          <button class="btn ghost sm" onclick="selectTextAll()" title="Select all text files for digest">✓ Select text</button>
+          <button class="btn ghost sm" onclick="clearSel()" title="Clear all selections">✕ Clear</button>
+          <button class="btn ghost sm" onclick="copyTreeAsText()" title="Copy tree structure as plain text">📋 Copy tree</button>
+          <button class="btn ghost sm" onclick="toggleFilterHidden()" id="filterHiddenBtn" title="Show/hide hidden files (dotfiles)">👁 Hidden</button>
+          <button class="btn ghost sm" onclick="toggleFilterBinary()" id="filterBinaryBtn" title="Show/hide binary files">🧊 Binary</button>
+          <input type="text" id="treeSearch" placeholder="🔍 Filter files…" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;width:160px;outline:none" oninput="filterTree(this.value)" aria-label="Filter files in tree">
           <span class="info" id="treeInfo"></span>
         </div>
         <div class="tree" id="tree"></div>
       </div>
       <div class="card" style="margin-top:16px" id="endpointsCard">
         <div class="minititle">🔌 API Endpoints <span class="ep-badge" id="epBadge">0</span></div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Detected API routes from file paths (Next.js, Express, Flask patterns).</p>
         <div id="endpointsContent"></div>
       </div>
     </section>
@@ -247,6 +273,11 @@
     <section class="panel" id="p-digest">
       <div class="digest-layout">
         <div>
+          <div class="card" style="margin-bottom:16px;background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.2)">
+            <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+              <b>LLM Digest</b> packs selected files into a single prompt you can paste into ChatGPT, Claude, or Gemini. Go to <b>Files</b> tab → tick checkboxes → come back here → click <b>Generate</b>. The prompt includes repo metadata, README, file tree, and full file contents. Binary files and lockfiles are skipped automatically.
+            </p>
+          </div>
           <div class="card" style="margin-bottom:16px">
             <div class="minititle">What goes into the prompt</div>
             <label class="optrow"><input type="checkbox" id="optTree" checked> File tree of selected files</label>
@@ -288,8 +319,13 @@
     </section>
 
     <section class="panel" id="p-activity">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Activity</b> shows the project's pulse: commit frequency over 52 weeks, top contributors by commit count, recent commits, star history, bus factor (how many people could walk away before the project stalls), and release timeline.
+        </p>
+      </div>
       <div class="card actchart" style="margin-bottom:16px">
-        <div class="minititle">Commit activity — last 52 weeks</div>
+        <div class="minititle">📊 Commit activity — last 52 weeks</div>
         <canvas id="actChart" height="90"></canvas>
       </div>
       <div class="card" style="margin-bottom:16px">
@@ -320,6 +356,11 @@
     </section>
 
     <section class="panel" id="p-fun">
+      <div class="card" style="margin-bottom:16px;background:rgba(236,72,153,.06);border-color:rgba(236,72,153,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Fun Mode</b> gives your repo a personality based on its dominant language, a data-driven roast of its quirks, and unlockable trophies for things like having tests, CI, a license, or 1,000+ stars. Share your card on social media!
+        </p>
+      </div>
       <div class="card persona" style="margin-bottom:16px">
         <div class="pi" id="persIcon"></div>
         <div>
@@ -339,9 +380,13 @@
     </section>
 
     <section class="panel" id="p-deps">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Deps</b> shows an interactive force-directed graph of dependencies parsed from manifest files (package.json, requirements.txt, Cargo.toml, go.mod, etc.). Hover over nodes to see package names. Each color represents a different ecosystem.
+        </p>
+      </div>
       <div class="card">
         <div class="minititle">🔗 Dependency Graph</div>
-        <p style="color:var(--text3);font-size:12px;margin-bottom:10px">Force-directed graph of dependencies parsed from manifest files. Click a node for details.</p>
         <div class="dep-graph-wrap" id="depGraphWrap">
           <canvas id="depGraphCanvas"></canvas>
           <div class="dep-graph-tooltip" id="depGraphTooltip"></div>
