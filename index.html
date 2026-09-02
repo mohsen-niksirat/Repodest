@@ -1111,7 +1111,7 @@ function renderBranchTagUI(){
   const bd=$('#branchDropdown');
   bd.innerHTML=S.branches.map(b=>'<option value="'+esc(b.name||'')+'"'+(b.name===S.currentBranch?' selected':'')+'>'+esc(b.name||'')+'</option>').join('');
   const td=$('#tagDropdown');
-  td.innerHTML='<option value="">—</option>'+S.tags.map(t=>'<option value="'+esc(t.name||'')">'+esc(t.name||'')+'</option>').join('');
+  td.innerHTML='<option value="">—</option>'+S.tags.map(t=>'<option value="'+esc(t.name||'')+'">'+esc(t.name||'')+'</option>').join('');
 }
 
 async function onBranchChange(branch){
