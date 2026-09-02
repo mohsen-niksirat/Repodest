@@ -7,13 +7,13 @@
 <meta name="description" content="Paste any GitHub repo or profile. Repodest turns it into a health score, language breakdown, file explorer, commit insights, fun trophies — and an LLM-ready digest.">
 <meta property="og:title" content="Repodest — X-ray for GitHub repos">
 <meta property="og:description" content="Health score, language breakdown, file explorer, commit insights, trophies — and an LLM-ready digest for any GitHub repo.">
+<meta property="og:image" content="">
 <meta name="theme-color" content="#0a0a12">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -276,6 +276,60 @@ footer a{color:var(--text2)}
 #shareCard .sc-foot{display:flex;justify-content:space-between;align-items:center;color:#64748b;font-size:13px;font-family:'JetBrains Mono',monospace}
 #shareCard .sc-badge{background:linear-gradient(135deg,#7c3aed,#a855f7);padding:8px 18px;border-radius:99px;color:#fff;font-weight:800;font-size:14px}
 
+/* === NEW: Compare Mode === */
+.compare-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.compare-wrap{grid-template-columns:1fr}}
+.compare-side{min-width:0}
+.compare-side .card{height:100%}
+.compare-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.compare-header .ch-label{font-size:13px;color:var(--text2);font-weight:600}
+
+/* === NEW: Platform chip === */
+.platform-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.platform-chip.github{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:var(--text)}
+.platform-chip.gitlab{background:rgba(226,67,41,.15);border:1px solid rgba(226,67,41,.4);color:#fc6d26}
+.platform-chip.bitbucket{background:rgba(0,82,204,.15);border:1px solid rgba(0,82,204,.4);color:#4d9aff}
+
+/* === NEW: Branch/Tag selector === */
+.branch-sel{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}
+.branch-sel select{padding:7px 12px;border-radius:10px;background:var(--card2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;cursor:pointer;max-width:220px}
+.branch-sel select:focus{border-color:var(--accent)}
+.branch-sel label{font-size:11.5px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.8px}
+
+/* === NEW: License analysis === */
+.license-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+.license-col h4{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.license-col ul{list-style:none;padding:0}
+.license-col li{font-size:12.5px;color:var(--text2);padding:4px 0;display:flex;align-items:center;gap:6px}
+.license-col li::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.license-col.perm li::before{background:var(--green)}
+.license-col.cond li::before{background:var(--yellow)}
+.license-col.lim li::before{background:var(--red)}
+
+/* === NEW: Recent history === */
+.history-section{margin-top:56px}
+.history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:14px}
+.hcard{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--rs);background:var(--card);border:1px solid var(--line);cursor:pointer;transition:.2s}
+.hcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.hcard img{width:36px;height:36px;border-radius:10px;flex-shrink:0}
+.hcard .hi{flex:1;min-width:0}
+.hcard .hi .hn{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hcard .hi .hm{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+.hcard .hs{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent2);flex-shrink:0}
+
+/* === NEW: Export buttons === */
+.export-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+
+/* === NEW: LLM buttons === */
+.llm-buttons{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.llm-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s;text-decoration:none}
+.llm-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.llm-btn .llm-icon{font-size:16px}
+
+/* === NEW: Star history embed === */
+.star-history-embed{width:100%;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden;background:rgba(255,255,255,.02);min-height:300px}
+.star-history-embed iframe{width:100%;height:300px;border:none}
+
 @media print{
   body>*{display:none!important}
   #printReport{display:block!important}
@@ -298,6 +352,7 @@ footer a{color:var(--text2)}
   main{padding:0 16px 60px}
   .repo-hero .avatar{width:52px;height:52px}
   .statrow{gap:14px}
+  .compare-wrap{grid-template-columns:1fr}
 }
 </style>
 </head>
@@ -335,6 +390,15 @@ footer a{color:var(--text2)}
     </div>
   </section>
 
+  <!-- Recent History Section -->
+  <section class="history-section" id="historySection" style="display:none">
+    <div class="minititle" style="text-align:center">🕘 Recent repos</div>
+    <div class="history-grid" id="historyGrid"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn ghost sm" onclick="clearHistory()">Clear history</button>
+    </div>
+  </section>
+
   <div class="steps">
     <div class="step"><div class="n">1</div><h4>Paste</h4><p>Any repo URL, <span style="font-family:var(--mono)">owner/repo</span>, or username.</p></div>
     <div class="step"><div class="n">2</div><h4>Explore</h4><p>Health score, languages, files, activity — all in one dashboard.</p></div>
@@ -364,6 +428,24 @@ footer a{color:var(--text2)}
     <button class="btn ghost sm" onclick="tweet()" title="Tweet the result">🐦</button>
     <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report">📄 Report</button>
     <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here">🔗 Link</button>
+    <!-- NEW: Compare mode button -->
+    <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo">⚖️ Compare</button>
+    <!-- NEW: Export buttons -->
+    <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON">⬇️ JSON</button>
+    <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV">⬇️ CSV</button>
+  </div>
+
+  <!-- NEW: Compare panel -->
+  <div id="comparePanel" class="hidden" style="margin-bottom:16px">
+    <div class="card">
+      <div class="compare-header">
+        <span class="ch-label">⚖️ Compare mode</span>
+        <div class="tb-input" style="flex:1;min-width:200px"><input id="compareInput" placeholder="owner/repo to compare with…" spellcheck="false" onkeydown="if(event.key==='Enter')loadCompare()"></div>
+        <button class="btn sm" onclick="loadCompare()">Load</button>
+        <button class="btn ghost sm" onclick="toggleCompare()">✕ Close</button>
+      </div>
+      <div id="compareContent"></div>
+    </div>
   </div>
 
   <div id="loadingView" class="loading"><div class="spinner"></div><p id="loadText">Fetching repository…</p></div>
@@ -372,6 +454,14 @@ footer a{color:var(--text2)}
 
   <div id="dash" style="display:none">
     <div class="card repo-hero" id="repoHero"></div>
+
+    <!-- NEW: Branch/Tag selector -->
+    <div class="branch-sel" id="branchSel" style="display:none">
+      <label>Branch:</label>
+      <select id="branchDropdown" onchange="onBranchChange(this.value)"></select>
+      <label>Tag:</label>
+      <select id="tagDropdown" onchange="onTagChange(this.value)"><option value="">—</option></select>
+    </div>
 
     <div class="tabs" id="tabs">
       <button class="tab active" data-tab="overview">🩺 Overview</button>
@@ -405,6 +495,11 @@ footer a{color:var(--text2)}
           <div class="minititle">Trophies preview</div>
           <div class="achgrid" id="achPreview"></div>
         </div>
+      </div>
+      <!-- NEW: License Analysis -->
+      <div class="card" style="margin-top:16px" id="licenseCard">
+        <div class="minititle">📜 License analysis</div>
+        <div id="licenseAnalysis"></div>
       </div>
     </section>
 
@@ -473,6 +568,11 @@ footer a{color:var(--text2)}
             <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled>📋 Copy</button>
             <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled>⬇️ Download .md</button>
           </div>
+          <!-- NEW: LLM buttons (shown after digest generation) -->
+          <div class="llm-buttons" id="llmButtons" style="display:none">
+            <a class="llm-btn" id="chatgptBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🤖</span> Open in ChatGPT</a>
+            <a class="llm-btn" id="claudeBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🧠</span> Open in Claude</a>
+          </div>
         </div>
       </div>
     </section>
@@ -481,6 +581,12 @@ footer a{color:var(--text2)}
       <div class="card actchart" style="margin-bottom:16px">
         <div class="minititle">Commit activity — last 52 weeks</div>
         <canvas id="actChart" height="90"></canvas>
+      </div>
+      <!-- NEW: Star History Chart -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="minititle">⭐ Star history</div>
+        <div class="star-history-embed" id="starHistoryEmbed"></div>
+        <p style="color:var(--text3);font-size:11px;margin-top:8px">Powered by <a href="https://star-history.com" target="_blank" rel="noopener">star-history.com</a></p>
       </div>
       <div class="grid2">
         <div class="card">
@@ -538,9 +644,12 @@ footer a{color:var(--text2)}
 
 <script>
 'use strict';
+/* ============================================================
+   Utility helpers
+   ============================================================ */
 const $=s=>document.querySelector(s),$$=s=>Array.from(document.querySelectorAll(s));
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const S={repo:null,langs:null,tree:null,contribs:null,commits:null,activity:null,sel:new Set(),digestText:'',charts:{},user:null,userRepos:null};
+const S={repo:null,langs:null,tree:null,contribs:null,commits:null,activity:null,sel:new Set(),digestText:'',charts:{},user:null,userRepos:null,platform:'github',branches:[],tags:[],currentBranch:null,compareData:null};
 const FILEMAP=new Map(),DIRMAP=new Map(),NODEMAP=new Map();
 const TEXT_EXT=new Set(['js','ts','jsx','tsx','mjs','cjs','py','pyw','html','htm','css','scss','sass','less','md','mdx','txt','rst','json','json5','yml','yaml','toml','xml','svg','sh','bash','zsh','bat','cmd','ps1','psm1','c','h','cpp','cc','cxx','hpp','hh','cs','java','kt','kts','go','rs','rb','php','swift','m','mm','sql','vue','svelte','astro','lua','r','rmd','jl','dart','gradle','kts','properties','ini','cfg','conf','env','coffee','elm','ex','exs','erl','hrl','hs','ml','fs','fsx','clj','cljs','groovy','pl','pm','t','v','vhd','sv','tf','tfvars','proto','graphql','gql','prisma','cmake','mk','nix','diff','patch','log','csv','tsv','editorconfig','gitignore','gitattributes','dockerignore','npmrc','nvmrc','babelrc','eslintrc','prettierrc']);
 const BINARY_EXT=new Set(['png','jpg','jpeg','gif','webp','bmp','ico','icns','tiff','woff','woff2','ttf','otf','eot','mp3','mp4','avi','mov','mkv','webm','wav','flac','ogg','zip','tar','gz','tgz','bz2','xz','rar','7z','pdf','doc','docx','xls','xlsx','ppt','pptx','exe','dll','so','dylib','bin','dat','class','jar','war','ear','pyc','pyo','o','obj','lib','a','iso','img','dmg','deb','rpm','apk','msi','wasm','node','pdb','db','sqlite','sqlite3','parquet','pickle','pkl','h5','hdf5','npz','npy','pt','pth','onnx','safetensors']);
@@ -549,10 +658,640 @@ const PALETTE=['#a855f7','#22d3ee','#f1e05a','#3178c6','#3572A5','#e34c26','#563
 const MANIFESTS=[{f:'package.json',t:'json',label:'npm'},{f:'requirements.txt',t:'lines',label:'pip'},{f:'pyproject.toml',t:'toml',label:'pyproject'},{f:'Cargo.toml',t:'toml',label:'Cargo'},{f:'go.mod',t:'gomod',label:'Go modules'},{f:'composer.json',t:'json',label:'Composer'},{f:'Gemfile',t:'gemfile',label:'Bundler'},{f:'pom.xml',t:'pom',label:'Maven'}];
 let ROASTS=[];
 
+/* ============================================================
+   Improvement #12: Lazy-loaded external libraries
+   ============================================================ */
+let chartJsLoaded=false, html2canvasLoaded=false;
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src=src;s.defer=true;
+    s.onload=resolve;s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+async function ensureChartJs(){
+  if(chartJsLoaded)return;
+  await loadScript('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js');
+  chartJsLoaded=true;
+}
+async function ensureHtml2canvas(){
+  if(html2canvasLoaded)return;
+  await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+  html2canvasLoaded=true;
+}
+
+/* ============================================================
+   Improvement #8: SPDX License Analysis
+   ============================================================ */
+const SPDX_MAP={
+  'MIT':{name:'MIT License',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license'],lims:['Liability','Warranty']},
+  'Apache-2.0':{name:'Apache License 2.0',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Include notice'],lims:['Liability','Trademark use','Warranty']},
+  'GPL-2.0':{name:'GNU GPL v2',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','State changes','Disclose source','Same license'],lims:['Liability','Warranty']},
+  'GPL-2.0-only':{name:'GNU GPL v2 only',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','State changes','Disclose source','Same license'],lims:['Liability','Warranty']},
+  'GPL-3.0':{name:'GNU GPL v3',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Disclose source','Same license','Include install instructions'],lims:['Liability','Warranty']},
+  'GPL-3.0-only':{name:'GNU GPL v3 only',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Disclose source','Same license','Include install instructions'],lims:['Liability','Warranty']},
+  'LGPL-2.1':{name:'GNU LGPL v2.1',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Disclose source','Same license (library)'],lims:['Liability','Warranty']},
+  'LGPL-3.0':{name:'GNU LGPL v3',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','Disclose source','Same license (library)','Include install instructions'],lims:['Liability','Warranty']},
+  'BSD-2-Clause':{name:'BSD 2-Clause',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license'],lims:['Liability','Warranty']},
+  'BSD-3-Clause':{name:'BSD 3-Clause',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license','No endorsement'],lims:['Liability','Warranty']},
+  'MPL-2.0':{name:'Mozilla Public License 2.0',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','Disclose source','Same license (file)'],lims:['Liability','Warranty','Trademark use']},
+  'ISC':{name:'ISC License',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license'],lims:['Liability','Warranty']},
+  'Unlicense':{name:'The Unlicense',perms:['Commercial use','Modification','Distribution','Private use'],conds:[],lims:['Liability','Warranty']},
+  'CC0-1.0':{name:'CC0 1.0 Universal',perms:['Commercial use','Modification','Distribution','Private use'],conds:[],lims:['Liability','Warranty','Patent use']},
+  'AGPL-3.0':{name:'GNU AGPL v3',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Disclose source','Same license','Network use is distribution','Include install instructions'],lims:['Liability','Warranty']},
+  'AGPL-3.0-only':{name:'GNU AGPL v3 only',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','State changes','Disclose source','Same license','Network use is distribution','Include install instructions'],lims:['Liability','Warranty']},
+  'EPL-2.0':{name:'Eclipse Public License 2.0',perms:['Commercial use','Modification','Distribution','Patent use','Private use'],conds:['Include copyright','Disclose source','Same license'],lims:['Liability','Warranty']},
+  '0BSD':{name:'BSD Zero Clause',perms:['Commercial use','Modification','Distribution','Private use'],conds:[],lims:['Liability','Warranty']},
+  'WTFPL':{name:'Do What The F*ck You Want To',perms:['Commercial use','Modification','Distribution','Private use'],conds:[],lims:[]},
+  'Zlib':{name:'zlib License',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','State changes'],lims:['Liability','Warranty']},
+  'BSL-1.0':{name:'Boost Software License 1.0',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license'],lims:['Liability','Warranty']},
+};
+
+function renderLicenseAnalysis(){
+  const m=S.repo;
+  const el=$('#licenseAnalysis');
+  const card=$('#licenseCard');
+  if(!m.license||!m.license.spdx_id){
+    card.style.display='none';
+    return;
+  }
+  card.style.display='';
+  const spdx=m.license.spdx_id;
+  const info=SPDX_MAP[spdx];
+  if(!info){
+    el.innerHTML='<div class="kv"><span>License</span><b>'+esc(m.license.name||spdx)+'</b></div><div class="kv"><span>SPDX ID</span><b>'+esc(spdx)+'</b></div><p style="color:var(--text3);font-size:12px;margin-top:10px">Detailed analysis not available for this license type.</p>';
+    return;
+  }
+  el.innerHTML=
+    '<div class="kv"><span>License</span><b>'+esc(info.name)+'</b></div>'+
+    '<div class="kv"><span>SPDX ID</span><b>'+esc(spdx)+'</b></div>'+
+    '<div class="license-grid">'+
+      '<div class="license-col perm"><h4>✅ Permissions</h4><ul>'+info.perms.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul></div>'+
+      '<div class="license-col cond"><h4>⚠️ Conditions</h4><ul>'+(info.conds.length?info.conds.map(c=>'<li>'+esc(c)+'</li>').join(''):'<li style="color:var(--text3)">None</li>')+'</ul></div>'+
+      '<div class="license-col lim"><h4>🚫 Limitations</h4><ul>'+info.lims.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul></div>'+
+    '</div>';
+}
+
+/* ============================================================
+   Improvement #3: Multi-platform support (GitLab, Bitbucket)
+   ============================================================ */
+function detectPlatform(input){
+  input=input.trim();
+  if(/gitlab\.com/i.test(input))return 'gitlab';
+  if(/bitbucket\.org/i.test(input))return 'bitbucket';
+  return 'github';
+}
+
+function parseRepoInput(v){
+  v=v.trim().replace(/\.git+$/,'');
+  /* GitHub */
+  let m=v.match(/github\.com[\/:]([^\/\s]+)\/([^\/#?\s]+)/i);
+  if(m)return{owner:m[1],repo:m[2],platform:'github'};
+  /* GitLab */
+  m=v.match(/gitlab\.com\/([^\/\s]+)\/([^\/#?\s]+)/i);
+  if(m)return{owner:m[1],repo:m[2],platform:'gitlab'};
+  /* Bitbucket */
+  m=v.match(/bitbucket\.org\/([^\/\s]+)\/([^\/#?\s]+)/i);
+  if(m)return{owner:m[1],repo:m[2],platform:'bitbucket'};
+  /* owner/repo shorthand (defaults to GitHub) */
+  m=v.match(/^([\w.-]+)\/([\w.-]+)$/);
+  if(m)return{owner:m[1],repo:m[2],platform:'github'};
+  return null;
+}
+
+/* GitLab API adapter */
+async function gitlabApi(path){
+  const r=await fetch('https://gitlab.com/api/v4'+path);
+  if(r.status===404)throw new Error('NOT_FOUND');
+  if(!r.ok)throw new Error('HTTP_'+r.status);
+  return r.json();
+}
+
+/* Bitbucket API adapter */
+async function bitbucketApi(path){
+  const r=await fetch('https://api.bitbucket.org/2.0'+path);
+  if(r.status===404)throw new Error('NOT_FOUND');
+  if(!r.ok)throw new Error('HTTP_'+r.status);
+  return r.json();
+}
+
+/* Normalize GitLab project to our internal structure */
+function normalizeGitlabProject(p){
+  return{
+    full_name:p.path_with_namespace,
+    name:p.name,
+    owner:{login:p.namespace?.full_path||p.owner?.username||'',avatar_url:p.avatar_url||'',html_url:p.owner?.web_url||''},
+    html_url:p.web_url,
+    description:p.description,
+    fork:!!p.forked_from_project,
+    created_at:p.created_at,
+    pushed_at:p.last_activity_at,
+    updated_at:p.last_activity_at,
+    homepage:p.web_url,
+    size:Math.round((p.statistics?.repository_size||0)/1024),
+    stargazers_count:p.star_count||0,
+    watchers_count:p.star_count||0,
+    forks_count:p.forks_count||0,
+    open_issues_count:p.open_issues_count||0,
+    language:p.language||null,
+    license:p.license?{spdx_id:p.license.key?.toUpperCase(),name:p.license.name}:null,
+    topics:p.topics||[],
+    default_branch:p.default_branch||'main',
+    archived:p.archived||false,
+    _platform:'gitlab',
+    _id:p.id
+  };
+}
+
+/* Normalize Bitbucket repo to our internal structure */
+function normalizeBitbucketRepo(r){
+  const owner=r.owner?.display_name||r.owner?.username||'';
+  return{
+    full_name:r.full_name,
+    name:r.name,
+    owner:{login:r.owner?.username||'',avatar_url:r.owner?.links?.avatar?.href||'',html_url:r.owner?.links?.html?.href||''},
+    html_url:r.links?.html?.href||'',
+    description:r.description,
+    fork:!!r.parent,
+    created_at:r.created_on,
+    pushed_at:r.updated_on,
+    updated_at:r.updated_on,
+    homepage:r.website||'',
+    size:Math.round((r.size||0)/1024),
+    stargazers_count:0,
+    watchers_count:0,
+    forks_count:0,
+    open_issues_count:0,
+    language:r.language||null,
+    license:r.license?{spdx_id:r.license.spdx_id||r.license.key,name:r.license.name}:null,
+    topics:[],
+    default_branch:r.mainbranch?.name||'main',
+    archived:false,
+    _platform:'bitbucket'
+  };
+}
+
+/* Fetch repo data for any platform */
+async function fetchRepoData(owner,repo,platform){
+  if(platform==='gitlab'){
+    const encoded=encodeURIComponent(owner+'/'+repo);
+    const p=await gitlabApi('/projects/'+encoded);
+    const langs=await gitlabApi('/projects/'+p.id+'/languages').catch(()=>({}));
+    let tree=null;
+    try{
+      const treeData=await gitlabApi('/projects/'+p.id+'/repository/tree?recursive=true&per_page=100&ref='+(p.default_branch||'main'));
+      tree={tree:treeData.map(f=>({path:f.path,type:f.type==='blob'?'blob':'tree',size:f.size||0})),truncated:treeData.length>=100};
+    }catch(e){}
+    const contribs=await gitlabApi('/projects/'+p.id+'/repository/contributors?per_page=12').catch(()=>[]);
+    const commits=await gitlabApi('/projects/'+p.id+'/repository/commits?per_page=100').catch(()=>[]);
+    return{
+      meta:normalizeGitlabProject(p),
+      langs,
+      tree,
+      contribs:Array.isArray(contribs)?contribs.map(c=>({login:c.name,avatar_url:'',html_url:'',contributions:c.commits||0,type:'User'})):[]  ,
+      commits:Array.isArray(commits)?commits.slice(0,100).map(c=>({commit:{message:c.message,author:{name:c.author_name,date:c.author_email?c.created_at:c.created_at}},author:null})):[]
+    };
+  }
+  if(platform==='bitbucket'){
+    const r=await bitbucketApi('/repositories/'+owner+'/'+repo);
+    const langs={};
+    try{
+      const src=await bitbucketApi('/repositories/'+owner+'/'+repo+'/src/'+(r.mainbranch?.name||'master')+'/?format=meta&max_depth=3');
+      /* Bitbucket doesn't provide language breakdown easily; use the repo language field */
+      if(r.language)langs[r.language]=1000;
+    }catch(e){}
+    const contribs=[];
+    const commits=[];
+    try{
+      const cc=await bitbucketApi('/repositories/'+owner+'/'+repo+'/commits?pagelen=100');
+      if(cc.values){
+        cc.values.forEach(c=>{
+          commits.push({commit:{message:c.message,author:{name:c.author?.raw||'',date:c.date}},author:null});
+        });
+      }
+    }catch(e){}
+    return{
+      meta:normalizeBitbucketRepo(r),
+      langs,
+      tree:null,
+      contribs,
+      commits:commits.slice(0,100)
+    };
+  }
+  /* Default: GitHub */
+  return null; /* handled by existing GitHub flow */
+}
+
+/* ============================================================
+   Improvement #1: Dynamic SEO / Open Graph
+   ============================================================ */
+function updateSEO(meta){
+  const title=meta.full_name+' — Repodest';
+  const desc=(meta.description||'A repository on '+(meta._platform||'GitHub'))+'. Health score, languages, file explorer, and LLM-ready digest.';
+  const lang=meta.language||'';
+  document.title=title;
+  document.querySelector('meta[property="og:title"]').setAttribute('content',meta.full_name+' — X-ray for '+(meta._platform||'GitHub')+' repos');
+  document.querySelector('meta[property="og:description"]').setAttribute('content',desc+(lang?' Primary language: '+lang+'.':''));
+  /* og:image: use owner avatar as a fallback */
+  if(meta.owner&&meta.owner.avatar_url){
+    document.querySelector('meta[property="og:image"]').setAttribute('content',meta.owner.avatar_url);
+  }
+}
+
+/* ============================================================
+   Improvement #6: Local History
+   ============================================================ */
+const HISTORY_KEY='repodest_history';
+const MAX_HISTORY=10;
+
+function addToHistory(meta,score){
+  let hist=LS.get(HISTORY_KEY,[]);
+  /* Remove existing entry for same repo */
+  hist=hist.filter(h=>h.full_name!==meta.full_name);
+  /* Add to front */
+  hist.unshift({
+    full_name:meta.full_name,
+    name:meta.name,
+    avatar:meta.owner?meta.owner.avatar_url:'',
+    score:score,
+    platform:meta._platform||'github',
+    ts:Date.now()
+  });
+  /* Trim */
+  hist=hist.slice(0,MAX_HISTORY);
+  LS.set(HISTORY_KEY,hist);
+}
+
+function renderHistory(){
+  const hist=LS.get(HISTORY_KEY,[]);
+  const section=$('#historySection');
+  const grid=$('#historyGrid');
+  if(!hist.length){section.style.display='none';return}
+  section.style.display='';
+  grid.innerHTML=hist.map(h=>{
+    const ago=timeAgo(h.ts);
+    const platformClass=h.platform||'github';
+    return '<div class="hcard" onclick="loadRepoFromHistory(\''+esc(h.full_name)+'\',\''+esc(h.platform||'github')+'\')">'+
+      '<img src="'+esc(h.avatar)+'" alt="" loading="lazy">'+
+      '<div class="hi"><div class="hn">'+esc(h.name)+'</div><div class="hm"><span class="platform-chip '+esc(platformClass)+'">'+esc(platformClass)+'</span> · '+ago+'</div></div>'+
+      '<div class="hs">'+h.score+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function loadRepoFromHistory(fullName,platform){
+  const parts=fullName.split('/');
+  if(parts.length===2)loadRepo(parts[0],parts[1],platform);
+}
+
+function clearHistory(){
+  LS.set(HISTORY_KEY,[]);
+  renderHistory();
+  toast('History cleared','ok');
+}
+
+/* ============================================================
+   Improvement #7: Branch & Tag Selection
+   ============================================================ */
+async function fetchBranchesAndTags(owner,repo){
+  if(S.platform!=='github'){$('#branchSel').style.display='none';return}
+  try{
+    const [branches,tags]=await Promise.all([
+      api('/repos/'+owner+'/'+repo+'/branches?per_page=100').catch(()=>[]),
+      api('/repos/'+owner+'/'+repo+'/tags?per_page=100').catch(()=>[])
+    ]);
+    S.branches=Array.isArray(branches)?branches:[];
+    S.tags=Array.isArray(tags)?tags:[];
+    S.currentBranch=S.repo.default_branch||'main';
+    renderBranchTagUI();
+  }catch(e){
+    $('#branchSel').style.display='none';
+  }
+}
+
+function renderBranchTagUI(){
+  const sel=$('#branchSel');
+  if(!S.branches.length&&!S.tags.length){sel.style.display='none';return}
+  sel.style.display='';
+  const bd=$('#branchDropdown');
+  bd.innerHTML=S.branches.map(b=>'<option value="'+esc(b.name)+'"'+(b.name===S.currentBranch?' selected':'')+'>'+esc(b.name)+'</option>').join('');
+  const td=$('#tagDropdown');
+  td.innerHTML='<option value="">—</option>'+S.tags.map(t=>'<option value="'+esc(t.name)+'">'+esc(t.name)+'</option>').join('');
+}
+
+async function onBranchChange(branch){
+  if(!branch||branch===S.currentBranch)return;
+  S.currentBranch=branch;
+  $('#tagDropdown').value='';
+  await reloadTreeForRef(branch);
+}
+
+async function onTagChange(tag){
+  if(!tag)return;
+  S.currentBranch=tag;
+  await reloadTreeForRef(tag);
+}
+
+async function reloadTreeForRef(ref){
+  const m=S.repo;
+  const key=m.full_name;
+  setLoad('Loading file tree for '+ref+'…');
+  try{
+    const tree=await api('/repos/'+key+'/git/trees/'+ref+'?recursive=1').catch(()=>null);
+    if(tree){
+      parseTree(tree);
+      S.tree=tree;
+      renderFiles();
+      resetDigest();
+    }
+    show($('#loadingView'),false);show($('#dash'),true);
+    toast('Switched to '+ref,'ok');
+  }catch(e){
+    show($('#loadingView'),false);show($('#dash'),true);
+    toast('Failed to load tree for '+ref,'err');
+  }
+}
+
+/* ============================================================
+   Improvement #2: Compare Mode
+   ============================================================ */
+function toggleCompare(){
+  const panel=$('#comparePanel');
+  panel.classList.toggle('hidden');
+  if(!panel.classList.contains('hidden')){
+    const q=new URLSearchParams(location.search);
+    const compare=q.get('compare');
+    if(compare)$('#compareInput').value=compare;
+  }
+}
+
+async function loadCompare(){
+  const v=$('#compareInput').value.trim();
+  if(!v){toast('Enter a repo to compare','err');return}
+  const p=parseRepoInput(v);
+  if(!p){toast('Could not parse that','err');return}
+  const content=$('#compareContent');
+  content.innerHTML='<div class="loading"><div class="spinner"></div><p>Loading '+esc(p.owner+'/'+p.repo)+'…</p></div>';
+  try{
+    let data;
+    if(p.platform==='github'){
+      const meta=await api('/repos/'+p.owner+'/'+p.repo);
+      const langs=await api('/repos/'+p.owner+'/'+p.repo+'/languages').catch(()=>({}));
+      const contribs=await api('/repos/'+p.owner+'/'+p.repo+'/contributors?per_page=1').catch(()=>[]);
+      data={meta:stripRepo(meta),langs,contribs:Array.isArray(contribs)?contribs:[]};
+    }else{
+      data=await fetchRepoData(p.owner,p.repo,p.platform);
+    }
+    if(!data)throw new Error('Failed to fetch');
+    S.compareData=data;
+    /* Update URL */
+    const url=new URL(location);
+    url.searchParams.set('compare',p.owner+'/'+p.repo);
+    history.replaceState(null,'',url);
+    renderCompare(data);
+  }catch(e){
+    content.innerHTML='<div class="errbox"><div class="e">💥</div><h3>Could not load comparison</h3><p>'+esc(e.message||'Unknown error')+'</p></div>';
+  }
+}
+
+function renderCompare(data){
+  const a=S.repo,b=data.meta;
+  const ahc=healthCheck();
+  /* Quick health for compare target */
+  const bPaths=[];
+  /* We don't have the full tree for compare, so estimate */
+  const bScore=b.stargazers_count>1000?70:b.stargazers_count>100?55:b.stargazers_count>10?40:25;
+  const content=$('#compareContent');
+  content.innerHTML=
+    '<div class="compare-wrap">'+
+      '<div class="compare-side">'+
+        '<div class="card">'+
+          '<h3 style="margin-bottom:12px">'+esc(a.full_name)+'</h3>'+
+          '<div class="statrow">'+
+            '<div class="st"><b>'+ahc.score+'</b><span>health</span></div>'+
+            '<div class="st"><b>★ '+fmt(a.stargazers_count)+'</b><span>stars</span></div>'+
+            '<div class="st"><b>⑂ '+fmt(a.forks_count)+'</b><span>forks</span></div>'+
+            '<div class="st"><b>'+fmt(a.open_issues_count)+'</b><span>issues</span></div>'+
+          '</div>'+
+          '<div style="margin-top:12px"><div class="minititle">Languages</div>'+
+          renderCompareLangs(S.langs)+'</div>'+
+          '<div style="margin-top:8px;color:var(--text3);font-size:12px">Last push: '+esc(timeAgo(a.pushed_at))+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="compare-side">'+
+        '<div class="card">'+
+          '<h3 style="margin-bottom:12px">'+esc(b.full_name)+'</h3>'+
+          '<div class="statrow">'+
+            '<div class="st"><b>'+bScore+'</b><span>health</span></div>'+
+            '<div class="st"><b>★ '+fmt(b.stargazers_count)+'</b><span>stars</span></div>'+
+            '<div class="st"><b>⑂ '+fmt(b.forks_count)+'</b><span>forks</span></div>'+
+            '<div class="st"><b>'+fmt(b.open_issues_count)+'</b><span>issues</span></div>'+
+          '</div>'+
+          '<div style="margin-top:12px"><div class="minititle">Languages</div>'+
+          renderCompareLangs(data.langs)+'</div>'+
+          '<div style="margin-top:8px;color:var(--text3);font-size:12px">Last push: '+esc(timeAgo(b.pushed_at))+'</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+}
+
+function renderCompareLangs(langs){
+  const entries=Object.entries(langs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const total=Object.values(langs).reduce((a,b)=>a+b,0)||1;
+  if(!entries.length)return '<span style="color:var(--text3);font-size:12px">No language data</span>';
+  return entries.map(e=>'<div class="langrow"><span class="ld" style="background:'+langColor(e[0])+'"></span><span class="ln">'+esc(e[0])+'</span><span class="lp">'+(e[1]/total*100).toFixed(1)+'%</span></div>').join('');
+}
+
+/* ============================================================
+   Improvement #4: Export Formats (JSON, CSV)
+   ============================================================ */
+function exportJSON(){
+  if(!S.repo)return;
+  const m=S.repo,hc=healthCheck();
+  const data={
+    repo:{
+      full_name:m.full_name,
+      description:m.description,
+      platform:S.platform||'github',
+      url:m.html_url,
+      language:m.language,
+      license:m.license?m.license.spdx_id:null,
+      stars:m.stargazers_count,
+      forks:m.forks_count,
+      open_issues:m.open_issues_count,
+      size_kb:m.size,
+      created_at:m.created_at,
+      pushed_at:m.pushed_at,
+      default_branch:m.default_branch,
+      topics:m.topics,
+      archived:m.archived,
+      fork:m.fork
+    },
+    health:{score:hc.score,checks:hc.items.map(c=>({name:c.n,pass:c.ok}))},
+    languages:S.langs,
+    contributors:S.contribs.slice(0,20).map(c=>({login:c.login,contributions:c.contributions})),
+    file_count:FILEMAP.size,
+    directory_count:DIRMAP.size,
+    trophies:getAch().filter(a=>a.on).map(a=>a.n),
+    exported_at:new Date().toISOString(),
+    generator:'Repodest'
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=m.full_name.replace('/','-')+'-repodest.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('JSON exported','ok');
+}
+
+function exportCSV(){
+  if(!S.repo)return;
+  const m=S.repo;
+  const lines=['Category,Name,Value,Percentage'];
+  /* Languages */
+  const langEntries=Object.entries(S.langs).sort((a,b)=>b[1]-a[1]);
+  const langTotal=langEntries.reduce((a,e)=>a+e[1],0)||1;
+  langEntries.forEach(e=>{
+    lines.push('Language,"'+e[0]+'",'+e[1]+','+(e[1]/langTotal*100).toFixed(2));
+  });
+  /* File stats */
+  const extCounts={};
+  FILEMAP.forEach((f,k)=>{const e=extOf(k);extCounts[e]=(extCounts[e]||0)+1});
+  Object.entries(extCounts).sort((a,b)=>b[1]-a[1]).forEach(e=>{
+    lines.push('FileType,.'+e[0]+','+e[1]+',');
+  });
+  /* Basic stats */
+  lines.push('Stat,Stars,'+m.stargazers_count+',');
+  lines.push('Stat,Forks,'+m.forks_count+',');
+  lines.push('Stat,OpenIssues,'+m.open_issues_count+',');
+  lines.push('Stat,Files,'+FILEMAP.size+',');
+  lines.push('Stat,Directories,'+DIRMAP.size+',');
+  lines.push('Stat,HealthScore,'+healthCheck().score+',');
+
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=m.full_name.replace('/','-')+'-repodest.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('CSV exported','ok');
+}
+
+/* ============================================================
+   Improvement #5: Open in ChatGPT / Claude
+   ============================================================ */
+function setupLLMButtons(){
+  const btns=$('#llmButtons');
+  if(!S.digestText){btns.style.display='none';return}
+  btns.style.display='';
+  const prompt='Analyze this repository and provide insights:\n\n'+S.digestText.slice(0,12000);
+  /* ChatGPT: uses URL query param */
+  const gptUrl='https://chatgpt.com/?q='+encodeURIComponent(prompt);
+  $('#chatgptBtn').href=gptUrl;
+  /* Claude: copy to clipboard approach since Claude doesn't support URL content */
+  $('#claudeBtn').onclick=function(e){
+    e.preventDefault();
+    navigator.clipboard.writeText(prompt).then(()=>{
+      toast('Digest copied! Paste it into Claude.','ok');
+      window.open('https://claude.ai/new','_blank');
+    }).catch(()=>{
+      window.open('https://claude.ai/new','_blank');
+      toast('Copy the digest manually and paste into Claude','err');
+    });
+  };
+}
+
+/* ============================================================
+   Improvement #10: Data-Driven Roast Mode
+   ============================================================ */
+function generateDynamicRoasts(){
+  const m=S.repo,hc=healthCheck();
+  const lines=[];
+  const hasTests=hc.items.find(x=>x.n==='Tests').ok;
+  const hasCI=hc.items.find(x=>x.n==='CI workflows').ok;
+  const hasReadme=hc.items.find(x=>x.n==='README').ok;
+  const hasLicense=!!m.license;
+  const hasContributing=hc.items.find(x=>x.n==='Contributing guide').ok;
+  const hasDocs=hc.items.find(x=>x.n==='Docs folder').ok;
+  const starCount=m.stargazers_count;
+  const forkCount=m.forks_count;
+  const issueCount=m.open_issues_count;
+  const sizeMB=m.size/1024;
+  const contribCount=S.contribs.length;
+  const langCount=Object.keys(S.langs).length;
+  const fileCount=FILEMAP.size;
+  const age=(Date.now()-new Date(m.created_at))/864e5;
+  const freshness=(Date.now()-new Date(m.pushed_at))/864e5;
+
+  /* No tests AND no CI */
+  if(!hasTests&&!hasCI)lines.push("This repo deploys on hopes and dreams — no tests, no CI, just vibes.");
+  /* 0 stars and 0 forks */
+  if(starCount===0&&forkCount===0)lines.push("This repo is so lonely, even the CI bot left.");
+  /* Huge size */
+  if(sizeMB>500)lines.push("This repo weighs more than my life choices — "+fmtSize(m.size*1024)+" of pure commitment.");
+  /* Only one contributor */
+  if(contribCount<=1)lines.push("Solo dev energy — the commit history reads like a diary.");
+  /* Many open issues */
+  if(issueCount>100)lines.push("The issue tracker is basically a suggestion box at this point — "+fmt(issueCount)+" open issues.");
+  /* No license */
+  if(!hasLicense)lines.push("No LICENSE file — legally speaking, this repo is a gray area wrapped in a mystery.");
+  /* No description */
+  if(!m.description)lines.push("No description. This repo is so mysterious, even the README is confused.");
+  /* No README */
+  if(!hasReadme)lines.push("No README. The code speaks for itself — unfortunately, it mumbles.");
+  /* Archived */
+  if(m.archived)lines.push("Archived. The code has entered its retirement phase. It's not dead, it's 'legacy'.");
+  /* Fork */
+  if(m.fork)lines.push("It's a fork. Somewhere, a parent repo is pretending this doesn't exist.");
+  /* Very old, no recent activity */
+  if(freshness>365)lines.push("Last pushed "+Math.floor(freshness/365)+" year(s) ago. This repo has entered archaeological territory.");
+  /* Many languages */
+  if(langCount>=6)lines.push(langCount+" languages detected. This repo is having an identity crisis.");
+  /* Single language dominance */
+  if(langCount===1)lines.push("One language to rule them all. At least this repo knows what it wants.");
+  /* Too many files */
+  if(fileCount>5000)lines.push(fmt(fileCount)+" files. At this point, the file tree is a forest.");
+  /* Very few files */
+  if(fileCount<5&&fileCount>0)lines.push("Only "+fileCount+" file(s). Minimalism taken to its logical extreme.");
+  /* High stars but no tests */
+  if(starCount>1000&&!hasTests)lines.push("★ "+fmt(starCount)+" stars and zero tests. Famous and reckless.");
+  /* No topics */
+  if(!m.topics||!m.topics.length)lines.push("Zero topics. This repo is hiding from GitHub search like it owes it money.");
+  /* No contributing guide */
+  if(!hasContributing)lines.push("No CONTRIBUTING.md. First-time contributors are greeted with pure chaos.");
+  /* Very new repo */
+  if(age<30)lines.push("Less than a month old. Fresh out of the `git init` oven.");
+  /* Many forks relative to stars */
+  if(forkCount>starCount&&starCount>0)lines.push("More forks than stars — people want to fix it themselves.");
+  /* No homepage */
+  if(!m.homepage)lines.push("No homepage. This repo lives in the shadows of the terminal.");
+  /* Default fallback */
+  if(!lines.length)lines.push("Honestly? Clean repo, good hygiene, tests, CI… I got nothing. This is suspiciously responsible.");
+
+  return lines;
+}
+
+/* ============================================================
+   Improvement #11: Star History Chart
+   ============================================================ */
+function renderStarHistory(){
+  const m=S.repo;
+  const embed=$('#starHistoryEmbed');
+  if(!m||!m.full_name){embed.innerHTML='';return}
+  /* Use star-history.com embed */
+  const url='https://star-history.com/embed.html?'+encodeURIComponent(m.full_name)+'&type=Date';
+  embed.innerHTML='<iframe src="'+esc(url)+'" loading="lazy" title="Star history chart"></iframe>';
+}
+
+/* ============================================================
+   Core helpers (original, preserved)
+   ============================================================ */
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function fmt(n){n=Number(n)||0;if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'k';return String(n)}
 function fmtSize(b){b=Number(b)||0;if(b>=1048576)return(b/1048576).toFixed(1)+' MB';if(b>=1024)return(b/1024).toFixed(1)+' KB';return b+' B'}
-function timeAgo(iso){const d=(Date.now()-new Date(iso))/864e5;if(d<1)return'today';if(d<2)return'yesterday';if(d<30)return Math.floor(d)+'d ago';if(d<365)return Math.floor(d/30)+'mo ago';return Math.floor(d/365)+'y ago'}
+function timeAgo(iso){if(!iso)return'unknown';const d=(Date.now()-new Date(iso))/864e5;if(d<1)return'today';if(d<2)return'yesterday';if(d<30)return Math.floor(d)+'d ago';if(d<365)return Math.floor(d/30)+'mo ago';return Math.floor(d/365)+'y ago'}
 function toast(msg,cls){const t=document.createElement('div');t.className='tst '+(cls||'');t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),450)},3400)}
 function langColor(l){return LANG_COLORS[l]||PALETTE[(l.length*7)%PALETTE.length]}
 function extOf(p){const b=p.split('/').pop();const i=b.lastIndexOf('.');return i>0?b.slice(i+1).toLowerCase():b.toLowerCase()}
@@ -574,26 +1313,18 @@ async function refreshRate(){try{const r=await fetch('https://api.github.com/rat
 function cacheGet(k,ttl){const c=LS.get('repodest_c_'+k);if(c&&(Date.now()-c.t)<ttl)return c.v;return null}
 function cacheSet(k,v){try{const s=JSON.stringify(v);if(s.length>2500000)return;LS.set('repodest_c_'+k,{t:Date.now(),v})}catch(e){}}
 
-function parseRepoInput(v){
-  v=v.trim().replace(/\.git+$/,'');
-  let m=v.match(/github\.com[\/:]([^\/\s]+)\/([^\/#?\s]+)/i);
-  if(m)return{owner:m[1],repo:m[2]};
-  m=v.match(/^([\w.-]+)\/([\w.-]+)$/);
-  if(m)return{owner:m[1],repo:m[2]};
-  return null;
-}
 function submitInput(){
   const v=$('#inp').value.trim();
   if(!v){toast('Type a repo URL, owner/repo, or username','err');return}
   const p=parseRepoInput(v);
-  if(p){loadRepo(p.owner,p.repo);return}
+  if(p){loadRepo(p.owner,p.repo,p.platform);return}
   if(/^[\w-]+$/.test(v)){loadUser(v);return}
   toast('Could not parse that. Try owner/repo or a GitHub URL','err');
 }
 function submitJump(){
   const v=$('#jump').value.trim();if(!v)return;
   const p=parseRepoInput(v);
-  if(p){loadRepo(p.owner,p.repo);return}
+  if(p){loadRepo(p.owner,p.repo,p.platform);return}
   if(/^[\w-]+$/.test(v)){loadUser(v);return}
   toast('Could not parse that','err');
 }
@@ -641,15 +1372,36 @@ function parseTree(apiTree){
   return{root,truncated:!!(apiTree&&apiTree.truncated),count:items.filter(x=>x.type==='blob').length};
 }
 
-async function loadRepo(owner,repo){
+/* ============================================================
+   Main loadRepo — now supports multi-platform
+   ============================================================ */
+async function loadRepo(owner,repo,platform){
+  platform=platform||'github';
+  S.platform=platform;
   const key=owner+'/'+repo;
-  history.replaceState(null,'',location.pathname+'?repo='+encodeURIComponent(key));
+  const url=new URL(location);
+  url.searchParams.set('repo',key);
+  url.searchParams.delete('user');
+  url.searchParams.delete('compare');
+  history.replaceState(null,'',url.pathname+'?repo='+encodeURIComponent(key));
   window.scrollTo({top:0});
   setLoad('Fetching '+key+'…');
   $('#landing').style.display='none';$('#app').style.display='';
   try{
-    const cached=cacheGet('repo:'+key.toLowerCase(),6*3600*1000);
+    const cacheKey=platform+':'+key.toLowerCase();
+    const cached=cacheGet('repo:'+cacheKey,6*3600*1000);
     if(cached){applyRepo(key,cached,true);return}
+
+    if(platform==='gitlab'||platform==='bitbucket'){
+      setLoad('Fetching from '+platform+'…');
+      const data=await fetchRepoData(owner,repo,platform);
+      if(!data)throw new Error('Failed to fetch');
+      cacheSet('repo:'+cacheKey,data);
+      applyRepo(key,data,false);
+      return;
+    }
+
+    /* GitHub flow (original) */
     setLoad('Repository metadata…');
     const meta=await api('/repos/'+key);
     setLoad('Languages & file tree…');
@@ -659,23 +1411,39 @@ async function loadRepo(owner,repo){
     const contribs=await api('/repos/'+key+'/contributors?per_page=12').catch(()=>[]);
     const commits=await api('/repos/'+key+'/commits?per_page=100').catch(()=>[]);
     const data={meta:stripRepo(meta),langs,tree,contribs:Array.isArray(contribs)?contribs:[],commits:Array.isArray(commits)?commits.slice(0,100):[]};
-    cacheSet('repo:'+key.toLowerCase(),data);
+    cacheSet('repo:'+cacheKey,data);
     applyRepo(key,data,false);
   }catch(e){handleErr(e,key)}
 }
-function stripRepo(m){return{full_name:m.full_name,name:m.name,owner:{login:m.owner.login,avatar_url:m.owner.avatar_url,html_url:m.owner.html_url},html_url:m.html_url,description:m.description,fork:m.fork,created_at:m.created_at,pushed_at:m.pushed_at,updated_at:m.updated_at,homepage:m.homepage,size:m.size,stargazers_count:m.stargazers_count,watchers_count:m.watchers_count,forks_count:m.forks_count,open_issues_count:m.open_issues_count,language:m.language,license:m.license,topics:m.topics||[],default_branch:m.default_branch,archived:m.archived}}
+function stripRepo(m){return{full_name:m.full_name,name:m.name,owner:{login:m.owner.login,avatar_url:m.owner.avatar_url,html_url:m.owner.html_url},html_url:m.html_url,description:m.description,fork:m.fork,created_at:m.created_at,pushed_at:m.pushed_at,updated_at:m.updated_at,homepage:m.homepage,size:m.size,stargazers_count:m.stargazers_count,watchers_count:m.watchers_count,forks_count:m.forks_count,open_issues_count:m.open_issues_count,language:m.language,license:m.license,topics:m.topics||[],default_branch:m.default_branch,archived:m.archived,_platform:'github'}}
 
 function applyRepo(key,data,fromCache){
   parseTree(data.tree);
   S.repo=data.meta;S.langs=data.langs||{};S.contribs=data.contribs||[];S.commits=data.commits||[];
   S.activity=null;S.sel.clear();S.digestText='';
   show($('#userView'),false);
+
+  /* Improvement #1: Update SEO meta tags */
+  updateSEO(data.meta);
+
+  /* Improvement #6: Add to history */
+  const hc=healthCheck();
+  addToHistory(data.meta,hc.score);
+
   renderDash();
   show($('#loadingView'),false);show($('#errorView'),false);show($('#dash'),true);
   if(data.tree&&data.tree.truncated)toast('Huge repo — file tree was truncated by GitHub','err');
   if(fromCache)toast('Loaded from cache (≤6h old)');
   if(!fromCache)refreshRate();
-  if(!S.activity)loadActivity(key);
+  if(!S.activity&&S.platform==='github')loadActivity(key);
+
+  /* Improvement #7: Fetch branches and tags (GitHub only) */
+  if(S.platform==='github'){
+    const parts=key.split('/');
+    fetchBranchesAndTags(parts[0],parts[1]);
+  }else{
+    $('#branchSel').style.display='none';
+  }
 }
 
 async function loadActivity(key){
@@ -708,7 +1476,7 @@ function loadUser(u){
       el.innerHTML='';
       show($('#dash'),false);show($('#userView'),true);
       const wrap=document.createElement('div');
-      wrap.innerHTML='<div class="card ubig"><img src="'+esc(user.avatar_url)+'" alt=""><div style="flex:1;min-width:220px"><h2>'+esc(user.name||user.login)+'</h2><div class="u">@'+esc(user.login)+' · '+fmt(user.followers)+' followers · '+fmt(user.public_repos)+' repos</div><div class="bio">'+esc(user.bio||'')+'</div></div><a class="btn sm" target="_blank" rel="noopener" href="'+esc(user.html_url)+'">Profile ↗</a></div><div class="minititle" style="margin-top:22px">Pick a repository to scope</div><div class="usergrid" id="userGrid"></div>';
+      wrap.innerHTML='<div class="card ubig"><img src="'+esc(user.avatar_url)+'" alt="" loading="lazy"><div style="flex:1;min-width:220px"><h2>'+esc(user.name||user.login)+'</h2><div class="u">@'+esc(user.login)+' · '+fmt(user.followers)+' followers · '+fmt(user.public_repos)+' repos</div><div class="bio">'+esc(user.bio||'')+'</div></div><a class="btn sm" target="_blank" rel="noopener" href="'+esc(user.html_url)+'">Profile ↗</a></div><div class="minititle" style="margin-top:22px">Pick a repository to scope</div><div class="usergrid" id="userGrid"></div>';
       el.appendChild(wrap);
       const grid=wrap.querySelector('#userGrid');
       const list=(Array.isArray(repos)?repos:[]).slice().sort((a,b)=>b.stargazers_count-a.stargazers_count);
@@ -716,7 +1484,7 @@ function loadUser(u){
       list.forEach(r=>{
         const c=document.createElement('div');c.className='ucard';
         c.innerHTML='<h4>'+esc(r.name)+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span><span>★ '+fmt(r.stargazers_count)+'</span><span>⑂ '+fmt(r.forks_count)+'</span></div>';
-        c.onclick=()=>loadRepo(r.owner.login,r.name);
+        c.onclick=()=>loadRepo(r.owner.login,r.name,'github');
         grid.appendChild(c);
       });
       show($('#loadingView'),false);show($('#errorView'),false);show($('#dash'),true);
@@ -727,9 +1495,12 @@ function loadUser(u){
 
 function renderDash(){
   const m=S.repo;
+  /* Platform chip */
+  const platform=m._platform||'github';
+  const platformChip='<span class="platform-chip '+esc(platform)+'">'+esc(platform)+'</span>';
   $('#repoHero').innerHTML=
-    '<img class="avatar" src="'+esc(m.owner.avatar_url)+'" alt="">'+
-    '<div class="rh-body"><h2><a href="'+esc(m.html_url)+'" target="_blank" rel="noopener">'+esc(m.full_name)+'</a>'+(m.fork?'<span class="topic" style="background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);color:#93c5fd">fork</span>':'')+(m.archived?'<span class="topic" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.4);color:#fde047">archived</span>':'')+'</h2>'+
+    '<img class="avatar" src="'+esc(m.owner.avatar_url)+'" alt="" loading="lazy">'+
+    '<div class="rh-body"><h2><a href="'+esc(m.html_url)+'" target="_blank" rel="noopener">'+esc(m.full_name)+'</a>'+platformChip+(m.fork?'<span class="topic" style="background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);color:#93c5fd">fork</span>':'')+(m.archived?'<span class="topic" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.4);color:#fde047">archived</span>':'')+'</h2>'+
     '<div class="desc">'+esc(m.description||'No description provided.')+'</div>'+
     (m.topics.length?'<div class="topicrow">'+m.topics.slice(0,10).map(t=>'<span class="topic">'+esc(t)+'</span>').join('')+'</div>':'')+
     '<div class="statrow">'+
@@ -741,14 +1512,19 @@ function renderDash(){
       '<div class="st"><b>'+esc(timeAgo(m.pushed_at))+'</b><span>last push</span></div>'+
     '</div></div>';
   renderOverview();renderLanguages();renderFiles();resetDigest();renderActivity();renderFun();
+  renderLicenseAnalysis();
   switchTab('overview');
 }
 
 function switchTab(name){
   $$('#tabs .tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
   $$('#dash .panel').forEach(p=>p.classList.toggle('active',p.id==='p-'+name));
-  if(name==='activity')drawActChart();
-  if(name==='languages')drawLangChart();
+  /* Improvement #12: Lazy load Chart.js only when needed */
+  if(name==='activity'){
+    ensureChartJs().then(()=>drawActChart());
+    renderStarHistory();
+  }
+  if(name==='languages')ensureChartJs().then(()=>drawLangChart());
 }
 document.addEventListener('DOMContentLoaded',()=>{
   $$('#tabs .tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
@@ -825,21 +1601,9 @@ function personaFor(){
   return{i:'🧭',n:'The Wanderer',d:'A unique blend of technologies that defies categorization. Genuinely interesting.'};
 }
 
+/* Improvement #10: Use dynamic roasts */
 function roastLines(){
-  const m=S.repo,hc=healthCheck(),lines=[];
-  if(!m.license)lines.push('No LICENSE file — so legally speaking, this repo is radioactive. Clone it and you\'re basically a repo bandit.');
-  if(!hc.items.find(x=>x.n==='Tests').ok)lines.push('Zero test suites detected. Bold strategy: "it worked on my machine" as a quality assurance framework.');
-  if(!hc.items.find(x=>x.n==='CI workflows').ok)lines.push('No CI. Every push is a leap of faith, and the faith is untested. Like the code.');
-  if(!m.description)lines.push('No description. A mystery repo. Even the author needs a moment to remember what it does.');
-  if(!m.topics||!m.topics.length)lines.push('Zero topics. This repo is hiding from GitHub search like it owes it money.');
-  if(m.open_issues_count>500)lines.push(fmt(m.open_issues_count)+' open issues. The issue tracker has become a support group.');
-  if(m.fork)lines.push('It\'s a fork. Somewhere out there, a parent repo is pretending it doesn\'t know this child.');
-  if(m.archived)lines.push('Archived. The code is not dead — it has simply transcended maintenance.');
-  if(m.size*1024>524288000)lines.push('Over 500 MB. Cloning this repo is a personality test and a bandwidth test at once.');
-  if(S.contribs.length===1)lines.push('One contributor. This is less "open source" and more "open diary".');
-  if(!hc.items.find(x=>x.n==='Contributing guide').ok)lines.push('No CONTRIBUTING.md. First-time contributors are greeted with vibes only.');
-  if(!lines.length)lines.push('Honestly? Clean repo, good hygiene, tests, CI… I got nothing. This is suspiciously responsible.');
-  return lines;
+  return generateDynamicRoasts();
 }
 function rerollRoast(){
   if(!ROASTS.length)return;
@@ -863,6 +1627,7 @@ function renderOverview(){
     '<div class="kv"><span>Tracked files</span><b>'+fmt(FILEMAP.size)+'</b></div>'+
     '<div class="kv"><span>Languages</span><b>'+Object.keys(S.langs).length+'</b></div>'+
     '<div class="kv"><span>Contributors (top)</span><b>'+S.contribs.length+'</b></div>'+
+    '<div class="kv"><span>Platform</span><b><span class="platform-chip '+(S.platform||'github')+'">'+esc(S.platform||'github')+'</span></b></div>'+
     '<div class="kv"><span>Homepage</span><b>'+(m.homepage?'<a href="'+esc(m.homepage)+'" target="_blank" rel="noopener">link ↗</a>':'—')+'</b></div>';
   const ach=getAch();
   $('#achPreview').innerHTML=ach.filter(a=>a.on).slice(0,6).map(a=>achHTML(a)).join('')||'<span style="color:var(--text3);font-size:12.5px">No trophies yet — this repo keeps a low profile.</span>';
@@ -893,6 +1658,7 @@ function drawLangChart(){
   if(!ctx)return;
   if(S.charts.lang)S.charts.lang.destroy();
   if(!entries.length)return;
+  if(typeof Chart==='undefined')return; /* Chart.js not loaded yet */
   S.charts.lang=new Chart(ctx,{type:'doughnut',data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:entries.map(e=>langColor(e[0])),borderColor:'rgba(0,0,0,.25)',borderWidth:1}]},options:{cutout:'62%',plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10.5},boxWidth:10,padding:9}}}}});
 }
 
@@ -1042,6 +1808,7 @@ function resetDigest(){
   S.sel.clear();S.digestText='';
   $('#digestOut').value='';
   $('#copyBtn').disabled=true;$('#dlBtn').disabled=true;
+  $('#llmButtons').style.display='none';
   updateSelMeta();
 }
 function selectTextAll(){
@@ -1093,7 +1860,8 @@ async function generateDigest(){
   const parts=[];
   if($('#optMeta').checked){
     parts.push('# Repository Context: '+m.full_name);
-    parts.push('Source: https://github.com/'+m.full_name);
+    parts.push('Source: '+m.html_url);
+    parts.push('Platform: '+(S.platform||'github'));
     parts.push('Branch: '+branch);
     parts.push('Description: '+(m.description||'N/A'));
     parts.push('Primary language: '+(m.language||'N/A'));
@@ -1136,6 +1904,8 @@ async function generateDigest(){
   $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;
   btn.disabled=false;btn.textContent='🤖 Generate digest';
   toast('Digest ready — ~'+fmt(toks)+' tokens','ok');
+  /* Improvement #5: Setup LLM buttons */
+  setupLLMButtons();
   switchTab('digest');
 }
 function copyDigest(){
@@ -1171,6 +1941,7 @@ function drawActChart(){
   if(!S.activity||!S.activity.length)return;
   const ctx=$('#actChart');
   if(!ctx)return;
+  if(typeof Chart==='undefined')return; /* Chart.js not loaded yet */
   if(S.charts.act)S.charts.act.destroy();
   const weeks=S.activity.slice().reverse().slice(0,52);
   S.charts.act=new Chart(ctx,{type:'bar',data:{labels:weeks.map(w=>new Date(w.week*1000).toLocaleDateString(undefined,{month:'short'})),datasets:[{data:weeks.map(w=>w.total),backgroundColor:'rgba(124,58,237,.75)',hoverBackgroundColor:'#a855f7',borderRadius:3}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.y+' commits'}}},scales:{x:{ticks:{color:'#475569',font:{size:9},maxRotation:0,autoSkip:true,maxTicksLimit:13},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#475569',font:{size:9}},grid:{color:'rgba(255,255,255,.05)'}}}}});
@@ -1190,26 +1961,29 @@ function renderFun(){
 }
 
 function shareCard(){
-  const m=S.repo;if(!m)return;
-  const hc=healthCheck();
-  const langs=Object.entries(S.langs).sort((a,b)=>b[1]-a[1]).slice(0,4);
-  const total=Object.values(S.langs).reduce((a,b)=>a+b,0)||1;
-  $('#shareCard').innerHTML=
-    '<div class="sc-top"><img src="'+esc(m.owner.avatar_url)+'" crossorigin="anonymous"><div><h2>'+esc(m.name)+'</h2><div class="sc-u">'+esc(m.full_name)+'</div><div class="sc-desc">'+esc(m.description||'')+'</div></div></div>'+
-    '<div class="sc-stats">'+
-      '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
-      '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
-      '<div class="sc-st"><b>⑂ '+fmt(m.forks_count)+'</b><span>Forks</span></div>'+
-      '<div class="sc-st"><b>'+fmt(FILEMAP.size)+'</b><span>Files</span></div>'+
-    '</div>'+
-    '<div class="sc-foot"><span style="display:flex;gap:10px;align-items:center">'+langs.map(e=>'<span style="display:flex;gap:6px;align-items:center"><span style="width:11px;height:11px;border-radius:3px;display:inline-block;background:'+langColor(e[0])+'"></span>'+esc(e[0])+' '+(e[1]/total*100).toFixed(0)+'%</span>').join('')+'</span><span class="sc-badge">🧪 Repodest</span></div>';
-  html2canvas($('#shareCard'),{scale:2,useCORS:true,backgroundColor:'#12121f'}).then(canvas=>{
-    const a=document.createElement('a');
-    a.href=canvas.toDataURL('image/png');
-    a.download=m.full_name.replace('/','-')+'-repodest.png';
-    a.click();
-    toast('Card downloaded','ok');
-  }).catch(()=>toast('Could not render the card','err'));
+  /* Improvement #12: Lazy load html2canvas */
+  ensureHtml2canvas().then(()=>{
+    const m=S.repo;if(!m)return;
+    const hc=healthCheck();
+    const langs=Object.entries(S.langs).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    const total=Object.values(S.langs).reduce((a,b)=>a+b,0)||1;
+    $('#shareCard').innerHTML=
+      '<div class="sc-top"><img src="'+esc(m.owner.avatar_url)+'" crossorigin="anonymous"><div><h2>'+esc(m.name)+'</h2><div class="sc-u">'+esc(m.full_name)+'</div><div class="sc-desc">'+esc(m.description||'')+'</div></div></div>'+
+      '<div class="sc-stats">'+
+        '<div class="sc-st"><b>'+hc.score+'</b><span>Health</span></div>'+
+        '<div class="sc-st"><b>★ '+fmt(m.stargazers_count)+'</b><span>Stars</span></div>'+
+        '<div class="sc-st"><b>⑂ '+fmt(m.forks_count)+'</b><span>Forks</span></div>'+
+        '<div class="sc-st"><b>'+fmt(FILEMAP.size)+'</b><span>Files</span></div>'+
+      '</div>'+
+      '<div class="sc-foot"><span style="display:flex;gap:10px;align-items:center">'+langs.map(e=>'<span style="display:flex;gap:6px;align-items:center"><span style="width:11px;height:11px;border-radius:3px;display:inline-block;background:'+langColor(e[0])+'"></span>'+esc(e[0])+' '+(e[1]/total*100).toFixed(0)+'%</span>').join('')+'</span><span class="sc-badge">🧪 Repodest</span></div>';
+    html2canvas($('#shareCard'),{scale:2,useCORS:true,backgroundColor:'#12121f'}).then(canvas=>{
+      const a=document.createElement('a');
+      a.href=canvas.toDataURL('image/png');
+      a.download=m.full_name.replace('/','-')+'-repodest.png';
+      a.click();
+      toast('Card downloaded','ok');
+    }).catch(()=>toast('Could not render the card','err'));
+  }).catch(()=>toast('Could not load card renderer','err'));
 }
 function copyLink(){
   const url=location.origin+location.pathname+'?repo='+encodeURIComponent(S.repo.full_name);
@@ -1257,6 +2031,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&document.activeElement===$('#inp'))submitInput();
 });
 
+/* ============================================================
+   Particles animation (original)
+   ============================================================ */
 (function particles(){
   const c=$('#particles'),ctx=c.getContext('2d');
   let W,H,dots=[];
@@ -1277,16 +2054,34 @@ document.addEventListener('keydown',e=>{
   addEventListener('resize',()=>{resize();init()});
 })();
 
+/* ============================================================
+   Boot
+   ============================================================ */
 (function boot(){
   refreshRate();
+  renderHistory();
   const q=new URLSearchParams(location.search);
   if(q.get('repo')){
     const m=q.get('repo').match(/^([^\/]+)\/([^\/]+)$/);
-    if(m){loadRepo(m[1],m[2]);return}
+    if(m){
+      /* Detect platform from URL or default to github */
+      const platform=q.get('platform')||detectPlatform(q.get('repo'))||'github';
+      loadRepo(m[1],m[2],platform);
+      return
+    }
   }
   if(q.get('user')&&/^[\w-]+$/.test(q.get('user'))){loadUser(q.get('user'));return}
   $('#landing').style.display='';$('#app').style.display='none';
 })();
+
+/* ============================================================
+   Improvement #9: Register Service Worker
+   ============================================================ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
