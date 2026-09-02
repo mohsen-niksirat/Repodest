@@ -67,7 +67,7 @@ Quick scan for exposed credentials, `.env` files, private keys, and best practic
 
 ## 🚀 Quick Start
 
-1. Open [repodest.github.io/repodest](https://mohsen-niksirat.github.io/repodest/)
+1. Open [https://mohsen-niksirat.github.io/repodest/](https://mohsen-niksirat.github.io/repodest/)
 2. Paste `owner/repo`, a GitHub URL, or a username
 3. Explore the tabs; tick files in **Files** → generate your **Digest**
 
@@ -128,7 +128,7 @@ MIT © [Mohsen Niksirat](https://github.com/mohsen-niksirat)
 
 ### 🚀 شروع سریع
 
-1. [repodest.github.io/repodest](https://mohsen-niksirat.github.io/repodest/) را باز کنید
+1. [https://mohsen-niksirat.github.io/repodest/](https://mohsen-niksirat.github.io/repodest/) را باز کنید
 2. `owner/repo`، آدرس گیت‌هاب، یا نام کاربری را وارد کنید
 3. تب‌ها را کاوش کنید؛ فایل‌ها را در **فایل‌ها** تیک بزنید → **خلاصه** خود را تولید کنید
 
@@ -169,7 +169,7 @@ Compara dos repos lado a lado con resaltado automático del ganador.
 
 ### 🚀 Inicio Rápido
 
-1. Abre [repodest.github.io/repodest](https://mohsen-niksirat.github.io/repodest/)
+1. Abre [https://mohsen-niksirat.github.io/repodest/](https://mohsen-niksirat.github.io/repodest/)
 2. Pega `owner/repo`, una URL de GitHub, o un nombre de usuario
 3. Explora las pestañas; marca archivos en **Archivos** → genera tu **Resumen**
 
@@ -210,7 +210,7 @@ Repodest 是一个**客户端 GitHub 仓库分析器**和 **LLM 就绪摘要生�
 
 ### 🚀 快速开始
 
-1. 打开 [repodest.github.io/repodest](https://mohsen-niksirat.github.io/repodest/)
+1. 打开 [https://mohsen-niksirat.github.io/repodest/](https://mohsen-niksirat.github.io/repodest/)
 2. 粘贴 `owner/repo`、GitHub URL 或用户名
 3. 浏览标签页；在**文件**中勾选文件 → 生成你的**摘要**
 
@@ -251,7 +251,7 @@ Comparez deux dépôts côte à côte avec mise en évidence automatique du gagn
 
 ### 🚀 Démarrage Rapide
 
-1. Ouvrez [repodest.github.io/repodest](https://mohsen-niksirat.github.io/repodest/)
+1. Ouvrez [https://mohsen-niksirat.github.io/repodest/](https://mohsen-niksirat.github.io/repodest/)
 2. Collez `owner/repo`, une URL GitHub ou un nom d'utilisateur
 3. Explorez les onglets ; cochez des fichiers dans **Fichiers** → générez votre **Résumé**
 
