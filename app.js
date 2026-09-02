@@ -788,10 +788,41 @@ function loadUser(u){
       if(!list.length){grid.innerHTML='<div class="card">No public repositories.</div>'}
       list.forEach(r=>{
         const c=document.createElement('div');c.className='ucard';
-        c.innerHTML='<h4>'+esc(r.name||'')+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>â˜… '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'â€”')+'</span><span>â˜… '+fmt(r.stargazers_count)+'</span><span>â‘‚ '+fmt(r.forks_count)+'</span></div>';
+        c.innerHTML='<h4>'+esc(r.name||'')+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span><span>★ '+fmt(r.stargazers_count)+'</span><span>⑂ '+fmt(r.forks_count)+'</span></div>';
         c.onclick=()=>loadRepo(r.owner.login,r.name,'github');
         grid.appendChild(c);
       });
+      /* Profile summary: aggregate stats over all repos */
+      {
+        const totalStars=list.reduce((a,r)=>a+(r.stargazers_count||0),0);
+        const totalForks=list.reduce((a,r)=>a+(r.forks_count||0),0);
+        const langCount={};
+        list.forEach(r=>{if(r.language)langCount[r.language]=(langCount[r.language]||0)+1});
+        const topLangs=Object.entries(langCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+        const owned=list.filter(r=>!r.fork).length;
+        const mostStarred=list[0];
+        const activeRecent=list.filter(r=>r.pushed_at&&(Date.now()-new Date(r.pushed_at))<90*864e5).length;
+        const summary=document.createElement('div');
+        summary.className='card';
+        summary.style.marginTop='18px';
+        summary.innerHTML=
+          '<div class="minititle">📊 Profile Summary</div>'+
+          '<div class="statrow" style="flex-wrap:wrap;gap:10px">'+
+            '<div class="st"><b>'+fmt(totalStars)+'</b><span>total stars</span></div>'+
+            '<div class="st"><b>'+fmt(totalForks)+'</b><span>total forks</span></div>'+
+            '<div class="st"><b>'+owned+'</b><span>original repos</span></div>'+
+            '<div class="st"><b>'+activeRecent+'</b><span>active (90d)</span></div>'+
+          '</div>'+
+          (topLangs.length?'<div style="margin-top:12px;font-size:11px;color:var(--text3)">Top languages</div><div class="topicrow" style="margin-top:6px">'+topLangs.map(l=>'<span class="topic"><span class="ld" style="display:inline-block;width:9px;height:9px;border-radius:3px;background:'+langColor(l[0])+';margin-right:5px"></span>'+esc(l[0])+' ×'+l[1]+'</span>').join('')+'</div>':'')+
+          (mostStarred?'<div class="kv" style="margin-top:10px"><span>⭐ Most starred</span><b><a href="#" data-owner="'+esc(mostStarred.owner.login)+'" data-repo="'+esc(mostStarred.name)+'">'+esc(mostStarred.full_name||mostStarred.name)+' ('+fmt(mostStarred.stargazers_count)+')</a></b></div>':'');
+        summary.querySelector('a[data-owner]').addEventListener('click',ev=>{
+          ev.preventDefault();
+          loadRepo(ev.target.dataset.owner,ev.target.dataset.repo,'github');
+        });
+        const pickTitle=wrap.querySelector('.minititle');
+        if(pickTitle)wrap.insertBefore(summary,pickTitle);
+        else wrap.appendChild(summary);
+      }
       show($('#loadingView'),false);show($('#errorView'),false);show($('#dash'),true);
       refreshRate();
     }catch(e){handleErr(e,u)}
@@ -1243,7 +1274,7 @@ async function generateDigest(){
   S.digestText=parts.join('\n');
   $('#digestOut').value=S.digestText;
   updateSelMeta();
-  $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;
+  $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;$('#gistBtn').disabled=false;
   btn.disabled=false;btn.textContent='ðŸ¤– Generate digest';
   toast('Digest ready ('+digestFormat.toUpperCase()+')','ok');
   setupLLMButtons();
@@ -1255,6 +1286,48 @@ function copyDigest(){
   (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Digest copied to clipboard','ok')).catch(()=>{
     const ta=$('#digestOut');ta.removeAttribute('readonly');ta.select();document.execCommand('copy');ta.setAttribute('readonly','');toast('Digest copied','ok');
   });
+}
+
+/* ---------- Gist sharing (needs a PAT with gist scope) ---------- */
+async function shareDigestGist(){
+  const t=$('#digestOut').value||S.digestText;
+  if(!t){toast('Generate a digest first','err');return}
+  const pat=LS.get('repodest_pat','');
+  if(!pat){
+    toast('A GitHub token is needed for Gist sharing','err');
+    openModal();
+    return;
+  }
+  const btn=$('#gistBtn');btn.disabled=true;btn.textContent='⏳ Uploading…';
+  try{
+    const name=((S.repo&&S.repo.full_name)||'repo').replace('/','-')+'-repodest-digest.md';
+    const resp=await fetch('https://api.github.com/gists',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Accept:'application/vnd.github+json',Authorization:'Bearer '+pat},
+      body:JSON.stringify({
+        description:'Repodest LLM digest for '+(S.repo&&S.repo.full_name||'repo')+' — preset: '+(DIGEST_PRESETS[digestPreset]||{}).label,
+        public:false,
+        files:{[name]:{content:t.slice(0,900000)}}
+      })
+    });
+    if(resp.status===401||resp.status===403){
+      const j=await resp.json().catch(()=>({}));
+      throw new Error(j.message||'Token rejected — needs gist scope');
+    }
+    if(!resp.ok)throw new Error('Gist API '+resp.status);
+    const gist=await resp.json();
+    const url=gist.html_url||(gist.data&&gist.data.html_url);
+    (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).catch(()=>{});
+    showModal('🌐 Digest shared as secret Gist',
+      '<p style="font-size:13px;color:var(--text2)">Anyone with this link can read the digest. It does not appear in your public profile.</p>'+
+      '<p style="margin:12px 0"><a href="'+esc(url)+'" target="_blank" rel="noopener" style="word-break:break-all">'+esc(url)+'</a></p>'+
+      '<p style="font-size:12px;color:var(--text3)">Link copied to clipboard.</p>');
+    toast('Gist created','ok');
+  }catch(e){
+    toast(e.message||'Gist upload failed','err');
+  }finally{
+    btn.disabled=false;btn.textContent='🌐 Gist share';
+  }
 }
 function downloadDigest(){
   const t=$('#digestOut').value||S.digestText;
@@ -2703,7 +2776,59 @@ async function runBattle(){
       '</div>'+
       '<div class="battle-summary">'+esc(shareText)+'</div>';
   }catch(e){
-    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e">ðŸ’¥</div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
+    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e">💥</div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
+  }
+}
+
+/* ---------- Battle Royale: single-elimination tournament (up to 8 repos) ---------- */
+function fetchRepoMetrics(p){
+  if(p.platform!=='github')return Promise.reject(new Error('Royale supports GitHub repos only'));
+  return api('/repos/'+p.owner+'/'+p.repo).then(meta=>{
+    const m=stripRepo(meta);
+    return api('/repos/'+p.owner+'/'+p.repo+'/languages').then(langs=>({meta:m,langs:langs||{},fileCount:0}));
+  });
+}
+function scoreOf(m,langs){
+  const stars=m.stargazers_count||0,forks=m.forks_count||0;
+  const freshness=m.pushed_at?Math.max(0,1-(Date.now()-new Date(m.pushed_at))/(365*864e5)):0;
+  const diversity=Object.keys(langs).length;
+  return stars*2+forks*3+freshness*400+diversity*50;
+}
+async function runRoyale(){
+  const res=$('#royaleResult');
+  const raw=($('#royaleInput').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!raw.length){toast('Enter at least 2 repos, one per line','err');return}
+  const parsed=raw.map(parseRepoInput).filter(Boolean).slice(0,7);
+  if(parsed.length<2){toast('Need at least 2 valid repos','err');return}
+  res.innerHTML='<div class="loading"><div class="spinner"></div><p>Fetching '+ (parsed.length+1) +' contestants…</p></div>';
+  try{
+    const me={meta:S.repo,langs:S.langs||{},champ:true};
+    const list=[me];
+    for(const p of parsed){
+      const d=await fetchRepoMetrics(p);
+      d.meta.full_name=d.meta.full_name||(p.owner+'/'+p.repo);
+      list.push(d);
+    }
+    let bracket=list.map(d=>({name:d.meta.full_name||d.meta.name,score:scoreOf(d.meta,d.langs)}));
+    let round=1,log='';
+    while(bracket.length>1){
+      const next=[];
+      log+='<div style="margin:8px 0;font-size:12px;color:var(--accent2);font-weight:700">Round '+round+'</div>';
+      for(let i=0;i<bracket.length;i+=2){
+        const a=bracket[i],b=bracket[i+1]||null;
+        if(!b){next.push(a);continue}
+        const win=a.score>=b.score?a:b;
+        log+='<div class="kv"><span>'+esc(a.name)+' vs '+esc(b.name)+'</span><b>→ '+esc(win.name)+'</b></div>';
+        next.push(win);
+      }
+      bracket=next;round++;
+    }
+    const champion=bracket[0];
+    res.innerHTML=
+      '<div style="text-align:center;font-size:17px;font-weight:800;margin:10px 0">🏆 Champion: '+esc(champion.name)+'</div>'+
+      '<div style="max-height:220px;overflow:auto">'+log+'</div>';
+  }catch(e){
+    res.innerHTML='<p style="color:var(--red);font-size:12px">'+esc(e.message||'Tournament failed')+'</p>';
   }
 }
 

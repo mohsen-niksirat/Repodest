@@ -338,6 +338,7 @@
           <div class="digest-actions">
             <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled>📋 Copy</button>
             <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled>⬇️ Download .md</button>
+            <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)">🌐 Gist share</button>
           </div>
           <div class="llm-buttons" id="llmButtons" style="display:none">
             <a class="llm-btn" id="chatgptBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🤖</span> Open in ChatGPT</a>
@@ -487,6 +488,14 @@
       <button class="btn ghost sm" onclick="closeBattleModal()">Close</button>
       <button class="btn sm" onclick="runBattle()">⚔️ Battle!</button>
     </div>
+    <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
+    <h3>🏆 Battle Royale</h3>
+    <p>Up to 7 more repos, single-elimination bracket. One per line.</p>
+    <textarea id="royaleInput" rows="4" spellcheck="false" placeholder="owner/repo&#10;another/repo&#10;third/repo" style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
+    <div class="mrow" style="margin-top:10px">
+      <button class="btn sm" onclick="runRoyale()">🏆 Start tournament</button>
+    </div>
+    <div id="royaleResult" style="margin-top:12px"></div>
   </div>
 </div>
 
