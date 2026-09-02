@@ -428,17 +428,6 @@ footer a{color:var(--text2)}
 #printReport th{background:#f3f4f6}
 #printReport h2{font-size:16px;margin:18px 0 8px}
 
-@media(max-width:640px){
-  .hero{padding:56px 0 24px}
-  .hwrap{padding:12px 16px}
-  .searchbox{flex-wrap:wrap;padding:10px}
-  .searchbox input{min-width:100%;padding:8px 6px}
-  .searchbox .btn{width:100%}
-  main{padding:0 16px 60px}
-  .repo-hero .avatar{width:52px;height:52px}
-  .statrow{gap:14px}
-  .compare-wrap{grid-template-columns:1fr}
-}
 
 /* === Feature 1: Dependency Graph === */
 .dep-graph-wrap{position:relative;width:100%;height:500px;border:1px solid var(--line);border-radius:var(--rs);overflow:hidden;background:var(--bg2)}
@@ -691,4 +680,322 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
 .sr-only{
   position:absolute;width:1px;height:1px;padding:0;margin:-1px;
   overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+}
+
+/* ============================================================
+   Mobile-First Responsive Overhaul
+   ============================================================ */
+
+/* --- Header: compact on mobile --- */
+@media(max-width:640px){
+  header{position:sticky;top:0;z-index:50}
+  .hwrap{padding:10px 12px;gap:8px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .hwrap::-webkit-scrollbar{display:none}
+  .logo{font-size:16px;gap:6px;white-space:nowrap}
+  .logo .lg{width:28px;height:28px;font-size:14px;border-radius:7px}
+  .hspace{display:none}
+  .chip-lite{padding:5px 8px;font-size:10px;gap:4px;white-space:nowrap}
+  .chip-lite span{display:none}
+  .theme-toggle{padding:5px 8px}
+  .theme-toggle .icon{font-size:12px}
+}
+
+/* --- Hero section --- */
+@media(max-width:640px){
+  .hero{padding:40px 0 20px}
+  .hero .eyebrow{font-size:10px;padding:5px 10px;margin-bottom:16px}
+  .hero h1{font-size:28px;letter-spacing:-1px}
+  .hero p.sub{font-size:14px;line-height:1.5;margin-top:12px}
+}
+
+/* --- Search box --- */
+@media(max-width:640px){
+  .searchbox{margin:24px 0 0;padding:6px;border-radius:12px}
+  .searchbox .ico{padding:0 4px 0 10px;font-size:16px}
+  .searchbox input{font-size:14px;padding:8px 4px;min-width:0}
+  .searchbox .btn{padding:10px 16px;font-size:13px;border-radius:10px}
+}
+
+/* --- Example buttons --- */
+@media(max-width:640px){
+  .examples{gap:6px;margin-top:14px}
+  .ex{padding:6px 10px;font-size:11px}
+}
+
+/* --- Feature grid --- */
+@media(max-width:640px){
+  .featgrid{grid-template-columns:1fr 1fr;gap:10px;margin-top:40px}
+  .feat{padding:14px}
+  .feat .fi{font-size:20px;margin-bottom:8px}
+  .feat h3{font-size:13px;margin-bottom:4px}
+  .feat p{font-size:11px;line-height:1.5}
+}
+
+/* --- Steps --- */
+@media(max-width:640px){
+  .steps{grid-template-columns:1fr;gap:10px;margin-top:36px}
+  .step .n{width:32px;height:32px;font-size:13px}
+  .step h4{font-size:13px}
+  .step p{font-size:11.5px}
+}
+
+/* --- Footer --- */
+@media(max-width:640px){
+  footer{margin-top:50px;font-size:11px;padding:0 8px}
+}
+
+/* --- History section --- */
+@media(max-width:640px){
+  .history-section{margin-top:36px}
+  .history-grid{grid-template-columns:1fr;gap:8px}
+  .hcard{padding:10px;gap:10px}
+  .hcard img{width:30px;height:30px;border-radius:8px}
+}
+
+/* --- Main content area --- */
+@media(max-width:640px){
+  main{padding:0 12px 48px}
+}
+
+/* ============================================================
+   Dashboard Mobile Styles
+   ============================================================ */
+
+/* --- Toolbar: horizontal scroll with hidden overflow --- */
+@media(max-width:640px){
+  .toolbar{gap:6px;padding:12px 0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .toolbar::-webkit-scrollbar{display:none}
+  .toolbar .btn{padding:7px 10px;font-size:11px;white-space:nowrap;flex-shrink:0}
+  .toolbar .tb-input{min-width:140px;flex-shrink:0}
+  .toolbar .tb-input input{font-size:12px;padding:6px 8px}
+}
+
+/* --- Tabs: scrollable strip --- */
+@media(max-width:640px){
+  .tabs{gap:4px;margin:16px 0 12px;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:8px 12px;font-size:12px;border-radius:8px;flex-shrink:0}
+}
+
+/* --- Repo hero --- */
+@media(max-width:640px){
+  .repo-hero{padding:14px;gap:12px;flex-direction:column;align-items:center;text-align:center}
+  .repo-hero .avatar{width:48px;height:48px;border-radius:12px}
+  .repo-hero h2{font-size:18px;justify-content:center}
+  .repo-hero .desc{font-size:13px;text-align:center}
+  .topicrow{justify-content:center}
+  .statrow{justify-content:center;gap:14px}
+  .statrow .st b{font-size:16px}
+  .statrow .st span{font-size:10px}
+}
+
+/* --- Branch selector --- */
+@media(max-width:640px){
+  .branch-sel{gap:6px;flex-wrap:wrap}
+  .branch-sel select{max-width:160px;font-size:11px;padding:5px 8px}
+}
+
+/* --- Cards --- */
+@media(max-width:640px){
+  .card{padding:14px;border-radius:12px}
+  .grid2,.grid3{grid-template-columns:1fr;gap:10px}
+}
+
+/* --- Overview: score ring and checks --- */
+@media(max-width:640px){
+  .hgrid{grid-template-columns:1fr;gap:10px}
+  .scorebox{padding:20px 14px}
+  .ring{width:130px;height:130px}
+  .ring svg{width:130px;height:130px}
+  .ring .val b{font-size:32px}
+  .checks{grid-template-columns:1fr}
+  .chk{padding:9px 10px;font-size:12px}
+}
+
+/* --- Minititle and info text --- */
+@media(max-width:640px){
+  .minititle{font-size:10px;letter-spacing:1.2px;margin-bottom:8px}
+}
+
+/* --- Key-value rows --- */
+@media(max-width:640px){
+  .kv{padding:7px 2px;font-size:12px}
+}
+
+/* --- Language breakdown --- */
+@media(max-width:640px){
+  .langbar{height:12px;margin-bottom:14px}
+  .langrow{font-size:12px;gap:8px}
+  .langrow .ln{width:80px;font-size:12px}
+  .langrow .lp{width:44px;font-size:10.5px}
+  .stackrow{gap:6px}
+  .stack{padding:5px 10px;font-size:11px}
+}
+
+/* --- Deps columns --- */
+@media(max-width:640px){
+  .depcol .dlist{max-height:180px}
+  .depcol .dep{padding:5px 8px;font-size:10.5px}
+}
+
+/* --- File stats --- */
+@media(max-width:640px){
+  .filestats{grid-template-columns:repeat(3,1fr);gap:8px}
+  .fstat{padding:10px}
+  .fstat b{font-size:17px}
+  .fstat span{font-size:9px}
+}
+
+/* --- File tree toolbar --- */
+@media(max-width:640px){
+  .tree-tools{gap:4px;flex-wrap:wrap}
+  .tree-tools .btn{padding:6px 8px;font-size:10.5px;white-space:nowrap}
+  .tree-tools input{width:120px;font-size:11px;padding:5px 8px}
+  .tree-tools .info{width:100%;text-align:center;margin-left:0;margin-top:4px;font-size:10.5px}
+}
+
+/* --- File tree --- */
+@media(max-width:640px){
+  .tree{font-size:11.5px}
+  .trow{padding:4px 6px;gap:6px}
+  .trow input[type=checkbox]{width:16px;height:16px}
+  .trow .fsize{font-size:10px}
+  .tnode{margin-left:8px;padding-left:6px}
+}
+
+/* --- Big files list --- */
+@media(max-width:640px){
+  .bigfiles .row{font-size:11.5px;gap:8px}
+  .bigfiles .bar{width:60px}
+}
+
+/* --- Digest layout --- */
+@media(max-width:640px){
+  .digest-layout{grid-template-columns:1fr;gap:10px}
+  .digest-out{min-height:250px;font-size:11px;padding:12px}
+  .digest-meta{font-size:11px;gap:10px}
+  .digest-actions{gap:6px}
+  .optrow{font-size:12px;padding:4px 0}
+}
+
+/* --- Activity --- */
+@media(max-width:640px){
+  .actchart{padding:10px}
+  .contrib{gap:8px;padding:6px 0}
+  .contrib img{width:28px;height:28px}
+  .contrib .cn{font-size:12px}
+  .contrib .cb{width:80px}
+  .contrib .cc{width:48px;font-size:10px}
+  .commit{font-size:12px;padding:8px 2px}
+  .commit .cd{font-size:10px}
+}
+
+/* --- Star history --- */
+@media(max-width:640px){
+  .star-history-embed{min-height:200px}
+  .star-history-embed iframe{height:200px}
+}
+
+/* --- Fun / Persona --- */
+@media(max-width:640px){
+  .persona{flex-direction:column;text-align:center;padding:18px;gap:12px}
+  .persona .pi{font-size:44px}
+  .persona h3{font-size:20px}
+  .persona p{font-size:12.5px;text-align:center}
+  .achgrid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .ach{padding:10px;gap:8px}
+  .ach .ai{font-size:20px}
+  .ach .an{font-size:11.5px}
+  .roast{font-size:13px;padding:12px 14px}
+}
+
+/* --- Deps graph --- */
+@media(max-width:640px){
+  .dep-graph-wrap{height:300px}
+  .dep-graph-legend{gap:8px}
+  .dep-graph-legend span{font-size:10.5px}
+}
+
+/* --- Complexity --- */
+@media(max-width:640px){
+  .complexity-top-files .cfrow{font-size:11px}
+  .complexity-top-files .cfpath{font-size:10.5px}
+}
+
+/* --- Bus factor --- */
+@media(max-width:640px){
+  .dominance-legend{gap:6px}
+  .dominance-legend span{font-size:10px}
+}
+
+/* --- Release timeline --- */
+@media(max-width:640px){
+  .release-timeline{padding-left:18px}
+  .release-item .rver{font-size:12px}
+  .release-item .rdate{font-size:10px}
+  .release-item .rbody{font-size:11px}
+}
+
+/* --- Similar repos --- */
+@media(max-width:640px){
+  .similar-grid{grid-template-columns:1fr;gap:8px}
+  .similar-card{padding:10px}
+}
+
+/* --- Security --- */
+@media(max-width:640px){
+  .security-checklist{grid-template-columns:1fr}
+  .sec-item{padding:8px 10px;font-size:12px}
+  .security-score{padding:12px}
+}
+
+/* --- Endpoints --- */
+@media(max-width:640px){
+  .endpoint-row .ep-file{max-width:120px}
+}
+
+/* --- README preview --- */
+@media(max-width:640px){
+  .readme-preview{padding:14px;font-size:12.5px;max-height:400px}
+  .readme-preview h1{font-size:18px}
+  .readme-preview h2{font-size:15px}
+}
+
+/* --- Explain modal content --- */
+@media(max-width:640px){
+  .explain-content{font-size:13px;line-height:1.65}
+}
+
+/* ============================================================
+   Modals Mobile
+   ============================================================ */
+@media(max-width:640px){
+  .modal-bg{padding:12px;align-items:flex-end}
+  .modal{width:100%;max-width:100%;border-radius:16px 16px 0 0;padding:20px 16px;max-height:85vh;overflow-y:auto}
+  .modal h3{font-size:17px;margin-bottom:4px}
+  .modal p{font-size:12px;margin-bottom:10px}
+  .modal input{padding:10px 12px;font-size:12px;margin-bottom:10px}
+  .modal .mrow{gap:6px}
+  .modal .mrow .btn{padding:9px 14px;font-size:12.5px}
+  .battle-modal .modal{max-height:90vh}
+  .share-templates{grid-template-columns:1fr;gap:8px}
+  .share-tpl{padding:14px}
+  .shortcuts-grid{grid-template-columns:1fr;gap:8px}
+  .shortcut-item{padding:8px 12px}
+  .clone-options{gap:8px}
+  .clone-row{padding:10px 12px;flex-wrap:wrap}
+  .clone-row code{font-size:11px}
+}
+
+/* ============================================================
+   Touch-friendly tap targets
+   ============================================================ */
+@media(max-width:640px){
+  .btn{min-height:44px;min-width:44px}
+  .tab{min-height:40px}
+  .chip-lite{min-height:36px}
+  .ex{min-height:36px}
+  .trow input[type=checkbox]{min-width:20px;min-height:20px}
+  .optrow input{min-width:20px;min-height:20px}
+  .rec-btn{min-height:40px;padding:8px 12px}
 }
