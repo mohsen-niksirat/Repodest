@@ -1616,7 +1616,57 @@ function renderFun(){
     $('#roastBox').innerHTML='<b>🔥 Roast mode:</b> '+esc(pick);
     const ach=getAch();
     $('#achFull').innerHTML=ach.map(a=>achHTML(a)).join('');
+    renderWrapped();
   }catch(e){console.warn('renderFun error:',e)}
+}
+
+/* ============================================================
+   Repo Wrapped — a fun 12-month story from activity data
+   ============================================================ */
+function renderWrapped(){
+  const el=$('#wrappedCard');
+  if(!el)return;
+  const m=S.repo;
+  if(!m){el.innerHTML='';return}
+  const weeks=Array.isArray(S.activity)?S.activity:[];
+  const last52=weeks.slice(-52);
+  const commits=last52.reduce((a,w)=>a+(w.total||0),0);
+  const activeWeeks=last52.filter(w=>(w.total||0)>0).length;
+  const busiest=last52.reduce((best,w)=>{
+    if(!best||(w.total||0)>(best.total||0))return w;
+    return best;
+  },null);
+  const busiestLabel=(()=>{ 
+    if(!busiest||!busiest.total)return null;
+    const d=new Date(busiest.week*86400000+86400000);
+    return {n:busiest.total,date:d.toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'})};
+  })();
+  const season=(()=>{
+    if(!last52.length)return null;
+    const half1=last52.slice(0,26).reduce((a,w)=>a+(w.total||0),0);
+    const half2=last52.slice(26).reduce((a,w)=>a+(w.total||0),0);
+    if(half1+half2<10)return null;
+    return half2>half1*1.25?'📈 Accelerating — the last 6 months are busier than the first.'
+      :half1>half2*1.25?'🌅 Cooling down — earlier months were busier.'
+      :'⚖️ Steady rhythm all year long.';
+  })();
+  const topContrib=(S.contribs&&S.contribs.filter(c=>c.type!=='Bot').slice().sort((a,b)=>(b.contributions||0)-(a.contributions||0))[0])||null;
+  const daysOld=(()=>{try{return Math.round((Date.now()-new Date(m.created_at))/(365.25*864e5)*10)/10}catch(e){return null}})();
+  const score=(()=>{try{return healthCheck().score}catch(e){return 0}})();
+  const starGrade=m.stargazers_count>=10000?' galactic 🌌':m.stargazers_count>=1000?' famous ✨':m.stargazers_count>=100?' loved 💛':' cozy 🌱';
+  const cards=[];
+  const add=(icon,title,body)=>cards.push('<div class="wrapped-tile"><div class="wt-i">'+icon+'</div><div class="wt-b"><b>'+esc(title)+'</b><span>'+body+'</span></div></div>');
+  if(commits>0){
+    add('🧾',fmt(commits)+' commits','across '+activeWeeks+' active weeks — '+(activeWeeks>=45?'almost never offline!':activeWeeks>=30?'a reliable heartbeat.':'quality over quantity.'));
+  }else{
+    add('😴','A quiet year','no commits in the last 52 weeks — the repo is resting.');
+  }
+  if(busiestLabel)add('⚡','Peak week: '+fmt(busiestLabel.n)+' commits','week of '+busiestLabel.date);
+  if(topContrib)add('👑',esc(topContrib.login||'Anonymous'),'led the charge with '+fmt(topContrib.contributions)+' lifetime commits');
+  if(season)add('🗓️','Rhythm',season);
+  if(daysOld!=null)add('🎂',daysOld+' years old','born '+(daysOld>=1?Math.round(daysOld)+' years':'<1 year')+' ago, still '+(score>=60?'kicking':'waiting for love'));
+  add('⭐',fmt(m.stargazers_count)+' stars','a'+starGrade+' repository'+(m.forks_count?' with '+fmt(m.forks_count)+' forks':''));
+  el.innerHTML='<div class="wrapped-grid">'+cards.join('')+'</div>';
 }
 
 /* first shareCard removed — using the share template version below */

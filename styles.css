@@ -482,6 +482,13 @@ footer a{color:var(--text2)}
 .rec-btn .rcnt{font-family:var(--mono);color:var(--accent2);font-size:11px}
 .rec-btn.preset-sel{border-color:var(--accent);background:rgba(168,85,247,.12);color:var(--text);box-shadow:0 0 0 1px var(--accent) inset}
 
+/* === Repo Wrapped === */
+.wrapped-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.wrapped-tile{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.wrapped-tile .wt-i{font-size:22px;line-height:1}
+.wrapped-tile .wt-b{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--text2)}
+.wrapped-tile .wt-b b{font-size:13.5px;color:var(--text)}
+
 /* === Badge generator === */
 .badge-preview-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .badge-preview{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
