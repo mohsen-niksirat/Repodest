@@ -482,6 +482,12 @@ footer a{color:var(--text2)}
 .rec-btn .rcnt{font-family:var(--mono);color:var(--accent2);font-size:11px}
 .rec-btn.preset-sel{border-color:var(--accent);background:rgba(168,85,247,.12);color:var(--text);box-shadow:0 0 0 1px var(--accent) inset}
 
+/* === Badge generator === */
+.badge-preview-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.badge-preview{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.badge-options{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--text2)}
+.badge-options .optrow{margin:0}
+
 /* === Command palette === */
 .cmd-item.sel{background:var(--card2);color:var(--text)}
 body.light .cmd-item{color:#475569}

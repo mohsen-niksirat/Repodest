@@ -39,6 +39,85 @@ async function ensureHtml2canvas(){
    (SPDX_MAP lives in core.js)
    ============================================================ */
 
+/* ============================================================
+   README Badge Generator (static SVG + dynamic shields.io)
+   ============================================================ */
+function scoreColor(score){
+  return score>=80?'#22c55e':score>=60?'#eab308':score>=40?'#f97316':'#ef4444';
+}
+function escapeXml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
+}
+function buildStaticBadge(left,right,color){
+  const leftW=6+String(left).length*7.2+6;
+  const rightW=6+String(right).length*7.2+6;
+  const total=leftW+rightW;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="'+total+'" height="20" role="img" aria-label="'+escapeXml(left)+': '+escapeXml(right)+'">'+
+    '<linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>'+
+    '<clipPath id="r"><rect width="'+total+'" height="20" rx="3" fill="#fff"/></clipPath>'+
+    '<g clip-path="url(#r)">'+
+      '<rect width="'+leftW+'" height="20" fill="#555"/>'+
+      '<rect x="'+leftW+'" width="'+rightW+'" height="20" fill="'+color+'"/>'+
+      '<rect width="'+total+'" height="20" fill="url(#s)"/>'+
+    '</g>'+
+    '<g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11">'+
+      '<text x="'+(leftW/2)+'" y="14">'+escapeXml(left)+'</text>'+
+      '<text x="'+(leftW+rightW/2)+'" y="14">'+escapeXml(right)+'</text>'+
+    '</g>'+
+  '</svg>';
+}
+function badgeMarkdown(){
+  const m=S.repo;if(!m)return'';
+  const score=(()=>{try{return healthCheck().score}catch(e){return 0}})();
+  const style=(document.querySelector('input[name="badgeStyle"]:checked')||{}).value||'static';
+  const withStars=!$('#badgeStars')||$('#badgeStars').checked;
+  const repoUrl=m.html_url||('https://github.com/'+m.full_name);
+  const deepUrl=location.origin+location.pathname+'?repo='+encodeURIComponent(m.full_name||'');
+  const lines=[];
+  if(style==='dynamic'){
+    lines.push('[![Repodest](https://img.shields.io/badge/analyzed%20by-Repodest-9333ea)]('+deepUrl+')');
+    lines.push('[![Health](https://img.shields.io/badge/dynamic/json?url='+encodeURIComponent('https://api.github.com/repos/'+(m.full_name||''))+'&query=%24.stargazers_count&logo=github&label=stars)]('+repoUrl+')');
+  }else{
+    lines.push('[![Health score](data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(buildStaticBadge('health score',score+'/100',scoreColor(score))) ) )+')('+deepUrl+')');
+  }
+  if(withStars&&style==='static'){
+    lines.push('[![Stars](data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(buildStaticBadge('stars',fmt(m.stargazers_count||0),'#0969da'))))+')('+repoUrl+')');
+  }
+  return lines.join('\n');
+}
+function renderBadgeGenerator(){
+  const card=$('#badgeCard'),preview=$('#badgePreview');
+  if(!card||!preview)return;
+  const m=S.repo;
+  if(!m||(S.platform!=='github'&&S.platform!=='ghe'&&S.platform!=='gitlab'&&S.platform!=='bitbucket')){card.style.display='none';return}
+  card.style.display='';
+  const score=(()=>{try{return healthCheck().score}catch(e){return 0}})();
+  preview.innerHTML=buildStaticBadge('health score',score+'/100',scoreColor(score))+'<div style="width:10px"></div>'+buildStaticBadge('stars',fmt(m.stargazers_count||0),'#0969da');
+  renderBadgeCode();
+}
+function renderBadgeCode(){
+  const ta=$('#badgeCode');
+  if(!ta)return;
+  ta.value=badgeMarkdown();
+}
+function copyBadgeCode(){
+  const ta=$('#badgeCode');
+  if(!ta||!ta.value)return;
+  (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('Badge markdown copied','ok')).catch(()=>{ta.removeAttribute('readonly');ta.select();document.execCommand('copy');ta.setAttribute('readonly','');toast('Badge markdown copied','ok')});
+}
+function downloadBadgeSVG(){
+  const m=S.repo;if(!m)return;
+  const score=(()=>{try{return healthCheck().score}catch(e){return 0}})();
+  const svg=buildStaticBadge('health score',score+'/100',scoreColor(score));
+  const blob=new Blob([svg],{type:'image/svg+xml'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=(m.full_name||'repo').replace('/','-')+'-badge.svg';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  toast('Badge SVG downloaded','ok');
+}
+
 function renderLicenseAnalysis(){
   try{
     const m=S.repo;
@@ -899,6 +978,7 @@ function renderDash(){
       '</div></div>';
     renderOverview();renderLanguages();renderFiles();resetDigest();renderActivity();renderFun();
     renderLicenseAnalysis();
+    try{renderBadgeGenerator()}catch(e){}
     computeComplexity();
     switchTab('overview');
   }catch(e){console.warn('renderDash error:',e)}
