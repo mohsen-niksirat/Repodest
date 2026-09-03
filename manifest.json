@@ -1,7 +1,7 @@
 {
   "name": "Repodest",
   "short_name": "Repodest",
-  "description": "Know a GitHub repo in seconds. Health score, language breakdown, file explorer, commit insights — and an LLM-ready digest.",
+  "description": "Know a GitHub repo in seconds. Health score, language breakdown, file explorer, commit insights \u00e2\u20ac\u201d and an LLM-ready digest.",
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#0a0a12",
@@ -9,12 +9,33 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧪%3C/text%3E%3C/svg%3E",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["developer", "utilities"],
+  "categories": [
+    "developer",
+    "utilities"
+  ],
   "lang": "en"
 }
