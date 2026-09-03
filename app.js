@@ -2311,6 +2311,71 @@ function selectSmartCategory(cat){
 }
 function selectRecCategory(cat){selectSmartCategory(cat)}
 
+/* ---------- Ask-a-question smart file selection ----------
+   Scores candidate files by keyword overlap with paths and
+   (lazily fetched) contents; picks the top matches. */
+const STOPWORDS=new Set(['how','does','do','the','a','an','is','are','what','where','when','which','why','who','in','on','of','to','for','with','and','or','not','it','this','that','can','i','my','me','work','works','working','code','file','files','repo','repository','project','use','uses','using','get','set']);
+function questionKeywords(q){
+  return String(q||'').toLowerCase().split(/[^a-z0-9_\-\.]+/).filter(w=>w.length>2&&!STOPWORDS.has(w)).slice(0,8);
+}
+function candidateFilesForSearch(){
+  const paths=[];FILEMAP.forEach((f,p)=>{if(isText(f)&&!isLock(f)&&(f.size||0)<120*1024)paths.push(p)});
+  return paths;
+}
+async function smartSelectForQuestion(){
+  const q=($('#askInput')&&$('#askInput').value)||'';
+  const kws=questionKeywords(q);
+  const status=$('#askStatus');
+  if(!kws.length){toast('Type a question with a few keywords','err');return}
+  const candidates=candidateFilesForSearch();
+  if(!candidates.length){toast('Load a repository first','err');return}
+  /* Pass 1: path/name scoring (free) */
+  const scores={};
+  for(const p of candidates){
+    const lower=p.toLowerCase();
+    let s=0;
+    kws.forEach(k=>{
+      if(lower.includes(k))s+=3;
+      const name=lower.split('/').pop();
+      if(name.includes(k))s+=2;
+    });
+    scores[p]=s;
+  }
+  status.textContent='Scanning '+candidates.length+' candidate files…';
+  /* Pass 2: content scoring for mid-ranked files (bounded fetches) */
+  const byPath=Array.from(candidates).sort((a,b)=>scores[b]-scores[a]);
+  const toFetch=byPath.slice(0,80);
+  const m=S.repo,branch=(m&&m.default_branch)||'main';
+  let fetched=0;
+  for(const p of toFetch){
+    try{
+      const r=await fetch(rawUrl((m&&m.full_name),branch,p));
+      if(!r.ok)continue;
+      const txt=(await r.text()).toLowerCase();
+      fetched++;
+      let hits=0;
+      kws.forEach(k=>{
+        const c=txt.split(k).length-1;
+        hits+=Math.min(c,10);
+      });
+      if(hits>0)scores[p]=(scores[p]||0)+hits;
+    }catch(e){/* skip */}
+  }
+  const ranked=Object.entries(scores).filter(([p,s])=>s>0).sort((a,b)=>b[1]-a[1]);
+  if(!ranked.length){
+    status.textContent='No files matched "'+q+'" — try different keywords.';
+    toast('No matching files found','err');
+    return;
+  }
+  const top=ranked.slice(0,12).map(x=>x[0]);
+  top.forEach(p=>S.sel.add(p));
+  $$('#tree .fcb').forEach(cb=>cb.checked=S.sel.has(cb.dataset.path));
+  updateSelMeta();
+  status.textContent='Selected '+top.length+' files for: '+q;
+  toast(top.length+' relevant files selected — generate the digest','ok');
+  switchTab('digest');
+}
+
 /* ============================================================
    Feature: Security Quick Scan
    ============================================================ */

@@ -322,6 +322,15 @@
             </div>
           </div>
           <div class="card" style="margin-top:16px">
+            <div class="minititle">❓ Ask-a-question auto-select</div>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Type what you want to ask the LLM — relevant files get selected automatically by matching your keywords against paths and file contents.</p>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="askInput" placeholder="e.g. how does authentication work?" spellcheck="false" style="flex:1" onkeydown="if(event.key==='Enter')smartSelectForQuestion()">
+              <button class="btn sm" onclick="smartSelectForQuestion()">🎯 Select</button>
+            </div>
+            <p style="font-size:11px;color:var(--text3);margin-top:8px" id="askStatus"></p>
+          </div>
+          <div class="card" style="margin-top:16px">
             <div class="minititle">Selection</div>
             <div class="digest-meta" id="selMeta"></div>
             <div class="digest-actions">
