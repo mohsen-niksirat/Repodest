@@ -319,6 +319,7 @@
               <button class="rec-btn" data-preset="learn" onclick="selectDigestPreset('learn')">🎓 Learn codebase</button>
               <button class="rec-btn" data-preset="migrate" onclick="selectDigestPreset('migrate')">🚚 Migration</button>
               <button class="rec-btn" data-preset="docs" onclick="selectDigestPreset('docs')">📝 Docs writing</button>
+              <button class="rec-btn" data-preset="custom" onclick="selectDigestPreset('custom')">✏️ Custom</button>
             </div>
             <div class="rec-btns">
               <button class="rec-btn" data-format="md" onclick="selectDigestFormat('md')">Markdown</button>
@@ -367,14 +368,17 @@
             <p style="color:var(--text3);font-size:11.5px;line-height:1.6">Tip: tick files in the <b>Files</b> tab tree, then come back here. Binary files and lockfiles are skipped automatically. Content is fetched fresh from raw.githubusercontent.com — it never leaves your browser.</p>
           </div>
         </div>
-        <div class="card">
-          <div class="minititle">Generated prompt</div>
-          <textarea class="digest-out" id="digestOut" readonly placeholder="Pick some files and hit Generate — the LLM-ready prompt will appear here."></textarea>
-          <div class="digest-actions">
-            <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled>📋 Copy</button>
-            <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled>⬇️ Download .md</button>
-            <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)">🌐 Gist share</button>
-          </div>
+          <div class="card">
+            <div class="minititle">Generated prompt</div>
+            <textarea class="digest-out" id="digestOut" readonly placeholder="Pick some files and hit Generate — the LLM-ready prompt will appear here."></textarea>
+            <div class="digest-actions" id="partNav" style="display:none"></div>
+            <div class="digest-actions">
+              <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled>📋 Copy</button>
+              <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled>⬇️ Download .md</button>
+              <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)">🌐 Gist share</button>
+              <button class="btn ghost sm" onclick="toggleTokTable()" id="tokBtn" disabled>🧮 Token breakdown</button>
+            </div>
+            <div id="tokTable" style="display:none"></div>
           <div class="llm-buttons" id="llmButtons" style="display:none">
             <a class="llm-btn" id="chatgptBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🤖</span> Open in ChatGPT</a>
             <a class="llm-btn" id="claudeBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🧠</span> Open in Claude</a>

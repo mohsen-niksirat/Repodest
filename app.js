@@ -1357,22 +1357,18 @@ async function generateDigest(){
   const paths=Array.from(S.sel).sort();
   let bytes=0;paths.forEach(p=>{const f=FILEMAP.get(p);if(f)bytes+=f.size||0});
   if(bytes>3*1024*1024){toast('Selection is over 3 MB — trim it down','err');btn.disabled=false;btn.textContent='🤖 Generate digest';return}
-  const parts=[];
-  parts.push(buildDigestHeader(m,branch));
+  /* Pass 1: fetch everything into per-file sections */
+  const sections=[];
+  let readmeSection=null;
   if($('#optReadme').checked){
     const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
     if(readme){
       try{
         btn.textContent='⏳ README…';
         const t=await(await fetch(rawUrl((m&&m.full_name),branch,readme))).text();
-        parts.push(wrapFileSection(readme,'md',t.slice(0,20000)));
+        readmeSection={path:readme,ext:'md',content:t.slice(0,20000)};
       }catch(e){}
     }
-  }
-  if($('#optTree').checked){
-    if(digestFormat==='xml')parts.push('  <file_tree>\n'+asciiTree(paths).split('&').join('&amp;').split('<').join('&lt;')+'\n  </file_tree>');
-    else if(digestFormat==='json')parts.push('    "file_tree": '+JSON.stringify(asciiTree(paths))+',');
-    else parts.push('\n# File Tree\n\n```text\n'+asciiTree(paths)+'\n```');
   }
   let fetched=0,skipped=0,binSkipped=0,sigShrunk=0;
   for(const p of paths){
@@ -1390,19 +1386,72 @@ async function generateDigest(){
       let t=await r.text();
       if(t.includes('\0')||/[ --]{5,}/.test(t)){binSkipped++;skipped++;continue}
       if(sigOnly&&(f.size||0)>10*1024){const shrunk=extractSignatures(t,ext);if(shrunk.length<t.length){t=shrunk;sigShrunk++}}
-      parts.push(wrapFileSection(p,ext,t));
+      sections.push({path:p,ext,content:t});
     }catch(e){skipped++}
   }
-  if(skipped)parts.push(digestFormat==='xml'?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
-  finalizeDigestFooter(parts);
-  S.digestText=parts.join('\n');
-  $('#digestOut').value=S.digestText;
+  /* Pass 2: pack sections into context-sized parts */
+  S.digestParts=packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkipped,sigShrunk);
+  S.digestPartIdx=0;
+  showDigestPart(0);
   updateSelMeta();
-  $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;$('#gistBtn').disabled=false;
+  $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;$('#gistBtn').disabled=false;$('#tokBtn').disabled=false;
   btn.disabled=false;btn.textContent='🤖 Generate digest';
-  toast('Digest ready ('+digestFormat.toUpperCase()+')','ok');
+  toast(S.digestParts.length>1?('Digest split into '+S.digestParts.length+' parts (context limit)'):('Digest ready ('+digestFormat.toUpperCase()+')'),'ok');
   setupLLMButtons();
   switchTab('digest');
+}
+
+/* Build context-fit parts: each part repeats the full header so it
+   stands alone in an LLM chat. Used when the digest exceeds the
+   selected model's context window. */
+function digestTokenBudget(){
+  const model=($('#modelSelect')||{}).value||'gpt5';
+  return Math.floor((MODEL_CTX[model]||128000)*0.9*(MODEL_CHARS_PER_TOK[model]||4));
+}
+function packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkipped,sigShrunk){
+  const budget=digestTokenBudget();
+  const groups=[];
+  let cur=[],curBytes=0;
+  const estBytes=sec=>sec.content.length+sec.path.length+40;
+  if(readmeSection){cur.push(readmeSection);curBytes+=estBytes(readmeSection)}
+  for(const sec of sections){
+    if(cur.length&&curBytes+estBytes(sec)>budget*0.6){groups.push(cur);cur=[];curBytes=0}
+    cur.push(sec);curBytes+=estBytes(sec);
+  }
+  if(cur.length)groups.push(cur);
+  if(!groups.length)groups.push([]);
+  const out=[];
+  groups.forEach((group,gi)=>{
+    const parts=[];
+    parts.push(buildDigestHeader(m,branch,group.length+' of '+paths.length+' files (part '+(gi+1)+'/'+groups.length+')'));
+    if($('#optTree').checked){
+      if(digestFormat==='xml')parts.push('  <file_tree>\n'+asciiTree(group.map(s=>s.path)).split('&').join('&amp;').split('<').join('&lt;')+'\n  </file_tree>');
+      else if(digestFormat==='json')parts.push('    "file_tree": '+JSON.stringify(asciiTree(group.map(s=>s.path)))+',');
+      else parts.push('\n# File Tree\n\n```text\n'+asciiTree(group.map(s=>s.path))+'\n```');
+    }
+    group.forEach(sec=>parts.push(wrapFileSection(sec.path,sec.ext,sec.content)));
+    if(gi===groups.length-1&&skipped)parts.push(digestFormat==='xml'?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
+    finalizeDigestFooter(parts);
+    out.push(parts.join('\n'));
+  });
+  return out;
+}
+function showDigestPart(idx){
+  S.digestPartIdx=idx;
+  const parts=S.digestParts||[];
+  S.digestText=parts[idx]||'';
+  $('#digestOut').value=S.digestText;
+  const nav=$('#partNav');
+  if(!nav)return;
+  if(parts.length>1){
+    nav.style.display='';
+    const prev=(idx-1)<0?0:idx-1,next=(idx+1)>(parts.length-1)?parts.length-1:idx+1;
+    nav.innerHTML='<button class="btn ghost sm" onclick="showDigestPart('+prev+')" '+(idx===0?'disabled':'')+'>◀</button>'+
+      '<span style="font-size:12px;color:var(--text2);align-self:center">Part <b>'+(idx+1)+'/'+parts.length+'</b> <span style="color:var(--text3)">— context limit; paste parts sequentially in one chat</span></span>'+
+      '<button class="btn ghost sm" onclick="showDigestPart('+next+')" '+(idx===parts.length-1?'disabled':'')+'>▶</button>';
+  }else{
+    nav.style.display='none';nav.innerHTML='';
+  }
 }
 function copyDigest(){
   const t=$('#digestOut').value||S.digestText;
@@ -1410,6 +1459,68 @@ function copyDigest(){
   (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Digest copied to clipboard','ok')).catch(()=>{
     const ta=$('#digestOut');ta.removeAttribute('readonly');ta.select();document.execCommand('copy');ta.setAttribute('readonly','');toast('Digest copied','ok');
   });
+}
+
+/* ---------- Per-file token breakdown table ---------- */
+let tokTableVisible=false;
+function toggleTokTable(){
+  tokTableVisible=!tokTableVisible;
+  $('#tokBtn').style.opacity=tokTableVisible?'':'0.6';
+  renderTokTable();
+}
+function renderTokTable(){
+  const host=$('#tokTable');
+  if(!host)return;
+  if(!tokTableVisible){host.style.display='none';return}
+  const model=($('#modelSelect')||{}).value||'gpt5';
+  const cpt=MODEL_CHARS_PER_TOK[model]||4;
+  const rows=[];
+  S.sel.forEach(p=>{
+    const f=FILEMAP.get(p);
+    if(!f)return;
+    const bytes=f.size||0;
+    rows.push({path:p,bytes,toks:Math.round(bytes/cpt)});
+  });
+  rows.sort((a,b)=>b.toks-a.toks);
+  if(!rows.length){host.style.display='';host.innerHTML='<p style="color:var(--text3);font-size:12px">No files selected.</p>';return}
+  const ctx=MODEL_CTX[model]||128000;
+  const shown=rows.slice(0,50);
+  host.style.display='';
+  host.innerHTML=
+    '<div style="font-size:11px;color:var(--text3);margin:8px 0 6px">'+rows.length+' files · estimates for '+esc($('#modelSelect')?$('#modelSelect').selectedOptions[0].textContent:model)+' · context '+fmt(ctx)+' tok</div>'+
+    shown.map(r=>{
+      const pct=Math.min(100,Math.round(r.toks/ctx*100));
+      const short=r.path.length>46?'…'+r.path.slice(-45):r.path;
+      return '<div class="langrow"><span class="ln" style="width:46%" title="'+esc(r.path)+'">'+esc(short)+'</span><span class="lb"><i style="width:'+Math.max(2,pct)+'%;background:'+(r.toks>ctx*0.25?'#ef4444':r.toks>ctx*0.1?'#f59e0b':'#22d3ee')+'"></i></span><span class="lp">'+fmt(r.toks)+' tk</span></div>';
+    }).join('')+
+    (rows.length>50?'<div style="font-size:11px;color:var(--text3);margin-top:6px">…and '+(rows.length-50)+' more (sorted by size)</div>':'');
+}
+
+/* ---------- Custom user-defined preset ---------- */
+const CUSTOM_TASK_KEY='repodest_custom_task';
+function editCustomTask(){
+  const saved=LS.get(CUSTOM_TASK_KEY,'');
+  const bg=document.createElement('div');
+  bg.className='modal-bg';
+  bg.style.cssText='position:fixed;inset:0;background:rgba(5,5,12,.7);backdrop-filter:blur(6px);z-index:120;display:grid;place-items:center;padding:20px';
+  bg.innerHTML='<div class="modal" style="background:var(--card-solid);border:1px solid var(--line2);border-radius:20px;padding:26px;width:min(560px,94vw);box-shadow:var(--shadow)">'+
+    '<h3>✏️ Custom preset instructions</h3>'+
+    '<p style="font-size:12.5px;color:var(--text2)">These instructions are prepended to every digest generated with the Custom preset.</p>'+
+    '<textarea id="custTaskInput" rows="6" spellcheck="false" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical" placeholder="e.g. You are a Scala expert. Review everything for functional programming style…">'+esc(saved)+'</textarea>'+
+    '<div class="mrow" style="margin-top:12px">'+
+      '<button class="btn ghost sm" onclick="this.closest(\'.modal-bg\').remove()">Cancel</button>'+
+      '<button class="btn sm" onclick="saveCustomTask(this)">Save</button>'+
+    '</div></div>';
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.remove()});
+  document.body.appendChild(bg);
+  setTimeout(()=>$('#custTaskInput').focus(),50);
+}
+function saveCustomTask(btnEl){
+  const ta=$('#custTaskInput');
+  if(!ta)return;
+  LS.set(CUSTOM_TASK_KEY,ta.value.trim());
+  (btnEl.closest('.modal-bg')).remove();
+  toast('Custom preset saved','ok');
 }
 
 /* ---------- Gist sharing (needs a PAT with gist scope) ---------- */
@@ -3665,6 +3776,15 @@ const DIGEST_PRESETS={
   migrate:{label:'Migration',task:'You are a migration expert. Analyze the repository below and produce a migration plan: inventory of frameworks and versions, dependency risks, suggested target stack, step-by-step migration phases, and a risk assessment.'},
   docs:{label:'Docs writing',task:'You are a technical writer. Using the repository below, draft up-to-date documentation: a README outline, API reference from exported functions/routes, and a getting-started guide. Match the tone to the existing docs.'}
 };
+/* Custom preset task is resolved dynamically from localStorage */
+function digestTask(){
+  if(digestPreset==='custom')return LS.get(CUSTOM_TASK_KEY,'')||'You are given the source of a software repository. Use this context to answer questions about the codebase accurately and concisely.';
+  return (DIGEST_PRESETS[digestPreset]||DIGEST_PRESETS.general).task;
+}
+function digestTaskLabel(){
+  if(digestPreset==='custom')return'Custom';
+  return (DIGEST_PRESETS[digestPreset]||DIGEST_PRESETS.general).label;
+}
 const DIGEST_FORMATS=['md','xml','json'];
 let digestPreset=LS.get('repodest_preset','general');
 let digestFormat=LS.get('repodest_format','md');
@@ -3673,10 +3793,11 @@ const MODEL_CTX={gpt5:128000,claude:200000,gemini:1000000,llama:8000};
 const MODEL_CHARS_PER_TOK={gpt5:4,claude:3.6,gemini:3.8,llama:4.2};
 
 function selectDigestPreset(p){
-  if(!DIGEST_PRESETS[p])return;
+  if(p!=='custom'&&!DIGEST_PRESETS[p])return;
   digestPreset=p;LS.set('repodest_preset',p);
   $$('.rec-btn[data-preset]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.preset===p));
-  toast('Preset: '+DIGEST_PRESETS[p].label,'ok');
+  toast('Preset: '+digestTaskLabel(),'ok');
+  if(p==='custom')editCustomTask();
 }
 function selectDigestFormat(f){
   if(!DIGEST_FORMATS.includes(f))return;
@@ -3756,25 +3877,27 @@ function extractSignatures(src,ext){
   return dedup.join('\n').replace(/\n{3,}/g,'\n\n');
 }
 
-function buildDigestHeader(m,branch){
+function buildDigestHeader(m,branch,partLabel){
   if(digestFormat==='xml'){
     return ['# Repository Context','<repository name="'+esc(m&&m.full_name)+'" platform="'+esc(S.platform||'github')+'" branch="'+esc(branch)+'">',
       '  <meta>','    <description>'+esc(m&&m.description)+'</description>','    <language>'+esc(m&&m.language)+'</language>',
       '    <stars>'+fmt(m&&m.stargazers_count)+'</stars>','    <forks>'+fmt(m&&m.forks_count)+'</forks>',
       '    <license>'+(m&&m.license?esc(m.license.spdx_id):'none')+'</license>','    <generated>'+new Date().toISOString().slice(0,10)+'</generated>',
-      '  </meta>','  <task>'+esc(DIGEST_PRESETS[digestPreset].task)+'</task>'].join('\n');
+      '  </meta>','  <task>'+esc(digestTask())+'</task>',
+      partLabel?'  <part>'+esc(partLabel)+'</part>':''].filter(Boolean).join('\n');
   }
   if(digestFormat==='json'){
     return ['{','  "repository": "'+(m&&m.full_name)+'",','  "platform": "'+(S.platform||'github')+'",','  "branch": "'+branch+'",',
-      '  "meta": '+JSON.stringify({description:m&&m.description,primary_language:m&&m.language,stars:m&&m.stargazers_count,forks:m&&m.forks_count,license:m&&m.license?m.license.spdx_id:null,generated:new Date().toISOString().slice(0,10)})+',',
-      '  "task": '+JSON.stringify(DIGEST_PRESETS[digestPreset].task)+','].join('\n');
+      '  "meta": '+JSON.stringify({description:m&&m.description,primary_language:m&&m.language,stars:m&&m.stargazers_count,forks:m&&m.forks_count,license:m&&m.license?m.license.spdx_id:null,generated:new Date().toISOString().slice(0,10),part:partLabel||null})+',',
+      '  "task": '+JSON.stringify(digestTask())+','].join('\n');
   }
   return ['# Repository Context: '+(m&&m.full_name),
     'Source: '+(m&&m.html_url),'Platform: '+(S.platform||'github'),'Branch: '+branch,
     'Description: '+(m&&m.description||'N/A'),'Primary language: '+(m&&m.language||'N/A'),
     'Stars: '+fmt(m&&m.stargazers_count)+' · Forks: '+fmt(m&&m.forks_count)+' · License: '+(m&&m.license?m.license.spdx_id:'none'),
     'Generated by Repodest on '+new Date().toISOString().slice(0,10),
-    '','## Task',''+DIGEST_PRESETS[digestPreset].task].join('\n');
+    partLabel?'Part: '+partLabel:'',
+    '','## Task',''+digestTask()].filter(l=>l!=='').join('\n');
 }
 
 function wrapFileSection(p,ext,content){
