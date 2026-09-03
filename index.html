@@ -55,6 +55,14 @@
   </section>
 
   <!-- Recent History Section -->
+  <section class="history-section" id="favSection" style="display:none">
+    <div class="minititle" style="text-align:center">⭐ Favorites</div>
+    <div class="history-grid" id="favGrid"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="btn ghost sm" onclick="clearFavorites()">Clear favorites</button>
+    </div>
+  </section>
+
   <section class="history-section" id="historySection" style="display:none">
     <div class="minititle" style="text-align:center">🕘 Recent repos</div>
     <div class="history-grid" id="historyGrid"></div>
@@ -97,6 +105,7 @@
     <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV">⬇️ CSV</button>
     <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo">⚔️ Battle</button>
     <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options">📋 Clone</button>
+    <button class="btn ghost sm" onclick="toggleFavorite()" id="favBtn" title="Save to favorites">⭐ <span id="favLabel">Fav</span></button>
   </div>
 
   <!-- Compare panel -->

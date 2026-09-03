@@ -3831,6 +3831,9 @@ function cmdActions(){
   (Array.isArray(hist)?hist:[]).slice(0,6).forEach(h=>{
     if(h&&h.full_name)actions.push({icon:'🕘',label:'Open '+h.full_name,kw:'recent history '+h.full_name,run:()=>loadRepoFromHistory(h.full_name,h.platform||'github')});
   });
+  getFavorites().slice(0,8).forEach(f=>{
+    actions.push({icon:'⭐',label:'Open '+f.full_name+' (favorite)',kw:'favorite starred '+f.full_name,run:()=>openFavorite(f.full_name,f.platform||'github')});
+  });
   return actions;
 }
 let cmdPaletteBg=null,cmdPaletteInput=null,cmdPaletteList=null,cmdSelIdx=0,cmdFiltered=[];
@@ -3954,3 +3957,75 @@ function updateOfflineBanner(){
 addEventListener('online',()=>{updateOfflineBanner();toast('Back online','ok')});
 addEventListener('offline',updateOfflineBanner);
 updateOfflineBanner();
+
+/* ============================================================
+   Favorites — starred repos with quick access
+   ============================================================ */
+const FAV_KEY='repodest_favorites';
+function getFavorites(){
+  const f=LS.get(FAV_KEY,[]);
+  return Array.isArray(f)?f:[];
+}
+function isFavorite(fullName){
+  return getFavorites().some(f=>f.full_name===fullName);
+}
+function toggleFavorite(){
+  const m=S.repo;
+  if(!m||!m.full_name){toast('Load a repository first','err');return}
+  let favs=getFavorites();
+  if(isFavorite(m.full_name)){
+    favs=favs.filter(f=>f.full_name!==m.full_name);
+    toast('Removed from favorites');
+  }else{
+    favs.unshift({full_name:m.full_name,name:m.name||m.full_name,avatar:(m.owner&&m.owner.avatar_url)||'',platform:m._platform||S.platform||'github',ts:Date.now()});
+    favs=favs.slice(0,12);
+    toast('Added to favorites ⭐','ok');
+  }
+  LS.set(FAV_KEY,favs);
+  updateFavBtn();
+  renderFavorites();
+}
+function clearFavorites(){
+  LS.set(FAV_KEY,[]);
+  renderFavorites();
+  toast('Favorites cleared');
+}
+function updateFavBtn(){
+  const m=S.repo;
+  const on=m&&m.full_name&&isFavorite(m.full_name);
+  const btn=$('#favBtn'),label=$('#favLabel');
+  if(btn)btn.style.opacity=on?'1':'';
+  if(btn)btn.style.borderColor=on?'var(--accent)':'';
+  if(label)label.textContent=on?'Faved':'Fav';
+}
+function renderFavorites(){
+  const section=$('#favSection'),grid=$('#favGrid');
+  if(!section||!grid)return;
+  const favs=getFavorites();
+  if(!favs.length){section.style.display='none';return}
+  section.style.display='';
+  grid.innerHTML=favs.map(f=>
+    '<div class="hcard" onclick="openFavorite(\''+esc(f.full_name)+'\',\''+esc(f.platform||'github')+'\')">'+
+      '<img src="'+esc(f.avatar)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'+
+      '<div class="hc-name">'+esc(f.name||f.full_name)+'</div>'+
+      '<div class="hc-score">⭐</div>'+
+    '</div>'
+  ).join('');
+}
+async function openFavorite(fullName,platform){
+  if(platform==='gitlab'||platform==='bitbucket'){loadRepo(fullName.split('/')[0],fullName.split('/').slice(1).join('/'),platform);return}
+  if(platform==='ghe'){
+    const parts=fullName.split('/');
+    loadRepo(parts[0],parts.slice(1).join('/'),'ghe');
+    return;
+  }
+  const parts=fullName.split('/');
+  loadRepo(parts[0],parts.slice(1).join('/'),'github');
+}
+
+/* Keep fav button in sync whenever a repo renders */
+document.addEventListener('DOMContentLoaded',()=>{
+  renderFavorites();
+  const _origRenderDashFav=renderDash;
+  renderDash=function(){_origRenderDashFav();try{updateFavBtn()}catch(e){}};
+});
