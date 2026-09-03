@@ -3487,15 +3487,19 @@ async function loadFixRate(){
     const FIX_RE=/^(fix|fixes|fixed|bugfix|hotfix|patch|revert)\b/i;
     const CHORE_RE=/^(chore|refactor|test|docs?|style|ci|build)\b/i;
     const FEAT_RE=/^(feat|feature|add|create)\b/i;
-    let fixes=0,feats=0,chores=0,other=0;
+    const CONV_RE=/^(feat|fix|bugfix|hotfix|patch|chore|refactor|test|docs|doc|style|ci|build|perf|revert)(\([a-z0-9_\-\.\/]+\))?!?:\s/i;
+    let fixes=0,feats=0,chores=0,other=0,conventional=0;
     commits.forEach(c=>{
       const msg=((c.commit&&c.commit.message)||'').trim();
+      const firstLine=msg.split('\n')[0];
+      if(CONV_RE.test(firstLine))conventional++;
       if(FIX_RE.test(msg))fixes++;
       else if(FEAT_RE.test(msg))feats++;
       else if(CHORE_RE.test(msg))chores++;
       else other++;
     });
-    S.deep.fix={total:commits.length,fixes,feats,chores,other};
+    const convScore=Math.round(conventional/Math.max(commits.length,1)*100);
+    S.deep.fix={total:commits.length,fixes,feats,chores,other,conventional,convScore};
     renderFixRate(S.deep.fix);
   }catch(e){
     el.innerHTML='<p style="color:var(--red);font-size:12px">Failed to load commits: '+esc(e.message||'error')+'</p>';
@@ -3505,12 +3509,15 @@ function renderFixRate(d){
   const el=$('#fixRateContent');if(!el)return;
   const total=d.total||1;
   const verdict=d.fixes/total>0.4?'🔴 High bug pressure':d.fixes/total>0.2?'🟡 Moderate bug pressure':'🟢 Low bug pressure';
+  const convLabel=d.convScore>=70?'✅ Disciplined':d.convScore>=40?'🟡 Partially structured':'⚠️ Unstructured';
   el.innerHTML=
     pctBar('Fixes / reverts',d.fixes,total,'#ef4444')+
     pctBar('Features',d.feats,total,'#a855f7')+
     pctBar('Chores / docs',d.chores,total,'#64748b')+
     pctBar('Other',d.other,total,'#334155')+
     '<div class="kv" style="margin-top:8px"><span>Verdict</span><b>'+verdict+'</b></div>'+
+    '<div class="kv"><span>Conventional Commits score</span><b>'+d.convScore+'/100 '+convLabel+'</b></div>'+
+    '<div class="langrow"><span class="ln" style="width:120px">'+d.conventional+'/'+d.total+' follow type(scope): subject format</span><span class="lb"><i style="width:'+d.convScore+'%;background:'+(d.convScore>=70?'#22c55e':d.convScore>=40?'#eab308':'#ef4444')+'"></i></span><span class="lp">'+d.convScore+'%</span></div>'+
     '<p style="color:var(--text3);font-size:11px;margin-top:6px">Share of the last '+d.total+' commits starting with fix/hotfix/patch/revert. High fix share may indicate instability; low with steady features suggests a healthy codebase.</p>';
 }
 
