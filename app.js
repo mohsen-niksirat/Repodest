@@ -294,7 +294,8 @@ function clearHistory(){
    Branch & Tag Selection
    ============================================================ */
 async function fetchBranchesAndTags(owner,repo){
-  if(S.platform!=='github'){$('#branchSel').style.display='none';return}
+  const gh=S.platform==='github'||S.platform==='ghe';
+  if(!gh){$('#branchSel').style.display='none';return}
   try{
     const [branches,tags]=await Promise.all([
       api('/repos/'+owner+'/'+repo+'/branches?per_page=100').catch(()=>[]),
@@ -602,8 +603,50 @@ function renderStarHistory(){
 function toast(msg,cls){const t=document.createElement('div');t.className='tst '+(cls||'');t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),450)},3400)}
 
 function authHeaders(){const t=LS.get('repodest_pat','');const h={Accept:'application/vnd.github+json'};if(t)h.Authorization='Bearer '+t;return h}
+
+/* ---------- GitHub Enterprise / self-hosted support ----------
+   Detects full-URL inputs like https://ghe.corp.com/owner/repo,
+   stores the API base in localStorage, and routes all /repos
+   calls through it. Returns '' for github.com. */
+const GHE_KEY='repodest_ghe_base';
+function gheBase(){
+  let b=LS.get(GHE_KEY,'');
+  if(b&&b.endsWith('/'))b=b.slice(0,-1);
+  return b;
+}
+function setGheBase(host){
+  if(!host){LS.set(GHE_KEY,'');return}
+  host=host.trim().replace(/\/+$/,'');
+  if(!/^https?:\/\//.test(host))host='https://'+host;
+  if(/github\.com$/i.test(host)){LS.set(GHE_KEY,'');return}
+  LS.set(GHE_KEY,host+'/api/v3');
+  toast('Using GitHub Enterprise at '+host,'ok');
+}
+function parseGheHost(v){
+  const m=(v||'').trim().match(/^https?:\/\/([^\/\s]+)\/[^\/]+\/[^\/]+/i);
+  if(m&&!/github\.com$/i.test(m[1]))return m[1];
+  return null;
+}
+function normalizeGheRepo(v){
+  const m=(v||'').trim().match(/^https?:\/\/([^\/\s]+)\/([^\/]+)\/([^\/#?\s]+)/i);
+  if(m&&!/github\.com$/i.test(m[1]))return{host:m[1],owner:m[2],repo:m[3].replace(/\.git+$/,'')};
+  return null;
+}
+/* GitHub API base — GHE if set, else public */
+function apiBase(){
+  return gheBase()||'https://api.github.com';
+}
+/* Raw content URL for the current repo (or explicit args) */
+function rawUrl(fullName,branch,path,platform){
+  platform=platform||(S.repo&&S.repo._platform)||S.platform||'github';
+  if(platform==='gitlab')return 'https://gitlab.com/'+fullName.replace(/\.git$/,'')+'/-/raw/'+encodeURIComponent(branch)+'/'+path;
+  if(platform==='bitbucket')return 'https://bitbucket.org/'+fullName+'/raw/'+encodeURIComponent(branch)+'/'+path;
+  if(platform==='ghe')return gheBase().replace(/\/api\/v3$/,'')+'/'+fullName+'/raw/'+encodeURIComponent(branch)+'/'+path;
+  return 'https://raw.githubusercontent.com/'+fullName+'/'+encodeURIComponent(branch)+'/'+path;
+}
+
 async function api(path){
-  const r=await fetch('https://api.github.com'+path,{headers:authHeaders()});
+  const r=await fetch(apiBase()+path,{headers:authHeaders()});
   updateRate(r);
   if(r.status===404)throw new Error('NOT_FOUND');
   if(r.status===403){const rem=Number(r.headers.get('x-ratelimit-remaining'));if(rem===0)throw new Error('RATE_LIMIT');throw new Error('HTTP_403')}
@@ -611,7 +654,7 @@ async function api(path){
   return r.json();
 }
 function updateRate(r){const v=r.headers.get('x-ratelimit-remaining');if(v!=null){$('#rateVal').textContent=v;const el=$('#rateChip .dot');if(el)el.style.background=Number(v)<=5?'var(--red)':Number(v)<20?'var(--yellow)':'var(--green)'}}
-async function refreshRate(){try{const r=await fetch('https://api.github.com/rate_limit',{headers:authHeaders()});updateRate(r);const j=await r.json();if(j&&j.resources&&j.resources.core)$('#rateVal').textContent=j.resources.core.remaining}catch(e){}}
+async function refreshRate(){try{const r=await fetch(apiBase()+'/rate_limit',{headers:authHeaders()});updateRate(r);const j=await r.json();if(j&&j.resources&&j.resources.core)$('#rateVal').textContent=j.resources.core.remaining}catch(e){}}
 
 function cacheGet(k,ttl){const c=LS.get('repodest_c_'+k);if(c&&(Date.now()-c.t)<ttl)return c.v;return null}
 function cacheSet(k,v){try{const s=JSON.stringify(v);if(s.length>2500000)return;LS.set('repodest_c_'+k,{t:Date.now(),v})}catch(e){}}
@@ -619,6 +662,9 @@ function cacheSet(k,v){try{const s=JSON.stringify(v);if(s.length>2500000)return;
 function submitInput(){
   const v=$('#inp').value.trim();
   if(!v){toast('Type a repo URL, owner/repo, or username','err');return}
+  /* GitHub Enterprise full URL? */
+  const ghe=normalizeGheRepo(v);
+  if(ghe){setGheBase(ghe.host);loadRepo(ghe.owner,ghe.repo,'ghe');return}
   const p=parseRepoInput(v);
   if(p){loadRepo(p.owner,p.repo,p.platform);return}
   if(/^[\w-]+$/.test(v)){loadUser(v);return}
@@ -626,6 +672,8 @@ function submitInput(){
 }
 function submitJump(){
   const v=$('#jump').value.trim();if(!v)return;
+  const ghe=normalizeGheRepo(v);
+  if(ghe){setGheBase(ghe.host);loadRepo(ghe.owner,ghe.repo,'ghe');return}
   const p=parseRepoInput(v);
   if(p){loadRepo(p.owner,p.repo,p.platform);return}
   if(/^[\w-]+$/.test(v)){loadUser(v);return}
@@ -707,7 +755,7 @@ async function loadRepo(owner,repo,platform){
       return;
     }
 
-    /* GitHub flow (original) */
+    /* GitHub flow (public github.com or GitHub Enterprise via apiBase()) */
     setLoad('Repository metadata…');
     const meta=await api('/repos/'+key);
     setLoad('Languages & file tree…');
@@ -716,12 +764,12 @@ async function loadRepo(owner,repo,platform){
     setLoad('Contributors & commits…');
     const contribs=await api('/repos/'+key+'/contributors?per_page=12').catch(()=>[]);
     const commits=await api('/repos/'+key+'/commits?per_page=100').catch(()=>[]);
-    const data={meta:stripRepo(meta),langs,tree,contribs:Array.isArray(contribs)?contribs:[],commits:Array.isArray(commits)?commits.slice(0,100):[]};
+    const data={meta:stripRepo(meta,platform),langs,tree,contribs:Array.isArray(contribs)?contribs:[],commits:Array.isArray(commits)?commits.slice(0,100):[]};
     cacheSet('repo:'+cacheKey,data);
     applyRepo(key,data,false);
   }catch(e){handleErr(e,key)}
 }
-function stripRepo(m){return{full_name:m.full_name||'',name:m.name||'',owner:{login:(m.owner&&m.owner.login)||'',avatar_url:(m.owner&&m.owner.avatar_url)||'',html_url:(m.owner&&m.owner.html_url)||''},html_url:m.html_url||'',description:m.description||'',fork:m.fork||false,created_at:m.created_at,pushed_at:m.pushed_at,updated_at:m.updated_at,homepage:m.homepage||'',size:m.size||0,stargazers_count:m.stargazers_count||0,watchers_count:m.watchers_count||0,forks_count:m.forks_count||0,open_issues_count:m.open_issues_count||0,language:m.language||null,license:m.license||null,topics:m.topics||[],default_branch:m.default_branch||'main',archived:m.archived||false,_platform:'github'}}
+function stripRepo(m,platform){return{full_name:m.full_name||'',name:m.name||'',owner:{login:(m.owner&&m.owner.login)||'',avatar_url:(m.owner&&m.owner.avatar_url)||'',html_url:(m.owner&&m.owner.html_url)||''},html_url:m.html_url||'',description:m.description||'',fork:m.fork||false,created_at:m.created_at,pushed_at:m.pushed_at,updated_at:m.updated_at,homepage:m.homepage||'',size:m.size||0,stargazers_count:m.stargazers_count||0,watchers_count:m.watchers_count||0,forks_count:m.forks_count||0,open_issues_count:m.open_issues_count||0,language:m.language||null,license:m.license||null,topics:m.topics||[],default_branch:m.default_branch||'main',archived:m.archived||false,_platform:platform||'github'}}
 
 function applyRepo(key,data,fromCache){
   try{
@@ -740,9 +788,9 @@ function applyRepo(key,data,fromCache){
     if(data.tree&&data.tree.truncated)toast('Huge repo — file tree was truncated by GitHub','err');
     if(fromCache)toast('Loaded from cache (≤6h old)');
     if(!fromCache)refreshRate();
-    if(!S.activity&&S.platform==='github')loadActivity(key);
+    if(!S.activity&&(S.platform==='github'||S.platform==='ghe'))loadActivity(key);
 
-    if(S.platform==='github'){
+    if(S.platform==='github'||S.platform==='ghe'){
       const parts=key.split('/');
       fetchBranchesAndTags(parts[0],parts[1]);
     }else{
@@ -1040,7 +1088,7 @@ async function renderDeps(stacks){
       const col=document.createElement('div');col.className='card depcol';
       col.innerHTML='<h4>'+esc(st.label)+'<span style="color:var(--text3);font-weight:400;font-size:11px">'+esc(st.file)+'</span></h4><div class="dlist"><span style="color:var(--text3);font-size:12px">Fetching…</span></div>';
       host.appendChild(col);
-      const raw='https://raw.githubusercontent.com/'+(S.repo&&S.repo.full_name)+'/'+branch+'/'+st.file;
+      const raw=rawUrl((S.repo&&S.repo.full_name),branch,st.file);
       let deps=[];
       try{
         const txt=await(await fetch(raw)).text();
@@ -1236,7 +1284,7 @@ async function generateDigest(){
     if(readme){
       try{
         btn.textContent='⏳ README…';
-        const t=await(await fetch('https://raw.githubusercontent.com/'+(m&&m.full_name)+'/'+branch+'/'+readme)).text();
+        const t=await(await fetch(rawUrl((m&&m.full_name),branch,readme))).text();
         parts.push(wrapFileSection(readme,'md',t.slice(0,20000)));
       }catch(e){}
     }
@@ -1257,7 +1305,7 @@ async function generateDigest(){
     if((f.size||0)>200*1024){skipped++;continue}
     if(!isText(f)){binSkipped++;skipped++;continue}
     try{
-      const r=await fetch('https://raw.githubusercontent.com/'+(m&&m.full_name)+'/'+branch+'/'+p);
+      const r=await fetch(rawUrl((m&&m.full_name),branch,p));
       if(!r.ok){skipped++;continue}
       let t=await r.text();
       if(t.includes('\0')||/[ --]{5,}/.test(t)){binSkipped++;skipped++;continue}
@@ -1410,8 +1458,27 @@ function printReport(){
   }catch(e){console.warn('printReport error:',e)}
 }
 
-function openModal(){$('#patInput').value=LS.get('repodest_pat','');$('#modalBg').classList.remove('hidden');setTimeout(()=>$('#patInput').focus(),60)}
+function openModal(){
+  $('#patInput').value=LS.get('repodest_pat','');
+  const gi=$('#gheInput');
+  if(gi){
+    const b=gheBase();
+    gi.value=b?b.replace(/\/api\/v3$/,''):'';
+    $('#gheStatus').textContent=b?'Currently using: '+b:'Currently using: api.github.com';
+  }
+  $('#modalBg').classList.remove('hidden');setTimeout(()=>$('#patInput').focus(),60)}
 function closeModal(){$('#modalBg').classList.add('hidden')}
+function saveGheHost(){
+  const v=($('#gheInput').value||'').trim();
+  setGheBase(v);
+  $('#gheStatus').textContent=gheBase()?'Now using: '+gheBase():'Now using: api.github.com';
+}
+function clearGheHost(){
+  setGheBase('');
+  $('#gheInput').value='';
+  $('#gheStatus').textContent='Now using: api.github.com';
+  toast('Reverted to github.com','ok');
+}
 function savePat(){
   const v=$('#patInput').value.trim();
   if(v)LS.set('repodest_pat',v);else localStorage.removeItem('repodest_pat');
@@ -1584,7 +1651,7 @@ async function renderSimilarRepos(){
   const card=$('#similarCard');
   if(!el||!card)return;
   const m=S.repo;
-  if(!m||S.platform!=='github'){card.style.display='none';return}
+  if(!m||(S.platform!=='github'&&S.platform!=='ghe')){card.style.display='none';return}
   card.style.display='';
   const topics=(m.topics||[]).slice(0,3);
   const lang=m.language||'';
@@ -1761,7 +1828,7 @@ async function renderReadmePreview(){
   el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Loading README…</span>';
   try{
     const branch=(m.default_branch)||'main';
-    const raw='https://raw.githubusercontent.com/'+m.full_name+'/'+branch+'/'+readmePath;
+    const raw=rawUrl(m.full_name,branch,readmePath);
     const resp=await fetch(raw);
     if(!resp.ok)throw new Error('Failed to fetch');
     const md=await resp.text();
@@ -2331,7 +2398,7 @@ async function findSimilarRepos(){
    ============================================================ */
 async function loadReleases(){
   const el=$('#releaseTimeline');if(!el)return;
-  if(S.platform!=='github'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available on GitHub.</p>';return}
+  if(S.platform!=='github'&&S.platform!=='ghe'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available on GitHub.</p>';return}
   el.innerHTML='<p style="color:var(--text3);font-size:13px">Loading releases…</p>';
   try{
     const releases=await api('/repos/'+S.repo.full_name+'/releases?per_page=10');
@@ -2764,7 +2831,7 @@ async function renderReleaseTimeline(){
   try{
     const el=$('#releaseTimeline');
     if(!el)return;
-    if(S.platform!=='github'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available for GitHub repos.</p>';return}
+    if(S.platform!=='github'&&S.platform!=='ghe'){el.innerHTML='<p style="color:var(--text3);font-size:13px">Releases only available for GitHub repos.</p>';return}
     const m=S.repo;if(!m||!m.full_name)return;
     el.innerHTML='<p style="color:var(--text3);font-size:12px">Loading releases…</p>';
     try{
@@ -2844,7 +2911,7 @@ renderDeps=async function(stacks){
   S._parsedDeps=S._parsedDeps||{};
   const branch=(S.repo&&S.repo.default_branch)||'main';
   for(const st of stacks){
-    const raw='https://raw.githubusercontent.com/'+(S.repo&&S.repo.full_name)+'/'+branch+'/'+st.file;
+    const raw=rawUrl((S.repo&&S.repo.full_name),branch,st.file);
     try{
       const txt=await(await fetch(raw)).text();
       let deps=[];
@@ -3199,8 +3266,8 @@ S.deep={pr:null,fix:null,churn:null,osv:null,loaded:false};
 function renderDeepPanel(){
   if(S.deep.loaded)return;
   S.deep.loaded=true;
-  if(S.platform!=='github'){
-    const note='<p style="color:var(--text3);font-size:13px">Deep Analysis currently requires a GitHub repository.</p>';
+  if(S.platform!=='github'&&S.platform!=='ghe'){
+    const note='<p style="color:var(--text3);font-size:13px">Deep Analysis currently requires a GitHub or GitHub Enterprise repository.</p>';
     $('#prAnalyticsContent').innerHTML=note;$('#fixRateContent').innerHTML=note;
     $('#churnContent').innerHTML=note;return;
   }
@@ -3379,7 +3446,7 @@ async function runOsvScan(){
       const hit=paths.find(p=>p===pl.f||p.endsWith('/'+pl.f));
       if(!hit)continue;
       try{
-        const r=await fetch('https://raw.githubusercontent.com/'+(S.repo&&S.repo.full_name)+'/'+branch+'/'+hit);
+        const r=await fetch(rawUrl((S.repo&&S.repo.full_name),branch,hit));
         if(!r.ok)continue;
         const deps=parseDepsFromManifest(pl.label,await r.text()).slice(0,100);
         if(deps.length)ecoDeps[pl.eco]=(ecoDeps[pl.eco]||[]).concat(deps);

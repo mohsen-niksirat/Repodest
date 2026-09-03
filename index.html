@@ -467,6 +467,15 @@
     <p>Without a token you get 60 API calls/hour — fine for a few lookups. A free personal access token raises that to 5,000/hour. It's stored only in your browser's localStorage and sent only to api.github.com.</p>
     <a class="hint" href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">→ Create a fine-grained token (no permissions needed for public repos)</a>
     <input id="patInput" type="password" placeholder="github_pat_… or ghp_…">
+    <div style="margin-top:14px">
+      <p style="font-size:12.5px;color:var(--text2);margin-bottom:6px"><b>🏢 GitHub Enterprise / self-hosted</b> — paste a full repo URL from your instance once (e.g. <code style="font-family:var(--mono);font-size:11px">https://ghe.corp.com/team/repo</code>) and it will be remembered. Or set a host manually:</p>
+      <div style="display:flex;gap:8px">
+        <input id="gheInput" type="text" placeholder="ghe.corp.com (empty = github.com)" style="flex:1">
+        <button class="btn ghost sm" onclick="saveGheHost()">Save</button>
+        <button class="btn ghost sm" onclick="clearGheHost()" title="Revert to github.com">✕</button>
+      </div>
+      <p style="font-size:11px;color:var(--text3);margin-top:6px" id="gheStatus"></p>
+    </div>
     <div class="mrow">
       <button class="btn ghost sm" onclick="closeModal()">Cancel</button>
       <button class="btn sm" onclick="savePat()">Save</button>
