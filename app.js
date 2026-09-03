@@ -783,6 +783,7 @@ function handleErr(err,name){
 function parseTree(apiTree){
   FILEMAP.clear();DIRMAP.clear();NODEMAP.clear();
   scopePrefix='';
+  resetFts();
   const sel=$('#scopeSelect');
   if(sel)sel.value='';
   const root={name:'/',path:'',dirs:new Map(),files:[],depth:0};
@@ -4182,3 +4183,165 @@ document.addEventListener('DOMContentLoaded',()=>{
   const _origRenderDashFav=renderDash;
   renderDash=function(){_origRenderDashFav();try{updateFavBtn()}catch(e){}};
 });
+
+/* ============================================================
+   Branch Diff — compare current ref with another branch/tag
+   ============================================================ */
+function toggleDiffPanel(){
+  const panel=$('#diffPanel');
+  if(!panel)return;
+  const showNow=panel.classList.contains('hidden');
+  panel.classList.toggle('hidden',!showNow);
+  if(!showNow)return;
+  const sel=$('#diffTarget');
+  if(!sel)return;
+  const current=S.currentBranch||(S.repo&&S.repo.default_branch)||'main';
+  const options=[];
+  S.branches.forEach(b=>{if(b.name&&b.name!==current)options.push(b.name)});
+  S.tags.forEach(t=>{if(t.name)options.push(t.name)});
+  sel.innerHTML='<option value="">— choose —</option>'+options.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('');
+  $('#diffBaseLabel').textContent=current;
+  $('#diffContent').innerHTML='';
+}
+async function loadBranchDiff(){
+  const m=S.repo;
+  const target=($('#diffTarget')||{}).value||'';
+  const host=$('#diffContent');
+  if(!m||!m.full_name||!target){toast('Pick a branch or tag to compare','err');return}
+  if(S.platform!=='github'&&S.platform!=='ghe'){toast('Diff works on GitHub repos','err');return}
+  const base=S.currentBranch||(m.default_branch||'main');
+  host.innerHTML='<p style="color:var(--text3);font-size:12px">⏳ Comparing…</p>';
+  try{
+    const cmp=await api('/repos/'+m.full_name+'/compare/'+encodeURIComponent(base)+'...'+encodeURIComponent(target));
+    const files=cmp.files||[];
+    const totalCommits=cmp.total_commits||0;
+    const additions=files.reduce((a,f)=>a+(f.additions||0),0);
+    const deletions=files.reduce((a,f)=>a+(f.deletions||0),0);
+    const newFiles=files.filter(f=>f.status==='added').length;
+    const removedFiles=files.filter(f=>f.status==='removed').length;
+    const modified=files.filter(f=>f.status==='modified').length;
+    const renamed=files.filter(f=>f.status==='renamed').length;
+    const byDir={};
+    files.forEach(f=>{
+      const parts=(f.filename||'').split('/');
+      const dir=parts.length>1?parts[0]:'/';
+      byDir[dir]=(byDir[dir]||0)+1;
+    });
+    const topDirs=Object.entries(byDir).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const statusColor=s=>s==='added'?'#22c55e':s==='removed'?'#ef4444':s==='renamed'?'#eab308':'#22d3ee';
+    const ahead=cmp.ahead_by!=null?cmp.ahead_by+' ahead':'';
+    const behind=cmp.behind_by!=null?cmp.behind_by+' behind':'';
+    host.innerHTML=
+      '<div class="statrow" style="flex-wrap:wrap;gap:10px;margin-bottom:10px">'+
+        '<div class="st"><b>'+totalCommits+'</b><span>commits</span></div>'+
+        '<div class="st"><b style="color:#4ade80">+'+fmt(additions)+'</b><span>additions</span></div>'+
+        '<div class="st"><b style="color:#f87171">−'+fmt(deletions)+'</b><span>deletions</span></div>'+
+        '<div class="st"><b>'+files.length+'</b><span>files</span></div>'+
+        (ahead||behind?'<div class="st"><b>'+esc([ahead,behind].filter(Boolean).join(' · '))+'</b><span>position</span></div>':'')+
+      '</div>'+
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-bottom:10px">'+
+        '<span style="color:#4ade80">■ '+newFiles+' added</span>'+
+        '<span style="color:#f87171">■ '+removedFiles+' removed</span>'+
+        '<span style="color:#22d3ee">■ '+modified+' modified</span>'+
+        (renamed?'<span style="color:#eab308">■ '+renamed+' renamed</span>':'')+
+      '</div>'+
+      (topDirs.length?'<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Most affected areas</div><div class="topicrow" style="margin-bottom:10px">'+topDirs.map(d=>'<span class="topic">'+esc(d[0])+' ×'+d[1]+'</span>').join('')+'</div>':'')+
+      '<div style="max-height:260px;overflow:auto">'+
+        files.slice(0,60).map(f=>{
+          const short=f.filename.length>44?'…'+f.filename.slice(-43):f.filename;
+          return '<div class="langrow"><span class="ln" style="width:46%" title="'+esc(f.filename)+'">'+esc(short)+'</span><span class="lb"><i style="width:'+Math.min(100,Math.max(3,Math.round((f.additions||0)/Math.max(1,f.additions||1)*100)))+'%;background:'+statusColor(f.status)+'"></i></span><span class="lp">+'+(f.additions||0)+' −'+(f.deletions||0)+'</span></div>';
+        }).join('')+
+        (files.length>60?'<div style="font-size:11px;color:var(--text3);margin-top:6px">…and '+(files.length-60)+' more files</div>':'')+
+      '</div>';
+  }catch(e){
+    host.innerHTML='<p style="color:var(--red);font-size:12px">Diff failed: '+esc(e.message||'error')+' (branches may be unrelated)</p>';
+  }
+}
+
+/* ============================================================
+   Full-text search inside file contents (bounded fetch + cache)
+   ============================================================ */
+const FTS_CACHE={byRepo:null,results:null,query:''};
+async function fullTextSearch(){
+  const q=($('#ftsInput')&&$('#ftsInput').value||'').trim();
+  const host=$('#ftsResults');
+  if(!q){toast('Type something to search for','err');return}
+  const needle=q.toLowerCase();
+  if(FTS_CACHE.byRepo===S.repo.full_name&&FTS_CACHE.results&&FTS_CACHE.query===needle){
+    renderFtsResults();
+    return;
+  }
+  const paths=candidateFilesForSearch();
+  if(!paths.length){toast('Load a repository first','err');return}
+  host.style.display='';
+  host.innerHTML='<p style="color:var(--text3);font-size:12px" id="ftsStatus">⏳ Scanning 0/'+paths.length+' files…</p>';
+  const m=S.repo,branch=(m&&m.default_branch)||'main';
+  const results=[];
+  let scanned=0;
+  const CONCURRENCY=8;
+  let idx=0;
+  async function worker(){
+    while(idx<paths.length){
+      const p=paths[idx++];
+      try{
+        const r=await fetch(rawUrl((m&&m.full_name),branch,p));
+        if(!r.ok)continue;
+        const txt=await r.text();
+        scanned++;
+        const lower=txt.toLowerCase();
+        const first=lower.indexOf(needle);
+        if(first>=0){
+          const lineNo=txt.slice(0,first).split('\n').length;
+          const line=(txt.split('\n')[lineNo-1]||'').trim().slice(0,140);
+          results.push({path:p,count:lower.split(needle).length-1,line:lineNo,snippet:line});
+        }
+        const st=$('#ftsStatus');
+        if(st&&(scanned%12===0))st.textContent='⏳ Scanning '+scanned+'/'+paths.length+' files… '+results.length+' matches';
+      }catch(e){/* skip */}
+    }
+  }
+  const workers=[];
+  for(let i=0;i<CONCURRENCY;i++)workers.push(worker());
+  await Promise.all(workers);
+  results.sort((a,b)=>b.count-a.count);
+  FTS_CACHE.byRepo=S.repo.full_name;
+  FTS_CACHE.results=results;
+  FTS_CACHE.query=needle;
+  renderFtsResults();
+}
+function renderFtsResults(){
+  const host=$('#ftsResults');
+  if(!host)return;
+  const results=FTS_CACHE.results||[];
+  if(!results.length){
+    host.innerHTML='<p style="color:var(--text3);font-size:12px">No matches in the '+candidateFilesForSearch().length+' scanned text files (&lt;120KB).</p>';
+    return;
+  }
+  host.innerHTML=
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'+results.length+' matching files — click a result to select it for the digest</div>'+
+    results.slice(0,25).map(r=>{
+      const short=r.path.length>44?'…'+r.path.slice(-43):r.path;
+      return '<div class="fts-row" data-path="'+esc(r.path)+'" onclick="ftsSelect(this.dataset.path)" style="cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:6px">'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center">'+
+          '<b style="font-family:var(--mono);font-size:12px">'+esc(short)+'</b>'+
+          '<span class="ep-badge">'+r.count+'×</span>'+
+        '</div>'+
+        '<div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">L'+r.line+': '+esc(r.snippet)+'</div>'+
+      '</div>';
+    }).join('')+
+    (results.length>25?'<div style="font-size:11px;color:var(--text3)">…and '+(results.length-25)+' more</div>':'');
+}
+function ftsSelect(path){
+  if(!path)return;
+  if(S.sel.has(path)){S.sel.delete(path)}else{S.sel.add(path)}
+  $$('#tree .fcb').forEach(cb=>cb.checked=S.sel.has(cb.dataset.path));
+  updateSelMeta();
+  toast((S.sel.has(path)?'Added to digest selection':'Removed from selection')+': '+path.split('/').pop(),'ok');
+}
+function resetFts(){
+  FTS_CACHE.byRepo=null;FTS_CACHE.results=null;FTS_CACHE.query='';
+  const host=$('#ftsResults');
+  if(host){host.style.display='none';host.innerHTML=''}
+  const inp=$('#ftsInput');
+  if(inp)inp.value='';
+}

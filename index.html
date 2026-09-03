@@ -143,6 +143,21 @@
       <select id="branchDropdown" onchange="onBranchChange(this.value)"></select>
       <label>Tag:</label>
       <select id="tagDropdown" onchange="onTagChange(this.value)"><option value="">—</option></select>
+      <button class="btn ghost sm" onclick="toggleDiffPanel()" title="Compare this branch with another">🔀 Diff</button>
+    </div>
+    <div id="diffPanel" class="hidden" style="margin-bottom:16px">
+      <div class="card">
+        <div class="minititle">🔀 Branch Diff</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+          <span style="font-size:12.5px;color:var(--text2)">Compare</span>
+          <b id="diffBaseLabel" style="font-family:var(--mono);font-size:12px">current</b>
+          <span style="font-size:12.5px;color:var(--text2)">with</span>
+          <select id="diffTarget" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;max-width:200px"></select>
+          <button class="btn sm" onclick="loadBranchDiff()">Compare</button>
+          <button class="btn ghost sm" onclick="toggleDiffPanel()">✕</button>
+        </div>
+        <div id="diffContent"></div>
+      </div>
     </div>
 
     <div class="tabs" id="tabs">
@@ -292,6 +307,15 @@
           <span class="info" id="treeInfo"></span>
         </div>
         <div class="tree" id="tree"></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="minititle">🔎 Search inside file contents</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Fetches and scans text files under 120KB in your browser — nothing is uploaded. Click a result to toggle it in the digest selection.</p>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="ftsInput" placeholder="e.g. TODO, authenticate, useMemo…" spellcheck="false" style="flex:1" onkeydown="if(event.key==='Enter')fullTextSearch()">
+          <button class="btn sm" onclick="fullTextSearch()">🔎 Search</button>
+        </div>
+        <div id="ftsResults" style="display:none;margin-top:10px"></div>
       </div>
       <div class="card" style="margin-top:16px" id="endpointsCard">
         <div class="minititle">🔌 API Endpoints <span class="ep-badge" id="epBadge">0</span></div>
