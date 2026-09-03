@@ -286,6 +286,9 @@
           <button class="btn ghost sm" onclick="toggleFilterHidden()" id="filterHiddenBtn" title="Show/hide hidden files (dotfiles)">👁 Hidden</button>
           <button class="btn ghost sm" onclick="toggleFilterBinary()" id="filterBinaryBtn" title="Show/hide binary files">🧊 Binary</button>
           <input type="text" id="treeSearch" placeholder="🔍 Filter files…" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;width:160px;outline:none" oninput="filterTree(this.value)" aria-label="Filter files in tree">
+          <select id="scopeSelect" onchange="filterScope(this.value)" title="Scope to a monorepo subfolder" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;max-width:180px">
+            <option value="">📂 Whole repo</option>
+          </select>
           <span class="info" id="treeInfo"></span>
         </div>
         <div class="tree" id="tree"></div>

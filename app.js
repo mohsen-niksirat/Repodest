@@ -782,6 +782,9 @@ function handleErr(err,name){
 /* BUG FIX #1 & #4: Null-safe parseTree — ensure every file has a `name` */
 function parseTree(apiTree){
   FILEMAP.clear();DIRMAP.clear();NODEMAP.clear();
+  scopePrefix='';
+  const sel=$('#scopeSelect');
+  if(sel)sel.value='';
   const root={name:'/',path:'',dirs:new Map(),files:[],depth:0};
   NODEMAP.set('',root);
   const items=(apiTree&&apiTree.tree)||[];
@@ -3491,26 +3494,53 @@ function filterTree(val){
   renderFiles();
 }
 
-/* Override renderFiles to support filtering */
+/* ---------- Monorepo subfolder scope ---------- */
+let scopePrefix='';
+function populateScopeSelect(){
+  const sel=$('#scopeSelect');
+  if(!sel)return;
+  const topDirs=new Set();
+  FILEMAP.forEach((f,p)=>{
+    const parts=(p||'').split('/');
+    if(parts.length>1)topDirs.add(parts[0]+'/');
+  });
+  const current=scopePrefix;
+  sel.innerHTML='<option value="">📂 Whole repo</option>'+
+    Array.from(topDirs).sort().map(d=>'<option value="'+esc(d)+'">'+esc(d)+'</option>').join('');
+  if(current&&topDirs.has(current))sel.value=current;
+  sel.style.display=topDirs.size>=2?'':'none';
+}
+function filterScope(val){
+  scopePrefix=(val||'').replace(/\/?$/,'/');
+  if(scopePrefix==='/')scopePrefix='';
+  renderFiles();
+  if(scopePrefix)toast('Scoped to '+scopePrefix+' — new selections limited to it','ok');
+  updateSelMeta();
+}
+
+/* Override renderFiles to support filtering + monorepo scope */
 const _origRenderFiles=renderFiles;
 renderFiles=function(){
   _origRenderFiles();
-  if(filterHidden||filterBinary||searchText){
+  populateScopeSelect();
+  if(filterHidden||filterBinary||searchText||scopePrefix){
     $$('#tree .trow').forEach(row=>{
       const path=row.dataset.path||row.querySelector('.fname')?.textContent||'';
       const isHidden=path.split('/').some(p=>p.startsWith('.')&&p!=='.');
       const isBinary=path.split('.').pop()&&BINARY_EXT.has(path.split('.').pop().toLowerCase());
       const matchesSearch=!searchText||path.toLowerCase().includes(searchText);
+      const inScope=!scopePrefix||path.startsWith(scopePrefix);
       let show=true;
       if(filterHidden&&isHidden)show=false;
       if(filterBinary&&isBinary)show=false;
       if(!matchesSearch)show=false;
+      if(!inScope)show=false;
       row.style.display=show?'':'none';
     });
     /* Update info text */
     const visible=$$('#tree .trow:not([style*="display: none"])').length;
     const info=$('#treeInfo');
-    if(info)info.textContent=visible+' visible · '+FILEMAP.size+' total';
+    if(info)info.textContent=visible+' visible · '+FILEMAP.size+' total'+(scopePrefix?' · scoped: '+scopePrefix:'');
   }
 }
 
