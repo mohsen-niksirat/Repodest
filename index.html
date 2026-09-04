@@ -72,56 +72,56 @@
 
   <!-- Recent History Section -->
   <section class="history-section" id="favSection" style="display:none">
-    <div class="minititle" style="text-align:center">⭐ Favorites</div>
+    <div class="minititle" style="text-align:center"><span data-i18n="favorites">⭐ Favorites</span></div>
     <div class="history-grid" id="favGrid"></div>
     <div style="text-align:center;margin-top:12px">
-      <button class="btn ghost sm" onclick="clearFavorites()">Clear favorites</button>
+      <button class="btn ghost sm" onclick="clearFavorites()" data-i18n="clearFavs">Clear favorites</button>
     </div>
   </section>
 
   <section class="history-section" id="historySection" style="display:none">
-    <div class="minititle" style="text-align:center">🕘 Recent repos</div>
+    <div class="minititle" style="text-align:center"><span data-i18n="recentReposTitle">🕘 Recent repos</span></div>
     <div class="history-grid" id="historyGrid"></div>
     <div style="text-align:center;margin-top:12px">
-      <button class="btn ghost sm" onclick="clearHistory()">Clear history</button>
+      <button class="btn ghost sm" onclick="clearHistory()" data-i18n="clearHistory">Clear history</button>
     </div>
   </section>
 
   <div class="steps">
-    <div class="step"><div class="n">1</div><h4>Paste</h4><p>Any repo URL, <span style="font-family:var(--mono)">owner/repo</span>, or username.</p></div>
-    <div class="step"><div class="n">2</div><h4>Explore</h4><p>Health score, languages, files, activity — all in one dashboard.</p></div>
-    <div class="step"><div class="n">3</div><h4>Feed your AI</h4><p>Pick files, hit generate, copy the digest into any LLM chat.</p></div>
+    <div class="step"><div class="n">1</div><h4 data-i18n="step1">Paste</h4><p data-i18n="step1Desc">Any repo URL, <span style="font-family:var(--mono)">owner/repo</span>, or username.</p></div>
+    <div class="step"><div class="n">2</div><h4 data-i18n="step2">Explore</h4><p data-i18n="step2Desc">Health score, languages, files, activity — all in one dashboard.</p></div>
+    <div class="step"><div class="n">3</div><h4 data-i18n="step3">Feed your AI</h4><p data-i18n="step3Desc">Pick files, hit generate, copy the digest into any LLM chat.</p></div>
   </div>
 
   <div class="featgrid">
-    <div class="feat"><div class="fi">🩺</div><h3>Health Score</h3><p>License, README, tests, CI, docs, freshness — 10 weighted checks distilled into one honest number.</p></div>
-    <div class="feat"><div class="fi">🤖</div><h3>LLM Digest</h3><p>The Gitingest trick, client-side. Select files, get a clean prompt with a token estimate. Copy or download.</p></div>
-    <div class="feat"><div class="fi">🗂️</div><h3>File Explorer</h3><p>Full tree visualizer with sizes, type distribution and the heaviest files in the repo.</p></div>
-    <div class="feat"><div class="fi">📊</div><h3>Deep Stats</h3><p>Language bytes, dependency scan across 8 ecosystems, commit activity and top contributors.</p></div>
-    <div class="feat"><div class="fi">🏆</div><h3>Fun Mode</h3><p>Every repo gets a personality, a roast, and trophies — Wrapped-style, shareable as a card.</p></div>
-    <div class="feat"><div class="fi">🔗</div><h3>Shareable</h3><p>Deep links, PNG cards and a printable A4 report. Everything stays in your browser.</p></div>
+    <div class="feat"><div class="fi">🩺</div><h3 data-i18n="feat1">Health Score</h3><p data-i18n="feat1Desc">License, README, tests, CI, docs, freshness — 10 weighted checks distilled into one honest number.</p></div>
+    <div class="feat"><div class="fi">🤖</div><h3 data-i18n="feat2">LLM Digest</h3><p data-i18n="feat2Desc">The Gitingest trick, client-side. Select files, get a clean prompt with a token estimate. Copy or download.</p></div>
+    <div class="feat"><div class="fi">🗂️</div><h3 data-i18n="feat3">File Explorer</h3><p data-i18n="feat3Desc">Full tree visualizer with sizes, type distribution and the heaviest files in the repo.</p></div>
+    <div class="feat"><div class="fi">📊</div><h3 data-i18n="feat4">Deep Stats</h3><p data-i18n="feat4Desc">Language bytes, dependency scan across 8 ecosystems, commit activity and top contributors.</p></div>
+    <div class="feat"><div class="fi">🏆</div><h3 data-i18n="feat5">Fun Mode</h3><p data-i18n="feat5Desc">Every repo gets a personality, a roast, and trophies — Wrapped-style, shareable as a card.</p></div>
+    <div class="feat"><div class="fi">🔗</div><h3 data-i18n="feat6">Shareable</h3><p data-i18n="feat6Desc">Deep links, PNG cards and a printable A4 report. Everything stays in your browser.</p></div>
   </div>
 
   <footer>
-    Built by <a href="https://github.com/mohsen-niksirat" target="_blank" rel="noopener">Mohsen Niksirat</a> · inspired by <a href="https://gitingest.com" target="_blank" rel="noopener">Gitingest</a> & GitHub Wrapped<br>
+    <span data-i18n-html="footer">Built by</span> <a href="https://github.com/mohsen-niksirat" target="_blank" rel="noopener">Mohsen Niksirat</a> · inspired by <a href="https://gitingest.com" target="_blank" rel="noopener">Gitingest</a> & GitHub Wrapped<br>
     Data from the public GitHub API · No tracking · No backend · <a href="https://github.com/mohsen-niksirat/repodest" target="_blank" rel="noopener">Source</a>
   </footer>
 </main>
 
 <main id="app" style="display:none" aria-label="Repository dashboard">
   <div class="toolbar">
-    <button class="btn ghost sm" onclick="goHome()">← Home</button>
+    <button class="btn ghost sm" onclick="goHome()" data-i18n="btnHome">← Home</button>
     <div class="tb-input"><input id="jump" placeholder="scope another repo…" spellcheck="false" onkeydown="if(event.key==='Enter')submitJump()"></div>
-    <button class="btn ghost sm" onclick="shareCard()" title="Download a shareable PNG">📸 Card</button>
+    <button class="btn ghost sm" onclick="shareCard()" title="Download a shareable PNG"><span data-i18n="btnCard">📸 Card</span></button>
     <button class="btn ghost sm" onclick="tweet()" title="Tweet the result">🐦</button>
-    <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report">📄 Report</button>
-    <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here">🔗 Link</button>
-    <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo">⚖️ Compare</button>
-    <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON">⬇️ JSON</button>
-    <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV">⬇️ CSV</button>
-    <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo">⚔️ Battle</button>
-    <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options">📋 Clone</button>
-    <button class="btn ghost sm" onclick="toggleFavorite()" id="favBtn" title="Save to favorites">⭐ <span id="favLabel">Fav</span></button>
+    <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report"><span data-i18n="btnReport">📄 Report</span></button>
+    <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here"><span data-i18n="btnLink">🔗 Link</span></button>
+    <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo"><span data-i18n="btnCompare">⚖️ Compare</span></button>
+    <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON"><span data-i18n="btnExportJson">⬇️ JSON</span></button>
+    <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV"><span data-i18n="btnExportCsv">⬇️ CSV</span></button>
+    <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo"><span data-i18n="btnBattle">⚔️ Battle</span></button>
+    <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options"><span data-i18n="btnClone">📋 Clone</span></button>
+    <button class="btn ghost sm" onclick="toggleFavorite()" id="favBtn" title="Save to favorites">⭐ <span id="favLabel" data-i18n="btnFav">Fav</span></button>
   </div>
 
   <!-- Compare panel -->
@@ -155,11 +155,11 @@
     <div class="card repo-hero" id="repoHero"></div>
 
     <div class="branch-sel" id="branchSel" style="display:none">
-      <label>Branch:</label>
+      <label data-i18n="branchLabel">Branch:</label>
       <select id="branchDropdown" onchange="onBranchChange(this.value)"></select>
-      <label>Tag:</label>
+      <label data-i18n="tagLabel">Tag:</label>
       <select id="tagDropdown" onchange="onTagChange(this.value)"><option value="">—</option></select>
-      <button class="btn ghost sm" onclick="toggleDiffPanel()" title="Compare this branch with another">🔀 Diff</button>
+      <button class="btn ghost sm" onclick="toggleDiffPanel()" title="Compare this branch with another"><span data-i18n="btnDiff">🔀 Diff</span></button>
     </div>
     <div id="diffPanel" class="hidden" style="margin-bottom:16px">
       <div class="card">
@@ -309,13 +309,13 @@
         <div class="minititle">📁 File tree <span class="help-slot" data-help="files"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Interactive tree with checkboxes. Select files → go to Digest tab → generate an LLM-ready prompt.</p>
         <div class="tree-tools">
-          <button class="btn ghost sm" onclick="expandAll(true)">📂 Expand all</button>
-          <button class="btn ghost sm" onclick="expandAll(false)">📁 Collapse all</button>
-          <button class="btn ghost sm" onclick="selectTextAll()" title="Select all text files for digest">✓ Select text</button>
-          <button class="btn ghost sm" onclick="clearSel()" title="Clear all selections">✕ Clear</button>
-          <button class="btn ghost sm" onclick="copyTreeAsText()" title="Copy tree structure as plain text">📋 Copy tree</button>
-          <button class="btn ghost sm" onclick="toggleFilterHidden()" id="filterHiddenBtn" title="Show/hide hidden files (dotfiles)">👁 Hidden</button>
-          <button class="btn ghost sm" onclick="toggleFilterBinary()" id="filterBinaryBtn" title="Show/hide binary files">🧊 Binary</button>
+          <button class="btn ghost sm" onclick="expandAll(true)" data-i18n="expandAll">📂 Expand all</button>
+          <button class="btn ghost sm" onclick="expandAll(false)" data-i18n="collapseAll">📁 Collapse all</button>
+          <button class="btn ghost sm" onclick="selectTextAll()" title="Select all text files for digest" data-i18n="selectText">✓ Select text</button>
+          <button class="btn ghost sm" onclick="clearSel()" title="Clear all selections" data-i18n="clearSel">✕ Clear</button>
+          <button class="btn ghost sm" onclick="copyTreeAsText()" title="Copy tree structure as plain text" data-i18n="copyTree">📋 Copy tree</button>
+          <button class="btn ghost sm" onclick="toggleFilterHidden()" id="filterHiddenBtn" title="Show/hide hidden files (dotfiles)"><span data-i18n="hiddenBtn">👁 Hidden</span></button>
+          <button class="btn ghost sm" onclick="toggleFilterBinary()" id="filterBinaryBtn" title="Show/hide binary files"><span data-i18n="binaryBtn">🧊 Binary</span></button>
           <input type="text" id="treeSearch" placeholder="🔍 Filter files…" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;width:160px;outline:none" oninput="filterTree(this.value)" aria-label="Filter files in tree">
           <select id="scopeSelect" onchange="filterScope(this.value)" title="Scope to a monorepo subfolder" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;max-width:180px">
             <option value="">📂 Whole repo</option>
@@ -329,7 +329,7 @@
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Fetches and scans text files under 120KB in your browser — nothing is uploaded. Click a result to toggle it in the digest selection.</p>
         <div style="display:flex;gap:8px">
           <input type="text" id="ftsInput" placeholder="e.g. TODO, authenticate, useMemo…" spellcheck="false" style="flex:1" onkeydown="if(event.key==='Enter')fullTextSearch()">
-          <button class="btn sm" onclick="fullTextSearch()">🔎 Search</button>
+          <button class="btn sm" onclick="fullTextSearch()" data-i18n="ftsBtn">🔎 Search</button>
         </div>
         <div id="ftsResults" style="display:none;margin-top:10px"></div>
       </div>
@@ -404,9 +404,9 @@
             <div class="minititle">Selection</div>
             <div class="digest-meta" id="selMeta"></div>
             <div class="digest-actions">
-              <button class="btn sm" onclick="selectTextAll()">✓ All text files</button>
+              <button class="btn sm" onclick="selectTextAll()" data-i18n="allTextBtn">✓ All text files</button>
               <button class="btn ghost sm" onclick="clearSel()">Clear</button>
-              <button class="btn green" id="genBtn" onclick="generateDigest()">🤖 Generate digest</button>
+              <button class="btn green" id="genBtn" onclick="generateDigest()" data-i18n="genBtn">🤖 Generate digest</button>
             </div>
             <p style="color:var(--text3);font-size:11.5px;line-height:1.6">Tip: tick files in the <b>Files</b> tab tree, then come back here. Binary files and lockfiles are skipped automatically. Content is fetched fresh from raw.githubusercontent.com — it never leaves your browser.</p>
           </div>
@@ -416,10 +416,10 @@
             <textarea class="digest-out" id="digestOut" readonly placeholder="Pick some files and hit Generate — the LLM-ready prompt will appear here."></textarea>
             <div class="digest-actions" id="partNav" style="display:none"></div>
             <div class="digest-actions">
-              <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled>📋 Copy</button>
-              <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled>⬇️ Download .md</button>
-              <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)">🌐 Gist share</button>
-              <button class="btn ghost sm" onclick="toggleTokTable()" id="tokBtn" disabled>🧮 Token breakdown</button>
+              <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled><span data-i18n="copyBtn">📋 Copy</span></button>
+              <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled><span data-i18n="dlBtn">⬇️ Download .md</span></button>
+              <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)"><span data-i18n="gistBtn">🌐 Gist share</span></button>
+              <button class="btn ghost sm" onclick="toggleTokTable()" id="tokBtn" disabled><span data-i18n="tokBtn">🧮 Token breakdown</span></button>
             </div>
             <div id="tokTable" style="display:none"></div>
           <div class="llm-buttons" id="llmButtons" style="display:none">
@@ -580,15 +580,15 @@
     <input id="battleInput" type="text" placeholder="owner/repo" spellcheck="false" onkeydown="if(event.key==='Enter')runBattle()">
     <div id="battleResult"></div>
     <div class="mrow">
-      <button class="btn ghost sm" onclick="closeBattleModal()">Close</button>
-      <button class="btn sm" onclick="runBattle()">⚔️ Battle!</button>
+      <button class="btn ghost sm" onclick="closeBattleModal()" data-i18n="close">Close</button>
+      <button class="btn sm" onclick="runBattle()" data-i18n="battleBtn">⚔️ Battle!</button>
     </div>
     <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
     <h3>🏆 Battle Royale</h3>
     <p>Up to 7 more repos, single-elimination bracket. One per line.</p>
     <textarea id="royaleInput" rows="4" spellcheck="false" placeholder="owner/repo&#10;another/repo&#10;third/repo" style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
     <div class="mrow" style="margin-top:10px">
-      <button class="btn sm" onclick="runRoyale()">🏆 Start tournament</button>
+      <button class="btn sm" onclick="runRoyale()" data-i18n="royaleBtn">🏆 Start tournament</button>
     </div>
     <div id="royaleResult" style="margin-top:12px"></div>
   </div>

@@ -2471,20 +2471,25 @@ const I18N={
 };
 let currentLang=LS.get('repodest_lang','en');
 function t(key){return(I18N[currentLang]&&I18N[currentLang][key])||(I18N.en[key]||key)}
-const LANG_ORDER=['en','fa','es','zh','fr'];
+const LANG_ORDER=['en','fa','es','zh','fr','ar','de'];
+const RTL_LANGS=new Set(['fa','ar']);
 function cycleLang(){
   const idx=LANG_ORDER.indexOf(currentLang);
   currentLang=LANG_ORDER[(idx+1)%LANG_ORDER.length];
   LS.set('repodest_lang',currentLang);
   applyLang();
-  toast(({en:'English',fa:'فارسی',es:'Español',zh:'中文',fr:'Français'})[currentLang],'ok');
+  toast(({en:'English',fa:'فارسی',es:'Español',zh:'中文',fr:'Français',ar:'العربية',de:'Deutsch'})[currentLang],'ok');
 }
 function applyLang(){
-  const isFa=currentLang==='fa';
+  const isFa=RTL_LANGS.has(currentLang);
   document.body.classList.toggle('rtl',isFa);
   document.documentElement.lang=currentLang;
   const langBtn=$('#langBtn');
-  if(langBtn)langBtn.querySelector('span').textContent=({en:'EN',fa:'FA',es:'ES',zh:'ZH',fr:'FR'})[currentLang]||'EN';
+  if(langBtn)langBtn.querySelector('span').textContent=({en:'EN',fa:'FA',es:'ES',zh:'ZH',fr:'FR',ar:'AR',de:'DE'})[currentLang]||'EN';
+  /* Translate every static element carrying data-i18n */
+  $$('[data-i18n]').forEach(el=>{const v=t(el.dataset.i18n);if(v)el.textContent=v});
+  $$('[data-i18n-html]').forEach(el=>{const v=t(el.dataset.i18nHtml);if(v)el.innerHTML=v});
+  $$('[data-i18n-ph]').forEach(el=>{const v=t(el.dataset.i18nPh);if(v)el.placeholder=v});
   /* Update tab names */
   const tabMap={
     'overview':t('tabOverview'),'languages':t('tabLanguages'),'files':t('tabFiles'),
@@ -4258,6 +4263,7 @@ function finalizeDigestFooter(parts){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{initDigestControls();updateSelMeta()});
+(function(){const old=toggleHelpPopover;toggleHelpPopover=function(btn){const el=document.createElement('div');el.className='help-popover';el.textContent=window.__helpTopic?window.__helpTopic(btn.dataset.help):HELP_TEXTS[btn.dataset.help]||'No help available.';const ex=document.querySelector('.help-popover');if(ex){const same=ex._chip===btn;ex.remove();if(same)return}el._chip=btn;document.body.appendChild(el);const r=btn.getBoundingClientRect();const pw=Math.min(320,innerWidth-24);el.style.width=pw+'px';let left=Math.min(Math.max(8,r.left+r.width/2-pw/2),innerWidth-pw-8);let top=r.bottom+8;el.style.left=left+'px';el.style.top=top+'px';const pr=el.getBoundingClientRect();if(pr.bottom>innerHeight-8)top=Math.max(8,r.top-pr.height-8);el.style.top=top+'px'}})();
 
 /* ============================================================
    UX upgrades — Command Palette, Chart PNG export,
@@ -4730,3 +4736,230 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     }
   });
 }
+
+/* ============================================================
+   i18n expansion — keys for the static chrome (data-i18n),
+   Arabic + German languages, and localized help texts.
+   Missing keys gracefully fall back to English via t().
+   ============================================================ */
+(function(){
+  const X={
+    en:{
+      feat1Desc:'License, README, tests, CI, docs, freshness — 10 weighted checks distilled into one honest number.',
+      feat2Desc:'The Gitingest trick, client-side. Select files, get a clean prompt with a token estimate.',
+      feat3Desc:'Full tree visualizer with sizes, type distribution and the heaviest files in the repo.',
+      feat4Desc:'Language bytes, dependency scan across 8 ecosystems, commit activity and top contributors.',
+      feat5Desc:'Every repo gets a personality, a roast, and trophies — Wrapped-style, shareable as a card.',
+      feat6Desc:'Deep links, PNG cards and a printable A4 report. Everything stays in your browser.',
+      favorites:'⭐ Favorites',clearFavs:'Clear favorites',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
+      battleBtn:'⚔️ Battle!',royaleBtn:'🏆 Start tournament',close:'Close',
+      copyBtn:'📋 Copy',dlBtn:'⬇️ Download .md',gistBtn:'🌐 Gist share',tokBtn:'🧮 Token breakdown',
+      genBtn:'🤖 Generate digest',allTextBtn:'✓ All text files',
+      expandAll:'📂 Expand all',collapseAll:'📁 Collapse all',selectText:'✓ Select text',
+      clearSel:'✕ Clear',copyTree:'📋 Copy tree',hiddenBtn:'👁 Hidden',binaryBtn:'🧊 Binary',ftsBtn:'🔎 Search',
+      branchLabel:'Branch:',tagLabel:'Tag:',
+      help_health:'Health Score rates the repository on 10 weighted criteria — license, README, tests, CI, docs, freshness and more. 80+ means excellent project hygiene.',
+      help_files:'Browse the repository tree and tick the checkboxes of the files you want in your LLM prompt. Use the toolbar to select all text files at once, filter by name, or scope to a subfolder.',
+      help_digest:'The LLM Digest packs your selected files into one prompt you can paste into ChatGPT, Claude or Gemini. Pick a preset to get task-specific instructions, then hit Generate. Everything stays in your browser.',
+      help_token:'Token estimates are per-model approximations. Switch models to see how the digest fits their context window — if it overflows, the digest is automatically split into parts.',
+      help_deep:'Deep Analysis goes beyond the health score: PR analytics, fix-vs-feature commit ratio, code churn hotspots and a dependency vulnerability scan via OSV.dev.',
+      help_deps:'An interactive force-directed graph of dependencies parsed from manifest files (package.json, requirements.txt, Cargo.toml, go.mod…).',
+      help_tokenModal:'Without a token you get 60 GitHub API calls per hour. A free personal access token raises that to 5,000/hour and is stored only in your browser.',
+      help_langs:'Byte-accurate language breakdown computed from the platform languages API. The doughnut chart shows the top 10 languages.',
+      help_badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
+      help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
+    },
+    fa:{
+      feat1Desc:'مجوز، README، تست‌ها، CI، مستندات و تازگی — ۱۰ بررسی وزن‌دار در یک عدد صادقانه.',
+      feat2Desc:'ترفند Gitingest در مرورگر شما. فایل‌ها را انتخاب کنید و یک پرامپت تمیز با تخمین توکن بگیرید.',
+      feat3Desc:'نمایش کامل درخت فایل با اندازه‌ها، توزیع نوع و سنگین‌ترین فایل‌های رپو.',
+      feat4Desc:'بایت زبان‌ها، اسکن وابستگی در ۸ اکوسیستم، فعالیت کامیت‌ها و مشارکت‌کنندگان برتر.',
+      feat5Desc:'هر رپو شخصیت، یک roast و جوایز می‌گیرد — به سبک Wrapped و قابل اشتراک.',
+      feat6Desc:'لینک عمیق، کارت PNG و گزارش A4 قابل چاپ. همه‌چیز در مرورگر شما می‌ماند.',
+      favorites:'⭐ علاقه‌مندی‌ها',clearFavs:'پاک کردن علاقه‌مندی‌ها',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 مقایسه',btnFav:'علاقه',
+      battleBtn:'⚔️ نبرد!',royaleBtn:'🏆 شروع تورنمنت',close:'بستن',
+      copyBtn:'📋 کپی',dlBtn:'⬇️ دانلود .md',gistBtn:'🌐 اشتراک Gist',tokBtn:'🧮 تفکیک توکن',
+      genBtn:'🤖 تولید خلاصه',allTextBtn:'✓ همه فایل‌های متنی',
+      expandAll:'📂 باز کردن همه',collapseAll:'📁 بستن همه',selectText:'✓ انتخاب متن‌ها',
+      clearSel:'✕ پاک کردن',copyTree:'📋 کپی درخت',hiddenBtn:'👁 مخفی',binaryBtn:'🧊 باینری',ftsBtn:'🔎 جستجو',
+      branchLabel:'شاخه:',tagLabel:'تگ:',
+      help_health:'امتیاز سلامت رپو را روی ۱۰ معیار وزن‌دار می‌سنجد — مجوز، README، تست، CI، مستندات و تازگی. بالای ۸۰ یعنی بهداشت پروژه عالی.',
+      help_files:'درخت رپو را بگردید و تیک فایل‌هایی که می‌خواهید در پرامپت LLM باشند را بزنید. با نوار ابزار می‌توانید همه فایل‌های متنی را یکجا انتخاب یا بر اساس نام فیلتر کنید.',
+      help_digest:'دایجست LLM فایل‌های انتخابی شما را در یک پرامپت برای ChatGPT، Claude یا Gemini بسته‌بندی می‌کند. یک preset انتخاب کنید و Generate را بزنید. همه‌چیز در مرورگر شما می‌ماند.',
+      help_token:'تخمین توکن برای هر مدل جداگانه است. مدل را عوض کنید تا ببینید دایجست در context window جا می‌شود یا نه — در صورت سرریز، دایجست خودکار به چند بخش تقسیم می‌شود.',
+      help_deep:'تحلیل عمیق فراتر از امتیاز سلامت است: تحلیل PRها، نسبت کامیت‌های fix، نقاط داغ churn و اسکن آسیب‌پذیری وابستگی‌ها با OSV.dev.',
+      help_deps:'نمودار تعاملی وابستگی‌ها که از فایل‌های manifest (package.json، requirements.txt، Cargo.toml، go.mod و…) استخراج می‌شود.',
+      help_tokenModal:'بدون توکن ۶۰ درخواست GitHub در ساعت دارید. توکن رایگان personal access این را به ۵۰۰۰ در ساعت می‌رساند و فقط در مرورگر شما ذخیره می‌شود.',
+      help_langs:'تفکیک دقیق بایتی زبان‌ها از API زبان‌های پلتفرم. نمودار دونات ۱۰ زبان اصلی را نشان می‌دهد.',
+      help_badge:'برچسب امتیاز سلامت برای README پروژه بسازید: SVG استاتیک با نمره ثبت‌شده یا برچسب دینامیک shields.io.',
+      help_wrapped:'داستان سرگرم‌کننده ۱۲ ماه این رپو: ریتم کامیت‌ها، هفته اوج، مشارکت‌کننده برتر و رتبه ستاره‌ها.'
+    },
+    es:{
+      feat1Desc:'Licencia, README, tests, CI, docs, frescura — 10 verificaciones ponderadas en un número honesto.',
+      feat2Desc:'El truco de Gitingest, en tu navegador. Selecciona archivos y obtén un prompt limpio con estimación de tokens.',
+      feat3Desc:'Visualizador completo del árbol con tamaños, distribución de tipos y los archivos más pesados.',
+      feat4Desc:'Bytes por idioma, escaneo de dependencias en 8 ecosistemas, actividad de commits y contribuidores.',
+      feat5Desc:'Cada repo recibe personalidad, roast y trofeos — estilo Wrapped, compartible como tarjeta.',
+      feat6Desc:'Enlaces profundos, tarjetas PNG y un informe A4 imprimible. Todo queda en tu navegador.',
+      favorites:'⭐ Favoritos',clearFavs:'Borrar favoritos',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
+      battleBtn:'⚔️ ¡Batalla!',royaleBtn:'🏆 Iniciar torneo',close:'Cerrar',
+      copyBtn:'📋 Copiar',dlBtn:'⬇️ Descargar .md',gistBtn:'🌐 Compartir Gist',tokBtn:'🧮 Desglose de tokens',
+      genBtn:'🤖 Generar resumen',allTextBtn:'✓ Todos los archivos de texto',
+      expandAll:'📂 Expandir todo',collapseAll:'📁 Colapsar todo',selectText:'✓ Seleccionar texto',
+      clearSel:'✕ Limpiar',copyTree:'📋 Copiar árbol',hiddenBtn:'👁 Ocultos',binaryBtn:'🧊 Binarios',ftsBtn:'🔎 Buscar',
+      branchLabel:'Rama:',tagLabel:'Tag:',
+      help_health:'La Puntuación de Salud evalúa el repo en 10 criterios ponderados — licencia, README, tests, CI, docs, frescura y más. 80+ significa higiene excelente.',
+      help_files:'Explora el árbol del repositorio y marca las casillas de los archivos para tu prompt LLM. Usa la barra de herramientas para seleccionar todos los archivos de texto o filtrar por nombre.',
+      help_digest:'El Resumen LLM empaqueta tus archivos seleccionados en un prompt para ChatGPT, Claude o Gemini. Elige un preset y pulsa Generar. Todo queda en tu navegador.',
+      help_token:'Las estimaciones de tokens son aproximaciones por modelo. Cambia de modelo para ver si el resumen cabe en su ventana de contexto — si se desborda, se divide en partes.',
+      help_deep:'El Análisis Profundo va más allá del score: analítica de PRs, ratio de commits de fix, hotspots de churn y escaneo de vulnerabilidades vía OSV.dev.',
+      help_deps:'Grafo interactivo de dependencias extraídas de los archivos manifest (package.json, requirements.txt, Cargo.toml, go.mod…).',
+      help_tokenModal:'Sin token tienes 60 llamadas GitHub por hora. Un token personal gratuito lo sube a 5.000/hora y solo se guarda en tu navegador.',
+      help_langs:'Desglose de idiomas preciso por bytes desde la API de la plataforma. El gráfico de dona muestra los 10 idiomas principales.',
+      help_badge:'Genera una insignia de puntuación para el README: SVG estático con el score o insignia dinámica de shields.io.',
+      help_wrapped:'La historia divertida de 12 meses de este repo: ritmo de commits, semana pico, contribuidor top y grado de estrellas.'
+    },
+    zh:{
+      feat1Desc:'许可证、README、测试、CI、文档、活跃度——10 项加权检查浓缩为一个诚实的数字。',
+      feat2Desc:'浏览器里的 Gitingest 技巧。选择文件，获得带 token 估算的干净提示词。',
+      feat3Desc:'完整文件树可视化，含大小、类型分布和仓库中最大的文件。',
+      feat4Desc:'语言字节数、8 大生态依赖扫描、提交活动和主要贡献者。',
+      feat5Desc:'每个仓库都有个性、吐槽和奖杯——Wrapped 风格，可生成分享卡片。',
+      feat6Desc:'深链接、PNG 卡片和可打印的 A4 报告。一切都在你的浏览器中。',
+      favorites:'⭐ 收藏',clearFavs:'清除收藏',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 对比',btnFav:'收藏',
+      battleBtn:'⚔️ 对战！',royaleBtn:'🏆 开始锦标赛',close:'关闭',
+      copyBtn:'📋 复制',dlBtn:'⬇️ 下载 .md',gistBtn:'🌐 Gist 分享',tokBtn:'🧮 Token 明细',
+      genBtn:'🤖 生成摘要',allTextBtn:'✓ 所有文本文件',
+      expandAll:'📂 全部展开',collapseAll:'📁 全部折叠',selectText:'✓ 选择文本',
+      clearSel:'✕ 清除',copyTree:'📋 复制树',hiddenBtn:'👁 隐藏文件',binaryBtn:'🧊 二进制',ftsBtn:'🔎 搜索',
+      branchLabel:'分支：',tagLabel:'标签：',
+      help_health:'健康评分按 10 项加权标准评估仓库——许可证、README、测试、CI、文档、活跃度等。80+ 表示项目卫生极佳。',
+      help_files:'浏览仓库文件树，勾选要放入 LLM 提示词的文件。使用工具栏一键选择所有文本文件、按名称过滤或限定子文件夹。',
+      help_digest:'LLM 摘要将选中的文件打包成可粘贴到 ChatGPT、Claude 或 Gemini 的提示词。选择预设获得任务指令，然后点击生成。一切都在浏览器中。',
+      help_token:'Token 估算因模型而异。切换模型查看摘要是否适合其上下文窗口——超出时会自动分割成多个部分。',
+      help_deep:'深度分析超越健康评分：PR 分析、修复型提交比率、代码 churn 热点和基于 OSV.dev 的依赖漏洞扫描。',
+      help_deps:'从 manifest 文件（package.json、requirements.txt、Cargo.toml、go.mod 等）解析的交互式依赖关系图。',
+      help_tokenModal:'没有令牌每小时有 60 次 GitHub API 调用。免费个人访问令牌可提升到 5,000 次/小时，且仅存储在你的浏览器中。',
+      help_langs:'基于平台语言 API 的字节精确语言分析。环形图显示前 10 种语言。',
+      help_badge:'为项目 README 生成健康评分徽章：含固定分数的静态 SVG 或动态 shields.io 徽章。',
+      help_wrapped:'这个仓库 12 个月的趣味故事：提交节奏、高峰周、主要贡献者和星级评价。'
+    },
+    fr:{
+      feat1Desc:'Licence, README, tests, CI, docs, fraîcheur — 10 vérifications pondérées en un nombre honnête.',
+      feat2Desc:'L\'astuce Gitingest, côté navigateur. Sélectionnez des fichiers, obtenez un prompt propre avec estimation de tokens.',
+      feat3Desc:'Visualisation complète de l\'arborescence avec tailles, distribution des types et fichiers les plus lourds.',
+      feat4Desc:'Octets par langage, scan des dépendances sur 8 écosystèmes, activité des commits et contributeurs.',
+      feat5Desc:'Chaque dépôt reçoit une personnalité, un roast et des trophées — style Wrapped, partageable en carte.',
+      feat6Desc:'Liens profonds, cartes PNG et rapport A4 imprimable. Tout reste dans votre navigateur.',
+      favorites:'⭐ Favoris',clearFavs:'Effacer les favoris',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
+      battleBtn:'⚔️ Battle !',royaleBtn:'🏆 Lancer le tournoi',close:'Fermer',
+      copyBtn:'📋 Copier',dlBtn:'⬇️ Télécharger .md',gistBtn:'🌐 Partager en Gist',tokBtn:'🧮 Détail des tokens',
+      genBtn:'🤖 Générer le résumé',allTextBtn:'✓ Tous les fichiers texte',
+      expandAll:'📂 Tout déplier',collapseAll:'📁 Tout replier',selectText:'✓ Sélectionner le texte',
+      clearSel:'✕ Effacer',copyTree:'📋 Copier l\'arbre',hiddenBtn:'👁 Cachés',binaryBtn:'🧊 Binaires',ftsBtn:'🔎 Rechercher',
+      branchLabel:'Branche :',tagLabel:'Tag :',
+      help_health:'Le Score de Santé évalue le dépôt sur 10 critères pondérés — licence, README, tests, CI, docs, fraîcheur… 80+ signifie une hygiène excellente.',
+      help_files:'Parcourez l\'arborescence et cochez les fichiers à inclure dans votre prompt LLM. Utilisez la barre d\'outils pour tout sélectionner, filtrer par nom ou limiter à un sous-dossier.',
+      help_digest:'Le Résumé LLM emballe vos fichiers sélectionnés en un prompt pour ChatGPT, Claude ou Gemini. Choisissez un preset puis Générez. Tout reste dans votre navigateur.',
+      help_token:'Les estimations de tokens varient selon le modèle. Changez de modèle pour voir si le résumé tient dans sa fenêtre de contexte — sinon il est découpé en parties.',
+      help_deep:'L\'Analyse Approfondie va plus loin que le score : analytics des PRs, ratio de commits de fix, hotspots de churn et scan de vulnérabilités via OSV.dev.',
+      help_deps:'Graphe interactif des dépendances extraites des fichiers manifest (package.json, requirements.txt, Cargo.toml, go.mod…).',
+      help_tokenModal:'Sans token, 60 appels GitHub par heure. Un token personnel gratuit porte cela à 5 000/heure, stocké uniquement dans votre navigateur.',
+      help_langs:'Répartition des langages précise en octets via l\'API de la plateforme. Le donut montre les 10 principaux langages.',
+      help_badge:'Générez un badge de score pour le README : SVG statique avec le score, ou badge dynamique shields.io.',
+      help_wrapped:'L\'histoire amusante des 12 derniers mois de ce dépôt : rythme des commits, semaine record, contributeur n°1 et grade d\'étoiles.'
+    },
+    ar:{
+      tabOverview:'🩺 نظرة عامة',tabLanguages:'📊 اللغات',tabFiles:'🗂️ الملفات',
+      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',
+      btnHome:'← الرئيسية',btnCard:'📸 بطاقة',btnReport:'📄 تقرير',btnLink:'🔗 رابط',
+      btnCompare:'⚖️ مقارنة',btnBattle:'⚔️ معركة',btnClone:'📋 استنساخ',
+      btnToken:'🔑 رمز',btnShortcuts:'❓ اختصارات',
+      searchPlaceholder:'المالك/المستودع، رابط GitHub، أو اسم مستخدم…',
+      jumpPlaceholder:'تحليل مستودع آخر…',
+      heroTitle:'تعرّف على مستودع GitHub',
+      heroSub:'في ثوانٍ، لا ساعات.',
+      heroDesc:'الصق أي مستودع أو ملف شخصي. يمنحك Repodest درجة صحة وتفصيل لغات ومستعرض ملفات ورؤى الالتزامات وجوائز ممتعة — ثم يغلّف كل ذلك في <b>ملخص جاهز لـ LLM</b> يمكنك تغذيته بـ ChatGPT أو Claude أو Gemini.',
+      scopeBtn:'حلّل',
+      recentRepos:'🕘 المستودعات الأخيرة',recentReposTitle:'🕘 المستودعات الأخيرة',
+      clearHistory:'مسح السجل',
+      step1:'الصق',step2:'استكشف',step3:'أطعم ذكاءك الاصطناعي',
+      step1Desc:'أي رابط مستودع، مالك/مستودع، أو اسم مستخدم.',
+      step2Desc:'درجة الصحة، اللغات، الملفات، النشاط — كل شيء في لوحة واحدة.',
+      step3Desc:'اختر الملفات، أنشئ الملخص، وانسخه في أي محادثة LLM.',
+      feat1:'درجة الصحة',feat2:'ملخص LLM',feat3:'مستعرض الملفات',
+      feat4:'إحصاءات عميقة',feat5:'الوضع الترفيهي',feat6:'قابل للمشاركة',
+      feat1Desc:'الترخيص، README، الاختبارات، CI، الوثائق، الحداثة — 10 فحوصات موزونة في رقم صادق واحد.',
+      feat2Desc:'حيلة Gitingest داخل متصفحك. اختر الملفات واحصل على موجه نظيف مع تقدير الرموز.',
+      feat3Desc:'عارض شجرة كامل بالأحجام وتوزيع الأنواع وأثقل ملفات المستودع.',
+      feat4Desc:'بايتات اللغات، مسح التبعيات عبر 8 أنظمة، نشاط الالتزامات وكبار المساهمين.',
+      feat5Desc:'كل مستودع يحصل على شخصية وسخرية وجوائز — بأسلوب Wrapped وقابل للمشاركة.',
+      feat6Desc:'روابط عميقة وبطاقات PNG وتقرير A4 قابل للطباعة. كل شيء يبقى في متصفحك.',
+      footer:'من إعداد',
+      favorites:'⭐ المفضلة',clearFavs:'مسح المفضلة',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 فرق',btnFav:'مفضل',
+      battleBtn:'⚔️ معركة!',royaleBtn:'🏆 ابدأ البطولة',close:'إغلاق',
+      copyBtn:'📋 نسخ',dlBtn:'⬇️ تنزيل .md',gistBtn:'🌐 مشاركة Gist',tokBtn:'🧮 تفصيل الرموز',
+      genBtn:'🤖 إنشاء الملخص',allTextBtn:'✓ كل الملفات النصية',
+      expandAll:'📂 فتح الكل',collapseAll:'📁 طي الكل',selectText:'✓ اختيار النصوص',
+      clearSel:'✕ مسح',copyTree:'📋 نسخ الشجرة',hiddenBtn:'👁 مخفي',binaryBtn:'🧊 ثنائي',ftsBtn:'🔎 بحث',
+      branchLabel:'الفرع:',tagLabel:'الوسم:',
+      excellentShape:'حالة ممتازة 🟢',decentShape:'حالة جيدة 🟡',
+      needsLove:'يحتاج اهتماماً 🟠',needsCare:'يحتاج عناية جدية 🔴'
+    },
+    de:{
+      tabOverview:'🩺 Überblick',tabLanguages:'📊 Sprachen',tabFiles:'🗂️ Dateien',
+      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',
+      btnHome:'← Start',btnCard:'📸 Karte',btnReport:'📄 Bericht',btnLink:'🔗 Link',
+      btnCompare:'⚖️ Vergleichen',btnBattle:'⚔️ Battle',btnClone:'📋 Klonen',
+      btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
+      searchPlaceholder:'besitzer/repo, eine GitHub-URL, oder ein Benutzername…',
+      jumpPlaceholder:'weiteres Repo analysieren…',
+      heroTitle:'Kenne ein GitHub-Repo',
+      heroSub:'in Sekunden, nicht Stunden.',
+      heroDesc:'Füge ein beliebiges Repository oder Profil ein. Repodest liefert dir einen Gesundheitsscore, Sprachverteilung, Datei-Explorer, Commit-Insights und Spaß-Trophäen — und packt alles in einen <b>LLM-fähigen Digest</b> für ChatGPT, Claude oder Gemini.',
+      scopeBtn:'Analysieren',
+      recentRepos:'🕘 Letzte Repos',recentReposTitle:'🕘 Letzte Repos',
+      clearHistory:'Verlauf löschen',
+      step1:'Einfügen',step2:'Erkunden',step3:'Füttere deine KI',
+      step1Desc:'Jede Repo-URL, besitzer/repo oder Benutzername.',
+      step2Desc:'Gesundheitscore, Sprachen, Dateien, Aktivität — alles in einem Dashboard.',
+      step3Desc:'Dateien wählen, generieren, den Digest in einen LLM-Chat kopieren.',
+      feat1:'Gesundheitscore',feat2:'LLM-Digest',feat3:'Datei-Explorer',
+      feat4:'Tiefen-Statistiken',feat5:'Spaß-Modus',feat6:'Teilbar',
+      feat1Desc:'Lizenz, README, Tests, CI, Docs, Aktualität — 10 gewichtete Prüfungen in einer ehrlichen Zahl.',
+      feat2Desc:'Der Gitingest-Trick, clientseitig. Dateien wählen, sauberen Prompt mit Token-Schätzung erhalten.',
+      feat3Desc:'Vollständiger Baum-Viewer mit Größen, Typverteilung und den schwersten Dateien des Repos.',
+      feat4Desc:'Sprach-Bytes, Abhängigkeits-Scan über 8 Ökosysteme, Commit-Aktivität und Top-Contributors.',
+      feat5Desc:'Jedes Repo bekommt Persönlichkeit, Roast und Trophäen — im Wrapped-Stil, teilbar als Karte.',
+      feat6Desc:'Deep-Links, PNG-Karten und ein druckbarer A4-Bericht. Alles bleibt im Browser.',
+      footer:'Erstellt von',
+      favorites:'⭐ Favoriten',clearFavs:'Favoriten löschen',
+      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
+      battleBtn:'⚔️ Battle!',royaleBtn:'🏆 Turnier starten',close:'Schließen',
+      copyBtn:'📋 Kopieren',dlBtn:'⬇️ .md herunterladen',gistBtn:'🌐 Gist teilen',tokBtn:'🧮 Token-Aufschlüsselung',
+      genBtn:'🤖 Digest erstellen',allTextBtn:'✓ Alle Textdateien',
+      expandAll:'📂 Alle aufklappen',collapseAll:'📁 Alle zuklappen',selectText:'✓ Text wählen',
+      clearSel:'✕ Leeren',copyTree:'📋 Baum kopieren',hiddenBtn:'👁 Versteckt',binaryBtn:'🧊 Binär',ftsBtn:'🔎 Suchen',
+      branchLabel:'Branch:',tagLabel:'Tag:',
+      excellentShape:'Ausgezeichnete Form 🟢',decentShape:'Gute Form 🟡',
+      needsLove:'Braucht Liebe 🟠',needsCare:'Braucht dringend Pflege 🔴'
+    }
+  };
+  Object.keys(X).forEach(lang=>{
+    if(!I18N[lang])I18N[lang]={};
+    Object.assign(I18N[lang],X[lang]);
+  });
+  /* Help texts route through t() with English fallback */
+  window.__helpTopic=function(topic){
+    const v=t('help_'+topic);
+    return v&&v!=='help_'+topic?v:(HELP_TEXTS[topic]||'No help available.');
+  };
+})();
+
+/* Localized status label for the digest model gauge */
