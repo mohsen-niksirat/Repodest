@@ -70,14 +70,18 @@ canvas#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
 .depth-near{filter:drop-shadow(0 0 14px rgba(124,58,237,.18))}
 .depth-mid{opacity:.65}
 .depth-far{opacity:.35;filter:blur(1px)}
-body.light .geo-cube{border-color:rgba(91,76,219,.14)}
-body.light .geo-cube::before,body.light .geo-cube::after{border-color:rgba(6,182,212,.10)}
-body.light .geo-ring{border-color:rgba(124,58,237,.14);box-shadow:0 0 20px rgba(124,58,237,.05),inset 0 0 14px rgba(124,58,237,.04)}
-body.light .geo-pyramid{border-bottom-color:rgba(124,58,237,.08)}
+body.light canvas#particles{opacity:.55}
+body.light .geo-cube{border-color:rgba(91,76,219,.30)}
+body.light .geo-cube::before,body.light .geo-cube::after{border-color:rgba(6,182,212,.20)}
+body.light .geo-ring{border-color:rgba(124,58,237,.26);box-shadow:0 0 20px rgba(124,58,237,.10),inset 0 0 14px rgba(124,58,237,.08)}
+body.light .geo-pyramid{border-bottom-color:rgba(124,58,237,.18)}
+body.light .geo-diamond{border-color:rgba(236,72,153,.20)}
+body.light .depth-far{opacity:.5}
+body.light .depth-mid{opacity:.8}
 body.light .floor-grid{
   background:
-    repeating-linear-gradient(90deg,rgba(91,76,219,.06) 0px,transparent 1px,transparent 72px),
-    repeating-linear-gradient(0deg,rgba(6,182,212,.05) 0px,transparent 1px,transparent 72px);
+    repeating-linear-gradient(90deg,rgba(91,76,219,.13) 0px,transparent 1px,transparent 72px),
+    repeating-linear-gradient(0deg,rgba(6,182,212,.10) 0px,transparent 1px,transparent 72px);
 }
 body.light .grain{opacity:.03}
 @media (prefers-reduced-motion: reduce){
@@ -268,10 +272,10 @@ footer a{color:var(--text2)}
 .bigfiles .bar i{display:block;height:100%;background:var(--grad2);border-radius:99px}
 
 .tree{font-family:var(--mono);font-size:12.8px;user-select:none}
-.tnode{border-left:1px dashed var(--line);margin-left:10px;padding-left:8px;overflow:hidden;transition:max-height .35s ease}
 .trow{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;cursor:default;transition:background .15s}
 .trow:hover{background:rgba(255,255,255,.04)}
-.trow.dir{cursor:pointer;font-weight:600;color:var(--text)}
+.trow.dir{cursor:pointer;font-weight:600;color:var(--text);flex-wrap:wrap}
+.tnode{border-left:1px dashed var(--line);margin-left:10px;padding-left:8px;overflow:hidden;transition:max-height .35s ease;flex-basis:100%;width:100%}
 .trow .caret{width:14px;text-align:center;color:var(--text3);transition:transform .25s ease;flex-shrink:0}
 .trow.dir.open .caret{transform:rotate(90deg)}
 .trow .fico{flex-shrink:0;width:16px;text-align:center}

@@ -2564,11 +2564,14 @@ renderDash=function(){
     };
   }
   function init(){
-    const count=Math.min(110,Math.max(45,Math.round(W*H/16000)));
+    const count=Math.min(180,Math.max(85,Math.round(W*H/9500)));
     dots=Array.from({length:count},makeDot);
   }
+  function lightFactor(){
+    return document.body.classList.contains('light')?0.55:1;
+  }
   function rgba(col,a){
-    return 'rgba('+col[0]+','+col[1]+','+col[2]+','+Math.max(0,a).toFixed(3)+')';
+    return 'rgba('+col[0]+','+col[1]+','+col[2]+','+Math.max(0,a*lightFactor()).toFixed(3)+')';
   }
   function tick(){
     requestAnimationFrame(tick);
