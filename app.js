@@ -2523,42 +2523,142 @@ renderDash=function(){
 /* ============================================================
    Particles animation — enhanced with connecting lines
    ============================================================ */
+/* ============================================================
+   Deep 3D particle world — depth layers, glow, mouse links,
+   parallax. Enhanced port of the profile.html mesh background.
+   ============================================================ */
 (function particles(){
-  const c=$('#particles'),ctx=c.getContext('2d');
-  let W,H,dots=[];
-  const CONNECTION_DIST=140;
-  function resize(){W=c.width=innerWidth;H=c.height=innerHeight}
-  function init(){dots=Array.from({length:60},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.8+.4,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,o:Math.random()*.5+.15}))}
+  const c=$('#particles');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  let W=0,H=0,dots=[],mouse={x:-1e4,y:-1e4},mx=0,my=0;
+  const PALETTE=[
+    [168,85,247],  /* purple  */
+    [34,211,238],  /* cyan    */
+    [236,72,153],  /* pink    */
+    [139,92,246],  /* violet  */
+    [124,58,237]   /* deep violet */
+  ];
+  const LINK_DIST=150;
+  const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function resize(){
+    W=c.width=innerWidth;
+    H=c.height=innerHeight;
+  }
+  function makeDot(){
+    /* z in [0,1]: 0 = far (small, dim, slow), 1 = near (big, bright, fast) */
+    const z=Math.random();
+    const glow=z>0.86;
+    return{
+      x:Math.random()*W,
+      y:Math.random()*H,
+      z,
+      r:z*2.6+.4,
+      vx:(Math.random()-.5)*(.18+z*.4),
+      vy:(Math.random()-.5)*(.18+z*.4),
+      col:PALETTE[Math.floor(Math.random()*PALETTE.length)],
+      o:z*.5+.12,
+      ph:Math.random()*Math.PI*2,
+      ps:Math.random()*.012+.004,
+      glow
+    };
+  }
+  function init(){
+    const count=Math.min(110,Math.max(45,Math.round(W*H/16000)));
+    dots=Array.from({length:count},makeDot);
+  }
+  function rgba(col,a){
+    return 'rgba('+col[0]+','+col[1]+','+col[2]+','+Math.max(0,a).toFixed(3)+')';
+  }
   function tick(){
+    requestAnimationFrame(tick);
+    if(document.hidden)return;
     ctx.clearRect(0,0,W,H);
-    /* Draw connecting lines between nearby particles */
+    /* parallax easing */
+    mx+=(mouse.x===-1e4?0:(mouse.x/W-0.5)*2-mx)*0.04;
+    my+=(mouse.y===-1e4?0:(mouse.y/H-0.5)*2-my)*0.04;
+    /* connection lines */
     for(let i=0;i<dots.length;i++){
+      const a=dots[i];
       for(let j=i+1;j<dots.length;j++){
-        const dx=dots[i].x-dots[j].x,dy=dots[i].y-dots[j].y;
-        const dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<CONNECTION_DIST){
-          const alpha=(1-dist/CONNECTION_DIST)*0.15;
+        const b=dots[j];
+        const dx=a.x-b.x,dy=a.y-b.y;
+        const d2=dx*dx+dy*dy;
+        if(d2<LINK_DIST*LINK_DIST){
+          const d=Math.sqrt(d2);
+          const depth=(a.z+b.z)/2;
+          const alpha=(1-d/LINK_DIST)*(0.06+depth*0.14);
           ctx.beginPath();
-          ctx.moveTo(dots[i].x,dots[i].y);
-          ctx.lineTo(dots[j].x,dots[j].y);
-          ctx.strokeStyle='rgba(168,85,247,'+alpha+')';
-          ctx.lineWidth=0.6;
+          ctx.moveTo(a.x-mx*depth*22,a.y-my*depth*22);
+          ctx.lineTo(b.x-mx*depth*22,b.y-my*depth*22);
+          ctx.strokeStyle=rgba(a.col,alpha);
+          ctx.lineWidth=0.4+depth*0.7;
           ctx.stroke();
         }
       }
     }
-    /* Draw particles */
+    /* particles */
     for(const d of dots){
-      d.x+=d.vx;d.y+=d.vy;
-      if(d.x<0||d.x>W)d.vx*=-1;
-      if(d.y<0||d.y>H)d.vy*=-1;
-      ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,7);
-      ctx.fillStyle='rgba(168,85,247,'+d.o+')';ctx.fill();
+      d.x+=d.vx;d.y+=d.vy;d.ph+=d.ps;
+      if(d.x<-40)d.x=W+40;if(d.x>W+40)d.x=-40;
+      if(d.y<-40)d.y=H+40;if(d.y>H+40)d.y=-40;
+      /* depth parallax: near dots shift more against the mouse */
+      const px=d.x-mx*d.z*30;
+      const py=d.y-my*d.z*30;
+      const tw=d.o+Math.sin(d.ph)*0.1;
+      if(d.glow){
+        /* soft halo for the closest layer */
+        const g=ctx.createRadialGradient(px,py,0,px,py,d.r*6);
+        g.addColorStop(0,rgba(d.col,tw*0.25));
+        g.addColorStop(1,rgba(d.col,0));
+        ctx.beginPath();
+        ctx.fillStyle=g;
+        ctx.arc(px,py,d.r*6,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(px,py,d.r,0,Math.PI*2);
+      ctx.fillStyle=rgba(d.col,tw);
+      ctx.fill();
+      /* interactive link to the cursor */
+      const mdx=px-mouse.x,mdy=py-mouse.y;
+      const md=Math.sqrt(mdx*mdx+mdy*mdy);
+      if(md<200){
+        ctx.beginPath();
+        ctx.moveTo(px,py);
+        ctx.lineTo(mouse.x,mouse.y);
+        ctx.strokeStyle=rgba(d.col,(0.12+d.z*0.18)*(1-md/200));
+        ctx.lineWidth=0.5+d.z*0.6;
+        ctx.stroke();
+      }
     }
-    requestAnimationFrame(tick);
   }
-  resize();init();tick();
   addEventListener('resize',()=>{resize();init()});
+  addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
+  addEventListener('mouseleave',()=>{mouse.x=-1e4;mouse.y=-1e4});
+  resize();init();
+  if(reduced){
+    /* draw a single static frame, no animation */
+    document.body.classList.add('reduced-motion');
+  }
+  tick();
+  /* Parallax for the floating 3D shapes + floor grid.
+     Uses margins (not transform) so CSS spin animations stay intact. */
+  const shapes=()=>document.querySelectorAll('.geo-shape');
+  const floor=()=>document.querySelector('.floor-grid');
+  let sx=0,sy=0;
+  (function parallax(){
+    requestAnimationFrame(parallax);
+    if(document.hidden)return;
+    sx+=(mx-sx)*0.06;sy+=(my-sy)*0.06;
+    shapes().forEach(el=>{
+      const speed=parseFloat(el.dataset.depth||'1')*14;
+      el.style.marginLeft=(sx*speed)+'px';
+      el.style.marginTop=(sy*speed)+'px';
+    });
+    const f=floor();
+    if(f)f.style.backgroundPositionX=(sx*10)+'px';
+  })();
 })();
 
 /* ============================================================

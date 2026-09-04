@@ -27,6 +27,62 @@ body::before{
 a{color:var(--accent2)}
 button{font-family:inherit}
 canvas#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ============================================================
+   Deep 3D world background — mesh glow, floating geo shapes,
+   perspective floor grid, film grain
+   ============================================================ */
+.bg-glow{
+  background:
+    radial-gradient(ellipse 120% 80% at 10% 15%,rgba(124,58,237,.14) 0%,transparent 50%),
+    radial-gradient(ellipse 80% 60% at 88% 78%,rgba(34,211,238,.10) 0%,transparent 50%),
+    radial-gradient(ellipse 60% 45% at 50% 0%,rgba(236,72,153,.06) 0%,transparent 45%),
+    radial-gradient(ellipse 90% 60% at 50% 115%,rgba(168,85,247,.10) 0%,transparent 55%);
+}
+.world-3d{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;perspective:900px;perspective-origin:50% 45%}
+.geo-shape{position:absolute;opacity:.9}
+.geo-cube{width:56px;height:56px;transform-style:preserve-3d;animation:spin3d 14s linear infinite}
+.geo-cube::before,.geo-cube::after{content:'';position:absolute;inset:0;border:1px solid rgba(34,211,238,.10)}
+.geo-cube::before{transform:rotateY(90deg)}
+.geo-cube::after{transform:rotateX(90deg)}
+@keyframes spin3d{from{transform:rotateX(50deg) rotateZ(0deg)}to{transform:rotateX(50deg) rotateZ(360deg)}}
+.geo-ring{border-radius:50%;border:2px solid rgba(168,85,247,.14);animation:spinRing 17s linear infinite;box-shadow:0 0 24px rgba(168,85,247,.06),inset 0 0 18px rgba(168,85,247,.05)}
+@keyframes spinRing{from{transform:rotateX(68deg) rotateZ(0deg)}to{transform:rotateX(68deg) rotateZ(360deg)}}
+.geo-diamond{transform-style:preserve-3d;animation:spin3d 11s linear infinite reverse;border-color:rgba(236,72,153,.12)}
+.geo-pyramid{width:0;height:0;border-left:26px solid transparent;border-right:26px solid transparent;border-bottom:44px solid rgba(124,58,237,.07);animation:pyrFloat 9s ease-in-out infinite}
+@keyframes pyrFloat{0%,100%{transform:translateY(0) rotate(8deg)}50%{transform:translateY(-18px) rotate(-6deg)}}
+.floor-grid{
+  position:fixed;bottom:0;left:-10%;right:-10%;height:42vh;z-index:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg,rgba(124,58,237,.05) 0px,transparent 1px,transparent 72px),
+    repeating-linear-gradient(0deg,rgba(34,211,238,.04) 0px,transparent 1px,transparent 72px);
+  transform:perspective(560px) rotateX(62deg);transform-origin:bottom center;
+  animation:gridFlow 3.2s linear infinite;
+  mask-image:linear-gradient(to top,rgba(0,0,0,.5) 0%,transparent 85%);
+  -webkit-mask-image:linear-gradient(to top,rgba(0,0,0,.5) 0%,transparent 85%);
+}
+@keyframes gridFlow{from{background-position:0 0}to{background-position:0 72px}}
+.grain{
+  position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* depth variants — far shapes are smaller, dimmer and softly blurred */
+.depth-near{filter:drop-shadow(0 0 14px rgba(124,58,237,.18))}
+.depth-mid{opacity:.65}
+.depth-far{opacity:.35;filter:blur(1px)}
+body.light .geo-cube{border-color:rgba(91,76,219,.14)}
+body.light .geo-cube::before,body.light .geo-cube::after{border-color:rgba(6,182,212,.10)}
+body.light .geo-ring{border-color:rgba(124,58,237,.14);box-shadow:0 0 20px rgba(124,58,237,.05),inset 0 0 14px rgba(124,58,237,.04)}
+body.light .geo-pyramid{border-bottom-color:rgba(124,58,237,.08)}
+body.light .floor-grid{
+  background:
+    repeating-linear-gradient(90deg,rgba(91,76,219,.06) 0px,transparent 1px,transparent 72px),
+    repeating-linear-gradient(0deg,rgba(6,182,212,.05) 0px,transparent 1px,transparent 72px);
+}
+body.light .grain{opacity:.03}
+@media (prefers-reduced-motion: reduce){
+  .geo-cube,.geo-ring,.geo-diamond,.geo-pyramid,.floor-grid{animation:none}
+}
 .bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;
   background:radial-gradient(700px 400px at 15% -5%,rgba(124,58,237,.14),transparent),radial-gradient(700px 500px at 90% 10%,rgba(34,211,238,.07),transparent),radial-gradient(800px 500px at 50% 110%,rgba(168,85,247,.1),transparent);
   animation:bgShift 20s ease-in-out infinite alternate;
