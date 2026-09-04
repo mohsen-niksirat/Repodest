@@ -1231,11 +1231,15 @@ function renderFiles(){
 }
 
 /* BUG FIX #1: Null-safe sorting in renderNode */
+/* Per-node render cap — huge folders render a slice + "show all" to keep the DOM light */
+const NODE_RENDER_CAP=250;
 function renderNode(container,node){
   if(!node||!container)return;
   try{
     const dirs=Array.from(node.dirs.values()).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     const files=node.files.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const capped=files.length>NODE_RENDER_CAP;
+    const visibleFiles=capped?files.slice(0,NODE_RENDER_CAP):files;
     for(const d of dirs){
       const row=document.createElement('div');
       row.className='trow dir';
@@ -1248,7 +1252,7 @@ function renderNode(container,node){
       row.dataset.rendered='0';
       row.appendChild(child);
     }
-    for(const f of files){
+    for(const f of visibleFiles){
       const row=document.createElement('div');
       row.className='trow';
       const icon=isLock(f)?'🔒':isText(f)?'📄':'🧊';
@@ -1257,6 +1261,25 @@ function renderNode(container,node){
       const ficoClass='fico'+(ext?' '+ext:'');
       row.innerHTML='<span class="caret" style="visibility:hidden">·</span><input type="checkbox" class="fcb" data-path="'+esc(f.path||'')+'"'+(S.sel.has(f.path)?' checked':'')+'><span class="'+ficoClass+'">'+icon+'</span><span class="fname" title="'+esc(f.path||'')+'">'+esc((f.name||(f.path||'').split('/').pop())||'')+'</span><span class="fsize">'+fmtSize(f.size||0)+'</span>';
       container.appendChild(row);
+    }
+    if(capped){
+      const more=document.createElement('div');
+      more.className='trow';
+      more.style.opacity='.75';
+      more.innerHTML='<span class="caret" style="visibility:hidden">·</span><span></span><span class="fico">⋯</span><span class="fname" style="color:var(--accent2);cursor:pointer">Show all '+(files.length-NODE_RENDER_CAP)+' more files in this folder</span><span class="fsize"></span>';
+      more.addEventListener('click',()=>{
+        more.remove();
+        for(const f of files.slice(NODE_RENDER_CAP)){
+          const row=document.createElement('div');
+          row.className='trow';
+          const icon=isLock(f)?'🔒':isText(f)?'📄':'🧊';
+          const ext=extOf(f.path||'');
+          const ficoClass='fico'+(ext?' '+ext:'');
+          row.innerHTML='<span class="caret" style="visibility:hidden">·</span><input type="checkbox" class="fcb" data-path="'+esc(f.path||'')+'"'+(S.sel.has(f.path)?' checked':'')+'><span class="'+ficoClass+'">'+icon+'</span><span class="fname" title="'+esc(f.path||'')+'">'+esc((f.name||(f.path||'').split('/').pop())||'')+'</span><span class="fsize">'+fmtSize(f.size||0)+'</span>';
+          container.appendChild(row);
+        }
+      });
+      container.appendChild(more);
     }
   }catch(e){console.warn('renderNode error:',e)}
 }
