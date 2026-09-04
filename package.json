@@ -1,0 +1,16 @@
+{
+  "name": "repodest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Client-side GitHub repository analyzer and LLM-ready digest generator (zero build step)",
+  "scripts": {
+    "test": "node tests.test.js",
+    "smoke": "node e2e.smoke.js",
+    "e2e": "playwright test",
+    "lhci": "lhci autorun"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "@lhci/cli": "^0.14.0"
+  }
+}

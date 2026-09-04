@@ -61,8 +61,37 @@ jobs:
             node -e "new Function(require('fs').readFileSync('$f','utf8')); console.log('$f syntax OK ✓')"
           done
 
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install chromium --with-deps
+
+      - name: Run Playwright e2e tests
+        run: npx playwright test
+
+      - name: Lighthouse CI (perf / a11y gates)
+        run: npx --yes @lhci/cli@0.14.x autorun
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
   deploy:
-    needs: [test, lint]
+    needs: [test, lint, browser]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
