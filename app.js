@@ -892,15 +892,20 @@ async function loadRepo(owner,repo,platform){
       return;
     }
 
-    /* GitHub flow (public github.com or GitHub Enterprise via apiBase()) */
+    /* GitHub flow (public github.com or GitHub Enterprise via apiBase())
+       Metadata first (needed for the default branch), then everything
+       else in parallel — cuts first-load latency to roughly the slowest
+       single call instead of the sum of all calls. */
     setLoad('Repository metadata…');
     const meta=await api('/repos/'+key);
-    setLoad('Languages & file tree…');
-    const langs=await api('/repos/'+key+'/languages').catch(()=>({}));
-    const tree=await api('/repos/'+key+'/git/trees/'+(meta.default_branch||'main')+'?recursive=1').catch(()=>null);
-    setLoad('Contributors & commits…');
-    const contribs=await api('/repos/'+key+'/contributors?per_page=12').catch(()=>[]);
-    const commits=await api('/repos/'+key+'/commits?per_page=100').catch(()=>[]);
+    setLoad('Languages, tree, contributors & commits…');
+    const branchGuess=meta.default_branch||'main';
+    const [langs,tree,contribs,commits]=await Promise.all([
+      api('/repos/'+key+'/languages').catch(()=>({})),
+      api('/repos/'+key+'/git/trees/'+branchGuess+'?recursive=1').catch(()=>null),
+      api('/repos/'+key+'/contributors?per_page=12').catch(()=>[]),
+      api('/repos/'+key+'/commits?per_page=100').catch(()=>[])
+    ]);
     const data={meta:stripRepo(meta,platform),langs,tree,contribs:Array.isArray(contribs)?contribs:[],commits:Array.isArray(commits)?commits.slice(0,100):[]};
     cacheSet2('repo:'+cacheKey,data);
     applyRepo(key,data,false);
