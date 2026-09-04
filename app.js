@@ -4404,32 +4404,44 @@ async function fullTextSearch(){
   host.innerHTML='<p style="color:var(--text3);font-size:12px" id="ftsStatus">⏳ Scanning 0/'+paths.length+' files…</p>';
   const m=S.repo,branch=(m&&m.default_branch)||'main';
   const results=[];
-  let scanned=0;
-  const CONCURRENCY=8;
-  let idx=0;
-  async function worker(){
-    while(idx<paths.length){
-      const p=paths[idx++];
-      try{
-        const r=await fetch(rawUrl((m&&m.full_name),branch,p));
-        if(!r.ok)continue;
-        const txt=await r.text();
-        scanned++;
-        const lower=txt.toLowerCase();
-        const first=lower.indexOf(needle);
-        if(first>=0){
-          const lineNo=txt.slice(0,first).split('\n').length;
-          const line=(txt.split('\n')[lineNo-1]||'').trim().slice(0,140);
-          results.push({path:p,count:lower.split(needle).length-1,line:lineNo,snippet:line});
-        }
-        const st=$('#ftsStatus');
-        if(st&&(scanned%12===0))st.textContent='⏳ Scanning '+scanned+'/'+paths.length+' files… '+results.length+' matches';
-      }catch(e){/* skip */}
+  /* Fast path: Web Worker with inline fallback */
+  let done=false;
+  try{
+    const workerBase=rawUrl((m&&m.full_name),branch,'').replace(/[^\/]+$/,'');
+    const wk=await ftsScanWithWorker(paths,rawUrl((m&&m.full_name),branch,'').replace(/\/$/,''),needle);
+    if(wk){
+      results.push(...wk);
+      done=true;
     }
+  }catch(e){/* fall through to inline */}
+  if(!done){
+    let scanned=0;
+    const CONCURRENCY=8;
+    let idx=0;
+    async function worker(){
+      while(idx<paths.length){
+        const p=paths[idx++];
+        try{
+          const r=await fetch(rawUrl((m&&m.full_name),branch,p));
+          if(!r.ok)continue;
+          const txt=await r.text();
+          scanned++;
+          const lower=txt.toLowerCase();
+          const first=lower.indexOf(needle);
+          if(first>=0){
+            const lineNo=txt.slice(0,first).split('\n').length;
+            const line=(txt.split('\n')[lineNo-1]||'').trim().slice(0,140);
+            results.push({path:p,count:lower.split(needle).length-1,line:lineNo,snippet:line});
+          }
+          const st=$('#ftsStatus');
+          if(st&&(scanned%12===0))st.textContent='⏳ Scanning '+scanned+'/'+paths.length+' files… '+results.length+' matches';
+        }catch(e){/* skip */}
+      }
+    }
+    const workers=[];
+    for(let i=0;i<CONCURRENCY;i++)workers.push(worker());
+    await Promise.all(workers);
   }
-  const workers=[];
-  for(let i=0;i<CONCURRENCY;i++)workers.push(worker());
-  await Promise.all(workers);
   results.sort((a,b)=>b.count-a.count);
   FTS_CACHE.byRepo=S.repo.full_name;
   FTS_CACHE.results=results;
@@ -4471,4 +4483,69 @@ function resetFts(){
   if(host){host.style.display='none';host.innerHTML=''}
   const inp=$('#ftsInput');
   if(inp)inp.value='';
+}
+
+/* ============================================================
+   Web Worker pool — off-main-thread content scanning.
+   Zero build step: worker code lives in a Blob.
+   Used by: full-text search (FTS) — the heaviest per-file work.
+   ============================================================ */
+const FTS_WORKER_SRC=`
+self.onmessage=async e=>{
+  const {paths,base,needle}=e.data;
+  const results=[];
+  const CONCURRENCY=8;
+  let idx=0;
+  async function fetchOne(p){
+    const r=await fetch(base+p);
+    if(!r.ok)return;
+    const txt=await r.text();
+    const lower=txt.toLowerCase();
+    const first=lower.indexOf(needle);
+    if(first>=0){
+      const lineNo=txt.slice(0,first).split('\\n').length;
+      const line=(txt.split('\\n')[lineNo-1]||'').trim().slice(0,140);
+      results.push({path:p,count:lower.split(needle).length-1,line:lineNo,snippet:line});
+    }
+  }
+  async function worker(){
+    while(idx<paths.length){
+      const p=paths[idx++];
+      try{await fetchOne(p)}catch(err){/* skip */}
+    }
+  }
+  const pool=[];
+  for(let i=0;i<CONCURRENCY;i++)pool.push(worker());
+  await Promise.all(pool);
+  self.postMessage({results});
+};
+`;
+let _ftsWorkerUrl=null;
+function ftsWorkerUrl(){
+  if(!_ftsWorkerUrl)_ftsWorkerUrl=URL.createObjectURL(new Blob([FTS_WORKER_SRC],{type:'text/javascript'}));
+  return _ftsWorkerUrl;
+}
+/* Returns results array via worker; falls back to inline scanning on failure */
+async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
+  return new Promise(async resolve=>{
+    let worker=null;
+    try{
+      worker=new Worker(ftsWorkerUrl());
+      const timeout=setTimeout(()=>{try{worker.terminate()}catch(e){};resolve(null)},60000);
+      worker.onmessage=e=>{
+        clearTimeout(timeout);
+        try{worker.terminate()}catch(err){}
+        resolve((e.data&&e.data.results)||null);
+      };
+      worker.onerror=()=>{
+        clearTimeout(timeout);
+        try{worker.terminate()}catch(err){}
+        resolve(null);
+      };
+      worker.postMessage({paths,base:rawBaseNoSlash+'/',needle});
+    }catch(e){
+      if(worker)try{worker.terminate()}catch(err){}
+      resolve(null);
+    }
+  });
 }
