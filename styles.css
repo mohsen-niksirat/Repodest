@@ -545,6 +545,29 @@ footer a{color:var(--text2)}
 /* === Repo Wrapped === */
 
 /* === Contextual help chips === */
+
+/* === Language picker menu === */
+.lang-menu{
+  position:fixed;z-index:400;width:170px;
+  background:var(--card-solid);border:1px solid var(--line2);
+  border-radius:14px;padding:6px;
+  box-shadow:0 14px 44px rgba(0,0,0,.28),0 0 0 1px rgba(124,58,237,.06);
+  animation:helpIn .16s ease;
+  display:flex;flex-direction:column;gap:2px;
+}
+.lang-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:9px;border:none;
+  background:transparent;color:var(--text2);
+  font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;
+  transition:background .15s,color .15s;width:100%;
+}
+.lang-item:hover{background:var(--card2);color:var(--text)}
+.lang-item.active{background:rgba(124,58,237,.12);color:var(--text)}
+.lang-item .li-flag{font-size:16px;line-height:1}
+.lang-item .li-name{flex:1}
+.lang-item .li-check{color:var(--accent);font-weight:800}
+body.light .lang-menu{box-shadow:0 14px 44px rgba(0,0,0,.14)}
 .help-slot{display:inline-flex;margin-left:6px}
 .help-chip{
   width:16px;height:16px;border-radius:50%;

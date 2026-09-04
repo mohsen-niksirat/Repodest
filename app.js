@@ -4282,7 +4282,7 @@ function cmdActions(){
     {icon:'🔗',label:'Go to Deps',kw:'tab deps dependencies',run:()=>switchTab('deps')},
     {icon:'🔬',label:'Go to Deep Analysis',kw:'tab deep pr osv churn',run:()=>switchTab('deep')},
     {icon:'🌙',label:'Toggle theme',kw:'dark light theme',run:()=>toggleTheme()},
-    {icon:'🌐',label:'Switch language',kw:'language i18n fa en es zh fr',run:()=>cycleLang()},
+    {icon:'🌐',label:'Switch language',kw:'language i18n fa en es zh fr ar de',run:()=>toggleLangMenu()},
     {icon:'🔑',label:'Set GitHub token',kw:'token pat api',run:()=>openModal()},
     {icon:'⚔️',label:'Repo Battle',kw:'battle compare versus',run:()=>openBattle()},
     {icon:'📸',label:'Share card',kw:'share card png image',run:()=>shareCard()},
@@ -4963,3 +4963,73 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
 })();
 
 /* Localized status label for the digest model gauge */
+
+/* ============================================================
+   Language picker menu — click the 🌐 chip to open a dropdown
+   of all supported languages instead of blind cycling.
+   ============================================================ */
+const LANG_NAMES={
+  en:{flag:'🇬🇧',name:'English'},
+  fa:{flag:'🇮🇷',name:'فارسی'},
+  es:{flag:'🇪🇸',name:'Español'},
+  zh:{flag:'🇨🇳',name:'中文'},
+  fr:{flag:'🇫🇷',name:'Français'},
+  ar:{flag:'🇸🇦',name:'العربية'},
+  de:{flag:'🇩🇪',name:'Deutsch'}
+};
+let langMenuEl=null;
+function toggleLangMenu(ev){
+  if(ev)ev.stopPropagation();
+  if(langMenuEl){closeLangMenu();return}
+  langMenuEl=document.createElement('div');
+  langMenuEl.className='lang-menu';
+  langMenuEl.setAttribute('role','menu');
+  langMenuEl.innerHTML=LANG_ORDER.map(code=>{
+    const info=LANG_NAMES[code]||{flag:'🌐',name:code};
+    const active=currentLang===code;
+    return '<button class="lang-item'+(active?' active':'')+'" role="menuitemradio" aria-checked="'+active+'" data-lang="'+code+'">'+
+      '<span class="li-flag">'+info.flag+'</span>'+
+      '<span class="li-name">'+esc(info.name)+'</span>'+
+      (active?'<span class="li-check">✓</span>':'')+
+    '</button>';
+  }).join('');
+  document.body.appendChild(langMenuEl);
+  const btn=$('#langBtn');
+  if(btn){
+    const r=btn.getBoundingClientRect();
+    const mw=170;
+    let left=Math.min(Math.max(8,r.right-mw),innerWidth-mw-8);
+    let top=r.bottom+8;
+    langMenuEl.style.left=left+'px';
+    langMenuEl.style.top=top+'px';
+  }
+  langMenuEl.addEventListener('click',e=>{
+    const item=e.target.closest('.lang-item');
+    if(!item)return;
+    const code=item.dataset.lang;
+    if(code&&code!==currentLang){
+      currentLang=code;
+      LS.set('repodest_lang',code);
+      applyLang();
+      toast((LANG_NAMES[code]||{}).name||code,'ok');
+    }
+    closeLangMenu();
+  });
+  setTimeout(()=>{
+    document.addEventListener('click',closeLangMenuOnOutside);
+    document.addEventListener('keydown',closeLangMenuOnEsc);
+  },0);
+}
+function closeLangMenuOnOutside(e){
+  if(langMenuEl&&!langMenuEl.contains(e.target)&&!e.target.closest('#langBtn'))closeLangMenu();
+}
+function closeLangMenuOnEsc(e){
+  if(e.key==='Escape')closeLangMenu();
+}
+function closeLangMenu(){
+  if(!langMenuEl)return;
+  langMenuEl.remove();
+  langMenuEl=null;
+  document.removeEventListener('click',closeLangMenuOnOutside);
+  document.removeEventListener('keydown',closeLangMenuOnEsc);
+}
