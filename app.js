@@ -4095,6 +4095,66 @@ function initDigestControls(){
   const sb=$('#sigBtn');if(sb)sb.classList.toggle('preset-sel',sigOnly);
 }
 
+/* ============================================================
+   Contextual help chips — a "?" next to key UI sections that
+   reveals an explanation popover on click.
+   ============================================================ */
+const HELP_TEXTS={
+  health:'Health Score rates the repository on 10 weighted criteria — license, README, tests, CI, docs, freshness and more. 80+ means excellent project hygiene.',
+  files:'Browse the repository tree and tick the checkboxes of the files you want in your LLM prompt. Use the toolbar to select all text files at once, filter by name, or scope to a subfolder.',
+  digest:'The LLM Digest packs your selected files into one prompt you can paste into ChatGPT, Claude or Gemini. Pick a preset to get task-specific instructions, then hit Generate. Everything stays in your browser.',
+  token:'Token estimates are per-model approximations. Switch models to see how the digest fits their context window — if it overflows, the digest is automatically split into parts.',
+  deep:'Deep Analysis goes beyond the health score: PR analytics, fix-vs-feature commit ratio, code churn hotspots and a dependency vulnerability scan via OSV.dev. Click each card to run it.',
+  battle:'Battle compares two repos metric by metric and highlights the winner. Battle Royale runs a single-elimination tournament for up to 8 repos.',
+  tokenModal:'Without a token you get 60 GitHub API calls per hour. A free personal access token raises that to 5,000/hour and is stored only in your browser.',
+  langs:'Byte-accurate language breakdown computed from the GitHub languages API. The doughnut chart shows the top 10 languages.',
+  treeTools:'Expand/collapse folders, select all text files, copy the tree as text, filter by name, or scope a monorepo to a single subfolder.',
+  badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
+  wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
+};
+function helpChip(topic){
+  return '<button class="help-chip" data-help="'+topic+'" title="What is this?" aria-label="Help: '+topic+'">?</button>';
+}
+function toggleHelpPopover(btn){
+  const existing=document.querySelector('.help-popover');
+  if(existing){
+    const same=existing._chip===btn;
+    existing.remove();
+    if(same)return;
+  }
+  const pop=document.createElement('div');
+  pop.className='help-popover';
+  pop.textContent=HELP_TEXTS[btn.dataset.help]||'No help available.';
+  pop._chip=btn;
+  document.body.appendChild(pop);
+  const r=btn.getBoundingClientRect();
+  const pw=Math.min(320,innerWidth-24);
+  pop.style.width=pw+'px';
+  let left=Math.min(Math.max(8,r.left+r.width/2-pw/2),innerWidth-pw-8);
+  let top=r.bottom+8;
+  pop.style.left=left+'px';
+  pop.style.top=top+'px';
+  const pr=pop.getBoundingClientRect();
+  if(pr.bottom>innerHeight-8)top=Math.max(8,r.top-pr.height-8);
+  pop.style.top=top+'px';
+}
+document.addEventListener('click',e=>{
+  const chip=e.target.closest('.help-chip');
+  if(chip){e.preventDefault();e.stopPropagation();toggleHelpPopover(chip);return}
+  const pop=document.querySelector('.help-popover');
+  if(pop&&!pop.contains(e.target))pop.remove();
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){const pop=document.querySelector('.help-popover');if(pop)pop.remove()}
+});
+document.addEventListener('DOMContentLoaded',()=>{
+  $$('.help-slot').forEach(slot=>{
+    const topic=slot.dataset.help;
+    if(!topic||!HELP_TEXTS[topic])return;
+    slot.innerHTML='<button class="help-chip" data-help="'+topic+'" aria-label="What is this?">?</button>';
+  });
+});
+
 /* Strip bodies from source code, keeping signatures, types & comments */
 function extractSignatures(src,ext){
   const keepExt=['js','ts','jsx','tsx','mjs','cjs','py','java','cs','go','rs','rb','php','c','h','cpp','hpp','kt','swift','dart','lua','scala'];

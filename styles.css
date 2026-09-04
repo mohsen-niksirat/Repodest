@@ -543,6 +543,27 @@ footer a{color:var(--text2)}
 .rec-btn.preset-sel{border-color:var(--accent);background:rgba(168,85,247,.12);color:var(--text);box-shadow:0 0 0 1px var(--accent) inset}
 
 /* === Repo Wrapped === */
+
+/* === Contextual help chips === */
+.help-slot{display:inline-flex;margin-left:6px}
+.help-chip{
+  width:16px;height:16px;border-radius:50%;
+  border:1px solid var(--line2);background:var(--card2);
+  color:var(--text3);font-size:10.5px;font-weight:700;line-height:1;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+  transition:.2s;padding:0;font-family:var(--mono);
+}
+.help-chip:hover{border-color:var(--accent);color:var(--accent);background:rgba(124,58,237,.1);transform:scale(1.12)}
+.help-popover{
+  position:fixed;z-index:300;
+  background:var(--card-solid);color:var(--text2);
+  border:1px solid var(--line2);border-radius:12px;
+  padding:12px 14px;font-size:12.5px;line-height:1.6;
+  box-shadow:0 12px 40px rgba(0,0,0,.25),0 0 0 1px rgba(124,58,237,.08);
+  animation:helpIn .18s ease;
+}
+@keyframes helpIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+body.light .help-popover{box-shadow:0 12px 40px rgba(0,0,0,.14)}
 .wrapped-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
 .wrapped-tile{display:flex;gap:10px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px}
 .wrapped-tile .wt-i{font-size:22px;line-height:1}

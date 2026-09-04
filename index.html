@@ -202,7 +202,7 @@
           <div class="tag" id="scoreTag"></div>
         </div>
         <div class="card">
-          <div class="minititle">Health checks</div>
+          <div class="minititle">Health checks <span class="help-slot" data-help="health"></span></div>
           <div class="checks" id="checks"></div>
         </div>
       </div>
@@ -217,7 +217,7 @@
         </div>
       </div>
       <div class="card" style="margin-top:16px" id="badgeCard">
-        <div class="minititle">🏷️ README Badge Generator</div>
+        <div class="minititle">🏷️ README Badge Generator <span class="help-slot" data-help="badge"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Static SVG badges you can paste into your project's README. Two styles: a self-hosted static badge (score is baked in) and a dynamic shields.io badge that fetches this repo's data on every view.</p>
         <div class="badge-preview-wrap">
           <div class="badge-preview" id="badgePreview"></div>
@@ -272,7 +272,7 @@
         </p>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">📊 Language breakdown (bytes)</div>
+        <div class="minititle">📊 Language breakdown (bytes) <span class="help-slot" data-help="langs"></span></div>
         <div class="langbar" id="langBar"></div>
         <div class="grid2">
           <div id="langRows"></div>
@@ -306,7 +306,7 @@
         </div>
       </div>
       <div class="card">
-        <div class="minititle">📁 File tree</div>
+        <div class="minititle">📁 File tree <span class="help-slot" data-help="files"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Interactive tree with checkboxes. Select files → go to Digest tab → generate an LLM-ready prompt.</p>
         <div class="tree-tools">
           <button class="btn ghost sm" onclick="expandAll(true)">📂 Expand all</button>
@@ -349,7 +349,7 @@
             </p>
           </div>
           <div class="card" style="margin-bottom:16px">
-            <div class="minititle">What goes into the prompt</div>
+            <div class="minititle">What goes into the prompt <span class="help-slot" data-help="digest"></span></div>
             <label class="optrow"><input type="checkbox" id="optTree" checked> File tree of selected files</label>
             <label class="optrow"><input type="checkbox" id="optReadme" checked> README as context</label>
             <label class="optrow"><input type="checkbox" id="optMeta" checked> Repo metadata header</label>
@@ -372,7 +372,7 @@
             </div>
           </div>
           <div class="card" style="margin-top:16px">
-            <div class="minititle">Model & token estimate</div>
+            <div class="minititle">Model & token estimate <span class="help-slot" data-help="token"></span></div>
             <div class="digest-meta" style="margin-bottom:10px">
               <select id="modelSelect" onchange="updateSelMeta()" style="padding:7px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none">
                 <option value="gpt5">GPT-5 / GPT-4o (128k)</option>
@@ -486,7 +486,7 @@
         <div style="text-align:right;margin-top:12px"><button class="btn ghost sm" onclick="rerollRoast()">🎲 Another one</button></div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">📅 Repo Wrapped <span style="font-size:10px;color:var(--text3)">last 12 months</span></div>
+        <div class="minititle">📅 Repo Wrapped <span style="font-size:10px;color:var(--text3)">last 12 months</span> <span class="help-slot" data-help="wrapped"></span></div>
         <div id="wrappedCard"></div>
       </div>
       <div class="card">
@@ -502,7 +502,7 @@
         </p>
       </div>
       <div class="card">
-        <div class="minititle">🔗 Dependency Graph</div>
+        <div class="minititle">🔗 Dependency Graph <span class="help-slot" data-help="deps"></span></div>
         <div class="dep-graph-wrap" id="depGraphWrap">
           <canvas id="depGraphCanvas"></canvas>
           <div class="dep-graph-tooltip" id="depGraphTooltip"></div>
@@ -519,7 +519,7 @@
       </div>
       <div class="grid2" style="margin-bottom:16px">
         <div class="card">
-          <div class="minititle">🔀 Pull Request Analytics</div>
+          <div class="minititle">🔀 Pull Request Analytics <span class="help-slot" data-help="deep"></span></div>
           <div id="prAnalyticsContent"><p style="color:var(--text3);font-size:12px">Click "Run deep scan" to fetch PR data.</p></div>
         </div>
         <div class="card">
@@ -549,7 +549,7 @@
 
 <div class="modal-bg hidden" id="modalBg">
   <div class="modal">
-    <h3>🔑 GitHub Token (optional)</h3>
+    <h3>🔑 GitHub Token (optional) <span class="help-slot" data-help="tokenModal"></span></h3>
     <p>Without a token you get 60 API calls/hour — fine for a few lookups. A free personal access token raises that to 5,000/hour. It's stored only in your browser's localStorage and sent only to api.github.com.</p>
     <a class="hint" href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">→ Create a fine-grained token (no permissions needed for public repos)</a>
     <input id="patInput" type="password" placeholder="github_pat_… or ghp_…">
