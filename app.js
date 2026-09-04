@@ -927,6 +927,8 @@ function applyRepo(key,data,fromCache){
 
     renderDash();
     show($('#loadingView'),false);show($('#errorView'),false);show($('#dash'),true);
+    try{renderSinceLastVisit(data.meta)}catch(e){}
+    try{maybeRunAutoDigest()}catch(e){}
     if(data.tree&&data.tree.truncated)toast('Huge repo — file tree was truncated by GitHub','err');
     if(fromCache)toast('Loaded from cache (≤6h old)');
     if(!fromCache)refreshRate();
@@ -3602,11 +3604,13 @@ function showModal(title,content){
 (function boot(){
   refreshRate();
   renderHistory();
+  try{applyUrlAutomation()}catch(e){}
   const q=new URLSearchParams(location.search);
   if(q.get('repo')){
     const m=q.get('repo').match(/^([^\/]+)\/([^\/]+)$/);
     if(m){
       const platform=q.get('platform')||detectPlatform(q.get('repo'))||'github';
+      if(platform==='ghe'&&!gheBase()){setGheBase(location.origin)} /* GHE deep link from inside the instance */
       loadRepo(m[1],m[2],platform);
       return
     }
@@ -4298,7 +4302,8 @@ function cmdActions(){
     {icon:'🧊',label:'Export language chart (PNG)',kw:'export chart png image',run:()=>exportChartPNG('langChart','languages')},
     {icon:'📈',label:'Export activity chart (PNG)',kw:'export chart png image',run:()=>exportChartPNG('actChart','activity')},
     {icon:'🏠',label:'Go home',kw:'home landing reset',run:()=>goHome()},
-    {icon:'❓',label:'Keyboard shortcuts',kw:'shortcuts help keys',run:()=>showShortcuts()}
+    {icon:'❓',label:'Keyboard shortcuts',kw:'shortcuts help keys',run:()=>showShortcuts()},
+    {icon:'🔖',label:'Bookmarklet (open any GitHub repo here)',kw:'bookmarklet bookmark drag github',run:()=>showBookmarklet()}
   ];
   const hist=LS.get('repodest_history',[]);
   (Array.isArray(hist)?hist:[]).slice(0,6).forEach(h=>{
@@ -5037,4 +5042,100 @@ function closeLangMenu(){
   langMenuEl=null;
   document.removeEventListener('click',closeLangMenuOnOutside);
   document.removeEventListener('keydown',closeLangMenuOnEsc);
+}
+
+/* ============================================================
+   "Since your last visit" — stores a lightweight snapshot per
+   repo in localStorage and diffs it on the next visit.
+   ============================================================ */
+const LASTVISIT_KEY='repodest_lastvisit';
+function loadLastVisitSnapshots(){
+  return LS.get(LASTVISIT_KEY,{});
+}
+function buildVisitSnapshot(m){
+  return{
+    ts:Date.now(),
+    stars:m.stargazers_count||0,
+    forks:m.forks_count||0,
+    open_issues:m.open_issues_count||0,
+    pushed_at:m.pushed_at||''
+  };
+}
+function saveVisitSnapshot(m){
+  if(!m||!m.full_name)return;
+  const all=loadLastVisitSnapshots();
+  all[m._platform+':'+m.full_name]=buildVisitSnapshot(m);
+  /* keep newest 40 */
+  const entries=Object.entries(all).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).slice(0,40);
+  LS.set(LASTVISIT_KEY,Object.fromEntries(entries));
+}
+function renderSinceLastVisit(m){
+  const host=$('#sinceLastVisit');
+  if(!host)return;
+  if(!m||!m.full_name){host.style.display='none';return}
+  const all=loadLastVisitSnapshots();
+  const prev=all[m._platform+':'+m.full_name];
+  saveVisitSnapshot(m);
+  if(!prev||!prev.ts||(Date.now()-prev.ts)<3600*1000){host.style.display='none';return}
+  const diffs=[];
+  const dStars=(m.stargazers_count||0)-(prev.stars||0);
+  const dForks=(m.forks_count||0)-(prev.forks||0);
+  const dIssues=(m.open_issues_count||0)-(prev.open_issues||0);
+  if(dStars)diffs.push((dStars>0?'+':'')+fmt(dStars)+' ★');
+  if(dForks)diffs.push((dForks>0?'+':'')+fmt(dForks)+' ⑂');
+  if(dIssues)diffs.push((dIssues>0?'+':'')+fmt(dIssues)+' issues');
+  const pushedChanged=prev.pushed_at&&m.pushed_at&&prev.pushed_at!==m.pushed_at;
+  const when=timeAgo(new Date(prev.ts).toISOString());
+  if(!diffs.length&&!pushedChanged){host.style.display='none';return}
+  const parts=[];
+  if(diffs.length)parts.push('<b>'+diffs.join(' · ')+'</b> since your visit '+when);
+  if(pushedChanged)parts.push('🔔 new push since '+when);
+  host.style.display='';
+  host.innerHTML='<span class="slv-chip">'+parts.join(' — ')+'</span>';
+}
+
+/* ============================================================
+   URL automation — deep links for power users:
+     ?repo=owner/repo&preset=review&format=json&digest=auto
+   digest=auto selects all text files and generates on load
+   (respecting API limits; requires a fresh or cached load).
+   ============================================================ */
+function applyUrlAutomation(){
+  const q=new URLSearchParams(location.search);
+  const preset=q.get('preset');
+  if(preset&&preset==='custom'){digestPreset='custom';LS.set('repodest_preset',preset)}
+  else if(preset&&DIGEST_PRESETS[preset]){digestPreset=preset;LS.set('repodest_preset',preset)}
+  const format=q.get('format');
+  if(format&&DIGEST_FORMATS.includes(format)){digestFormat=format;LS.set('repodest_format',format)}
+  if(q.get('skeleton')==='1'){sigOnly=true;LS.set('repodest_sigonly',true)}
+  initDigestControls();
+  if(q.get('digest')==='auto'){
+    S.autoDigestPending=true;
+  }
+}
+async function maybeRunAutoDigest(){
+  if(!S.autoDigestPending)return;
+  S.autoDigestPending=false;
+  const m=S.repo;
+  if(!m||S.platform==='gitlab'||S.platform==='bitbucket'){toast('Auto-digest works on GitHub repos','err');return}
+  if(!S.sel.size)selectTextAll();
+  if(!S.sel.size){toast('No text files to digest','err');return}
+  toast('Auto-generating digest from URL params…','ok');
+  generateDigest();
+}
+
+/* Bookmarklet — drag to bookmarks bar; click on any GitHub repo page */
+function showBookmarklet(){
+  const code="location.href='https://mohsen-niksirat.github.io/Repodest/?repo='+encodeURIComponent(location.pathname.replace(/^\\/([^\\/]+)\\/([^\\/]+).*$/,'$1/$2'))";
+  showModal('🔖 Repodest Bookmarklet',
+    '<p style="font-size:13px;color:var(--text2)">Drag this link to your bookmarks bar. While browsing any GitHub repo, click it to open the repo here instantly.</p>'+
+    '<p style="margin:12px 0"><a class="btn sm" style="display:inline-block;text-decoration:none" href="javascript:void 0" onclick="return false" ondragstart="event.dataTransfer.setData(\'text/plain\',this.href);return true" data-bm="1">🧪 Analyze with Repodest</a></p>'+
+    '<p style="font-size:11.5px;color:var(--text3);margin-top:8px">Or copy this URL scheme into a new bookmark:</p>'+
+    '<textarea readonly rows="3" style="width:100%;margin-top:6px;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:11px" id="bmCode">javascript:(function(){var m=location.pathname.match(/^\\/([^\\/]+)\\/([^\\/]+)/);if(m)open("https://mohsen-niksirat.github.io/Repodest/?repo="+encodeURIComponent(m[1]+"/"+m[2]))})();</textarea>'+
+    '<div class="mrow" style="margin-top:10px"><button class="btn sm" onclick="copyBmCode()">📋 Copy</button></div>');
+}
+function copyBmCode(){
+  const ta=$('#bmCode');
+  if(!ta)return;
+  (navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(()=>toast('Bookmarklet copied','ok')).catch(()=>{ta.select();document.execCommand('copy');toast('Bookmarklet copied','ok')});
 }

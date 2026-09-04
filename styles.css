@@ -544,6 +544,15 @@ footer a{color:var(--text2)}
 
 /* === Repo Wrapped === */
 
+/* === "Since last visit" banner === */
+.slv-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);
+  color:var(--text2);font-size:12.5px;font-weight:600;
+  padding:7px 14px;border-radius:99px;
+}
+body.light .slv-chip{background:rgba(6,182,212,.07);border-color:rgba(6,182,212,.3)}
+
 /* === Contextual help chips === */
 
 /* === Language picker menu === */

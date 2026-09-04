@@ -35,7 +35,7 @@ check('all IDs used by app.js $(...) exist in HTML (spot check)',()=>{
   const usedIds=[...appjs.matchAll(/\$\('#([\w-]+)'\)/g)].map(m=>m[1]);
   const uniq=[...new Set(usedIds)];
   /* dynamically created IDs are allowed to miss; spot check the static ones */
-  const dynamicOk=new Set(['custTaskInput','cmdInput','cmdList','ftsStatus','diffBaseLabel','battleModal','cloneModal','cloneContent','depsCanvas','liveRegion','pwaInstallBtn','offlineBanner','tokTable']);
+  const dynamicOk=new Set(['custTaskInput','cmdInput','cmdList','ftsStatus','diffBaseLabel','battleModal','cloneModal','cloneContent','depsCanvas','liveRegion','pwaInstallBtn','offlineBanner','tokTable','bmCode']);
   const missing=uniq.filter(id=>!html.includes('id="'+id+'"')&&!dynamicOk.has(id));
   assert(missing.length===0,'missing HTML ids: '+missing.slice(0,8).join(', '));
 });
