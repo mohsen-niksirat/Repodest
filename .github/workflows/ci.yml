@@ -23,6 +23,9 @@ jobs:
       - name: Run unit tests
         run: node tests.test.js
 
+      - name: Run e2e smoke checks
+        run: node e2e.smoke.js
+
   lint:
     runs-on: ubuntu-latest
     steps:
