@@ -57,8 +57,9 @@ jobs:
 
       - name: Validate JS syntax
         run: |
-          node -e "new Function(require('fs').readFileSync('core.js','utf8')); console.log('core.js syntax OK ✓')"
-          node -e "new Function(require('fs').readFileSync('app.js','utf8')); console.log('app.js syntax OK ✓')"
+          for f in core.js app.js app.features.js app.ux.js app.boot.js; do
+            node -e "new Function(require('fs').readFileSync('$f','utf8')); console.log('$f syntax OK ✓')"
+          done
 
   deploy:
     needs: [test, lint]

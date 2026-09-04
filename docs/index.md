@@ -64,10 +64,14 @@ repodest/
 ├── index.html          # HTML structure
 ├── styles.css          # All CSS styles
 ├── core.js             # Shared pure functions & data (browser + Node)
-├── app.js              # Application logic / DOM code
+├── app.js              # Spine: state, API, loadRepo, tree, digest
+├── app.features.js     # Feature cards (share, clone, battle, deps graph…)
+├── app.ux.js           # UX layer (palette, help, i18n, deep tab, worker…)
+├── app.boot.js         # Theme, URL bootstrap, service worker (last)
 ├── sw.js               # Service worker for PWA caching
 ├── manifest.json       # PWA manifest
 ├── tests.test.js       # Unit tests (72 tests, runs against core.js)
+├── e2e.smoke.js        # Structural smoke checks (24)
 ├── docs/               # Documentation
 ├── .github/workflows/  # CI/CD pipeline
 ├── LICENSE             # MIT License
