@@ -1807,6 +1807,24 @@ function savePat(){
   closeModal();
   toast(v?'Token saved locally':'Token removed','ok');
   refreshRate();
+  if(v)validatePat(v);
+}
+/* Validate a PAT against /user: shows the account it belongs to, or
+   a clear warning. (Note: GitHub's OAuth Device Flow endpoints do not
+   allow CORS, so a fully browser-side "Sign in with GitHub" is not
+   possible without a proxy — token entry remains the zero-backend path.) */
+async function validatePat(token){
+  try{
+    const r=await fetch(apiBase()+'/user',{headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}});
+    if(r.ok){
+      const u=await r.json();
+      toast('✓ Token valid — signed in as @'+(u.login||'user'),'ok');
+      const chip=$('#rateChip');
+      if(chip)chip.title='Signed in as @'+(u.login||'user');
+    }else if(r.status===401){
+      toast('⚠️ Token was rejected by GitHub (invalid or expired)','err');
+    }
+  }catch(e){/* network issue — silent */}
 }
 $('#modalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 $('#explainModalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeExplainModal()});
