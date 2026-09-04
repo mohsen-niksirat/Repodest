@@ -738,6 +738,60 @@ async function refreshRate(){try{const r=await fetch(apiBase()+'/rate_limit',{he
 function cacheGet(k,ttl){const c=LS.get('repodest_c_'+k);if(c&&(Date.now()-c.t)<ttl)return c.v;return null}
 function cacheSet(k,v){try{const s=JSON.stringify(v);if(s.length>2500000)return;LS.set('repodest_c_'+k,{t:Date.now(),v})}catch(e){}}
 
+/* ---------- IndexedDB cache layer (removes the 5MB localStorage cap) ----------
+   Writes go to IDB always; localStorage only for small payloads so
+   synchronous paths and the service worker era behavior still work.
+   Reads prefer IDB, then fall back to localStorage. */
+let _idbPromise=null;
+function idb(){
+  if(_idbPromise)return _idbPromise;
+  _idbPromise=new Promise(resolve=>{
+    try{
+      if(!('indexedDB' in window)){resolve(null);return}
+      const req=indexedDB.open('repodest_cache',1);
+      req.onupgradeneeded=()=>{req.result.createObjectStore('kv')};
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>resolve(null);
+    }catch(e){resolve(null)}
+  });
+  return _idbPromise;
+}
+async function idbGet(key){
+  const db=await idb();
+  if(!db)return null;
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction('kv','readonly');
+      const req=tx.objectStore('kv').get(key);
+      req.onsuccess=()=>resolve(req.result==null?null:req.result);
+      req.onerror=()=>resolve(null);
+    }catch(e){resolve(null)}
+  });
+}
+async function idbSet(key,val){
+  const db=await idb();
+  if(!db)return;
+  return new Promise(resolve=>{
+    try{
+      const tx=db.transaction('kv','readwrite');
+      tx.objectStore('kv').put(val,key);
+      tx.oncomplete=()=>resolve();
+      tx.onerror=()=>resolve();
+    }catch(e){resolve()}
+  });
+}
+async function cacheGet2(k,ttl){
+  try{
+    const hit=await idbGet('c_'+k);
+    if(hit&&(Date.now()-hit.t)<ttl)return hit.v;
+  }catch(e){}
+  return cacheGet(k,ttl);
+}
+async function cacheSet2(k,v){
+  idbSet('c_'+k,{t:Date.now(),v}).catch(()=>{});
+  try{const s=JSON.stringify(v);if(s.length<1200000)LS.set('repodest_c_'+k,{t:Date.now(),v})}catch(e){}
+}
+
 function submitInput(){
   const v=$('#inp').value.trim();
   if(!v){toast('Type a repo URL, owner/repo, or username','err');return}
@@ -826,14 +880,14 @@ async function loadRepo(owner,repo,platform){
   $('#landing').style.display='none';$('#app').style.display='';
   try{
     const cacheKey=platform+':'+key.toLowerCase();
-    const cached=cacheGet('repo:'+cacheKey,6*3600*1000);
+    const cached=await cacheGet2('repo:'+cacheKey,6*3600*1000);
     if(cached){applyRepo(key,cached,true);return}
 
     if(platform==='gitlab'||platform==='bitbucket'){
       setLoad('Fetching from '+platform+'…');
       const data=await fetchRepoData(owner,repo,platform);
       if(!data)throw new Error('Failed to fetch');
-      cacheSet('repo:'+cacheKey,data);
+      cacheSet2('repo:'+cacheKey,data);
       applyRepo(key,data,false);
       return;
     }
@@ -848,7 +902,7 @@ async function loadRepo(owner,repo,platform){
     const contribs=await api('/repos/'+key+'/contributors?per_page=12').catch(()=>[]);
     const commits=await api('/repos/'+key+'/commits?per_page=100').catch(()=>[]);
     const data={meta:stripRepo(meta,platform),langs,tree,contribs:Array.isArray(contribs)?contribs:[],commits:Array.isArray(commits)?commits.slice(0,100):[]};
-    cacheSet('repo:'+cacheKey,data);
+    cacheSet2('repo:'+cacheKey,data);
     applyRepo(key,data,false);
   }catch(e){handleErr(e,key)}
 }
