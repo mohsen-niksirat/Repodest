@@ -1905,6 +1905,15 @@ function updateFavBtn(){
   if(btn)btn.style.borderColor=on?'var(--accent)':'';
   if(label)label.textContent=on?'Faved':'Fav';
 }
+
+/* ---------- Collapsible "more tools" (mobile-first toolbar) ---------- */
+function toggleMoreTools(){
+  const panel=$('#moreTools'),btn=$('#moreBtn');
+  if(!panel||!btn)return;
+  const open=panel.classList.toggle('open');
+  btn.setAttribute('aria-expanded',open?'true':'false');
+  btn.textContent=open?'✕':'⋯';
+}
 function renderFavorites(){
   const section=$('#favSection'),grid=$('#favGrid');
   if(!section||!grid)return;

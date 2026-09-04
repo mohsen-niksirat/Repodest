@@ -896,12 +896,24 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
    Dashboard Mobile Styles
    ============================================================ */
 
-/* --- Toolbar: horizontal scroll with hidden overflow --- */
+/* --- Toolbar: collapsible "more" tray on mobile, inline on desktop --- */
+#moreTools{display:contents}
 @media(max-width:640px){
-  .toolbar{gap:6px;padding:12px 0;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .toolbar::-webkit-scrollbar{display:none}
-  .toolbar .btn{padding:7px 10px;font-size:11px;white-space:nowrap;flex-shrink:0}
-  .toolbar .tb-input{min-width:140px;flex-shrink:0}
+  .toolbar{gap:6px;padding:12px 0;flex-wrap:wrap}
+  #moreTools{
+    display:none;
+    flex-basis:100%;
+    flex-wrap:wrap;
+    gap:6px;
+    padding:8px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:var(--card2);
+  }
+  #moreTools.open{display:flex;animation:helpIn .18s ease}
+  #moreTools .btn{flex:1 1 30%;justify-content:center}
+  .toolbar .btn{padding:7px 10px;font-size:11px;white-space:nowrap}
+  .toolbar .tb-input{min-width:120px;flex:1}
   .toolbar .tb-input input{font-size:12px;padding:6px 8px}
 }
 

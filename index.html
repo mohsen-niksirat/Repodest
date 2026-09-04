@@ -112,16 +112,19 @@
   <div class="toolbar">
     <button class="btn ghost sm" onclick="goHome()" data-i18n="btnHome">← Home</button>
     <div class="tb-input"><input id="jump" placeholder="scope another repo…" spellcheck="false" onkeydown="if(event.key==='Enter')submitJump()"></div>
-    <button class="btn ghost sm" onclick="shareCard()" title="Download a shareable PNG"><span data-i18n="btnCard">📸 Card</span></button>
-    <button class="btn ghost sm" onclick="tweet()" title="Tweet the result">🐦</button>
-    <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report"><span data-i18n="btnReport">📄 Report</span></button>
-    <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here"><span data-i18n="btnLink">🔗 Link</span></button>
-    <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo"><span data-i18n="btnCompare">⚖️ Compare</span></button>
-    <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON"><span data-i18n="btnExportJson">⬇️ JSON</span></button>
-    <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV"><span data-i18n="btnExportCsv">⬇️ CSV</span></button>
-    <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo"><span data-i18n="btnBattle">⚔️ Battle</span></button>
-    <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options"><span data-i18n="btnClone">📋 Clone</span></button>
     <button class="btn ghost sm" onclick="toggleFavorite()" id="favBtn" title="Save to favorites">⭐ <span id="favLabel" data-i18n="btnFav">Fav</span></button>
+    <button class="btn ghost sm" onclick="toggleMoreTools()" id="moreBtn" title="More tools" aria-expanded="false">⋯</button>
+    <div id="moreTools">
+      <button class="btn ghost sm" onclick="shareCard()" title="Download a shareable PNG"><span data-i18n="btnCard">📸 Card</span></button>
+      <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report"><span data-i18n="btnReport">📄 Report</span></button>
+      <button class="btn ghost sm" onclick="tweet()" title="Tweet the result">🐦</button>
+      <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here"><span data-i18n="btnLink">🔗 Link</span></button>
+      <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo"><span data-i18n="btnCompare">⚖️ Compare</span></button>
+      <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo"><span data-i18n="btnBattle">⚔️ Battle</span></button>
+      <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON"><span data-i18n="btnExportJson">⬇️ JSON</span></button>
+      <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV"><span data-i18n="btnExportCsv">⬇️ CSV</span></button>
+      <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options"><span data-i18n="btnClone">📋 Clone</span></button>
+    </div>
   </div>
 
   <!-- Compare panel -->
