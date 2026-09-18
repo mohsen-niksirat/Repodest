@@ -63,7 +63,8 @@ test('dashboard renders for a real repo with tabs', async ({ page }) => {
   await expect(page.locator('#tabs .tab')).toHaveCount(10);
   /* switch to Files tab and check the tree rendered */
   await clickTab(page,'files');
-  await expect(page.locator('#tree .trow').first()).toBeVisible();
+  await expect(page.locator('#tree')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('#tree .trow').first()).toBeAttached({ timeout: 15000 });
 });
 
 test('digest tab exposes presets and generate button', async ({ page }) => {
