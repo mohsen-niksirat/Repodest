@@ -363,7 +363,7 @@ function closeShortcutsModal(){$('#shortcutsModalBg').classList.add('hidden')}
 const I18N={
   en:{
     tabOverview:'🩺 Overview',tabLanguages:'📊 Languages',tabFiles:'🗂️ Files',
-    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',tabDeep:'🔬 Deep',tabMap:'🗺️ Map',
+    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',tabDeep:'🔬 Deep',tabMap:'🗺️ Map',tabCrawl:'🦎 Crawl',
     btnHome:'← Home',btnCard:'📸 Card',btnReport:'📄 Report',btnLink:'🔗 Link',
     btnCompare:'⚖️ Compare',btnBattle:'⚔️ Battle',btnClone:'📋 Clone',
     btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
@@ -419,7 +419,7 @@ const I18N={
   },
   fa:{
     tabOverview:'🩺 نمای کلی',tabLanguages:'📊 زبان‌ها',tabFiles:'🗂️ فایل‌ها',
-    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',tabDeep:'🔬 تحلیل عمیق',tabMap:'🗺️ نقشه',
+    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',tabDeep:'🔬 تحلیل عمیق',tabMap:'🗺️ نقشه',tabCrawl:'🦎 خزش',
     btnHome:'← خانه',btnCard:'📸 کارت',btnReport:'📄 گزارش',btnLink:'🔗 لینک',
     btnCompare:'⚖️ مقایسه',btnBattle:'⚔️ نبرد',btnClone:'📋 کلون',
     btnToken:'🔑 توکن',btnShortcuts:'❓ میانبرها',
@@ -667,7 +667,7 @@ function applyLang(){
   const tabMap={
     'overview':t('tabOverview'),'languages':t('tabLanguages'),'files':t('tabFiles'),
     'digest':t('tabDigest'),'activity':t('tabActivity'),'fun':t('tabFun'),'deps':t('tabDeps'),
-    'deep':t('tabDeep'),'map':t('tabMap')
+    'deep':t('tabDeep'),'map':t('tabMap'),'crawl':t('tabCrawl')
   };
   $$('#tabs .tab').forEach(b=>{const k=b.dataset.tab;if(tabMap[k])b.textContent=tabMap[k]});
   /* Update search placeholders */

@@ -1526,6 +1526,7 @@ const HELP_TEXTS={
   treeTools:'Expand/collapse folders, select all text files, copy the tree as text, filter by name, or scope a monorepo to a single subfolder.',
   badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
   map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
+  crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle. Use it for offline reading, RAG, or append the bundle to your LLM digest. It stays on the starting domain, and you can lock it to the starting subpath.',
   wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
 };
 function helpChip(topic){
@@ -1656,6 +1657,11 @@ function buildDigestHeader(m,branch,partLabel){
 }
 
 function wrapFileSection(p,ext,content){
+  if(p==='__docs_bundle__.txt'){
+    if(digestFormat==='xml')return '  <docs_bundle>\n<![CDATA[\n'+content+'\n]]>\n  </docs_bundle>';
+    if(digestFormat==='json')return '    '+JSON.stringify({docs_bundle:content})+',';
+    return '\n# Crawled documentation (from the Crawl tab)\n\n'+content;
+  }
   if(digestFormat==='xml')return '  <file path="'+esc(p)+'">\n<![CDATA[\n'+content+'\n]]>\n  </file>';
   if(digestFormat==='json')return '    '+JSON.stringify({path:p,content})+',';
   return '\n# File: '+p+'\n\n````'+ext+'\n'+content+'\n````';
@@ -1688,6 +1694,7 @@ function cmdActions(){
     {icon:'📊',label:'Go to Languages',kw:'tab languages chart',run:()=>switchTab('languages')},
     {icon:'🗂️',label:'Go to Files',kw:'tab files tree',run:()=>switchTab('files')},
     {icon:'🗺️',label:'Go to Repo Map',kw:'tab map architecture graph interactive',run:()=>switchTab('map')},
+    {icon:'🦎',label:'Go to Docs Crawler',kw:'tab crawl docs scraper website documentation',run:()=>switchTab('crawl')},
     {icon:'🤖',label:'Go to Digest',kw:'tab digest prompt llm',run:()=>switchTab('digest')},
     {icon:'📈',label:'Go to Activity',kw:'tab activity commits',run:()=>switchTab('activity')},
     {icon:'🏆',label:'Go to Fun',kw:'tab fun trophies roast',run:()=>switchTab('fun')},
@@ -2191,6 +2198,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_langs:'Byte-accurate language breakdown computed from the platform languages API. The doughnut chart shows the top 10 languages.',
       help_badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
       help_map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
+      help_crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle — for offline reading, RAG, or appending to your LLM digest.',
       help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
     },
     fa:{
@@ -2300,7 +2308,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     },
     ar:{
       tabOverview:'🩺 نظرة عامة',tabLanguages:'📊 اللغات',tabFiles:'🗂️ الملفات',
-      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',tabMap:'🗺️ الخريطة',
+      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',tabMap:'🗺️ الخريطة',tabCrawl:'🦎 الزحف',
       btnHome:'← الرئيسية',btnCard:'📸 بطاقة',btnReport:'📄 تقرير',btnLink:'🔗 رابط',
       btnCompare:'⚖️ مقارنة',btnBattle:'⚔️ معركة',btnClone:'📋 استنساخ',
       btnToken:'🔑 رمز',btnShortcuts:'❓ اختصارات',
@@ -2338,7 +2346,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     },
     de:{
       tabOverview:'🩺 Überblick',tabLanguages:'📊 Sprachen',tabFiles:'🗂️ Dateien',
-      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',tabMap:'🗺️ Karte',
+      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',tabMap:'🗺️ Karte',tabCrawl:'🦎 Crawlen',
       btnHome:'← Start',btnCard:'📸 Karte',btnReport:'📄 Bericht',btnLink:'🔗 Link',
       btnCompare:'⚖️ Vergleichen',btnBattle:'⚔️ Battle',btnClone:'📋 Klonen',
       btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',

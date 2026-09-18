@@ -185,6 +185,7 @@
       <button class="tab" data-tab="languages">📊 Languages</button>
       <button class="tab" data-tab="files">🗂️ Files</button>
       <button class="tab" data-tab="map">🗺️ Map</button>
+      <button class="tab" data-tab="crawl">🦎 Crawl</button>
       <button class="tab" data-tab="digest">🤖 Digest</button>
       <button class="tab" data-tab="activity">📈 Activity</button>
       <button class="tab" data-tab="fun">🏆 Fun</button>
@@ -373,6 +374,40 @@
           <div class="map-info" id="mapInfo"></div>
         </div>
         <div class="dep-graph-legend" id="mapLegend"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-crawl">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)" data-i18n-html="crawlHint">
+          A browser-side documentation crawler. Give it a docs URL — it fetches pages <b>recursively</b>, strips navbars, sidebars, footers and TOCs, and gives you one clean text bundle for offline reading or your LLM / RAG pipeline. Same-origin only by default.
+        </p>
+      </div>
+      <div class="card">
+        <div class="minititle">🦎 Docs Crawler <span class="help-slot" data-help="crawl"></span></div>
+        <div class="crawl-bar">
+          <input id="crawlUrl" type="text" data-i18n-ph="crawlUrlPh" placeholder="https://docs.example.com …" spellcheck="false" autocomplete="off" aria-label="Documentation URL to crawl">
+          <button class="btn green" id="crawlBtn" onclick="startCrawl()" data-i18n="crawlBtn">🦎 Crawl docs</button>
+          <button class="btn ghost sm" id="crawlStopBtn" style="display:none" onclick="stopCrawl()" data-i18n="crawlStop">⏹ Stop</button>
+        </div>
+        <div class="crawl-opts">
+          <label class="optrow"><span data-i18n="crawlMaxPages">Max pages</span> <input id="crawlMaxPages" type="number" min="1" max="50" value="10" style="width:70px"></label>
+          <label class="optrow"><input type="checkbox" id="crawlRestrict"> <span data-i18n="crawlRestrict">Restrict to the starting subpath</span></label>
+        </div>
+        <div class="crawl-prefill" id="crawlPrefill" style="display:none"></div>
+        <div class="crawl-progress" id="crawlProgress" style="display:none">
+          <div class="crawl-bar-track"><div class="crawl-bar-fill" id="crawlBar"></div></div>
+          <div class="crawl-stats" id="crawlStats"></div>
+          <div class="crawl-page-list" id="crawlPageList"></div>
+        </div>
+        <p class="crawl-proxy-note" id="crawlProxyNote" style="display:none" data-i18n="crawlProxyNote">Direct fetch failed for some pages — retried through a public CORS proxy.</p>
+        <textarea class="crawl-out" id="crawlOut" readonly placeholder="Crawled documentation text appears here…"></textarea>
+        <div class="digest-actions" id="crawlActions" style="display:none">
+          <button class="btn sm" onclick="crawlCopy()" data-i18n="crawlCopy">📋 Copy text</button>
+          <button class="btn ghost sm" onclick="crawlDownload()" data-i18n="crawlDownload">⬇️ Download .txt</button>
+          <button class="btn ghost sm" onclick="crawlAddToDigest()" data-i18n="crawlAddDigest">+ Add to digest</button>
+        </div>
+        <p id="crawlDigestHint" style="display:none;font-size:11.5px;color:var(--text3);margin-top:10px">✓ Crawled docs bundle attached — it will be appended to the next generated digest.</p>
       </div>
     </section>
 
@@ -705,6 +740,7 @@
 <script src="app.features.js"></script>
 <script src="app.ux.js"></script>
 <script src="app.map.js"></script>
+<script src="app.crawl.js"></script>
 <script src="app.boot.js"></script>
 </body>
 </html>

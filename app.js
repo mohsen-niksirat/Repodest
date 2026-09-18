@@ -1507,6 +1507,10 @@ function packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkippe
   let cur=[],curBytes=0;
   const estBytes=sec=>sec.content.length+sec.path.length+40;
   if(readmeSection){cur.push(readmeSection);curBytes+=estBytes(readmeSection)}
+  if(S.docsBundle){
+    const docSec={path:'__docs_bundle__.txt',ext:'txt',content:S.docsBundle.slice(0,200000)};
+    cur.push(docSec);curBytes+=estBytes(docSec);
+  }
   for(const sec of sections){
     if(cur.length&&curBytes+estBytes(sec)>budget*0.6){groups.push(cur);cur=[];curBytes=0}
     cur.push(sec);curBytes+=estBytes(sec);

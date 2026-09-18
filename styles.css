@@ -1195,3 +1195,30 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
 @media(prefers-reduced-motion:reduce){
   .map-search,.map-info{transition:none}
 }
+
+/* ============================================================
+   Docs Crawler — Lizard-style
+   ============================================================ */
+.crawl-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.crawl-bar input{flex:1;min-width:220px;padding:11px 14px;border-radius:11px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s}
+.crawl-bar input:focus{border-color:var(--accent2)}
+.crawl-opts{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:12.5px;color:var(--text2)}
+.crawl-opts input[type=number]{padding:6px 9px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12.5px;outline:none}
+.crawl-prefill{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.crawl-progress{margin:4px 0 14px}
+.crawl-bar-track{height:8px;border-radius:99px;background:var(--card2);overflow:hidden;position:relative}
+.crawl-bar-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#22c55e,#4ade80);transition:width .35s ease;font-size:0;color:transparent;min-width:34px;text-align:right;padding-right:8px;line-height:8px;font-family:var(--mono)}
+.crawl-stats{display:flex;gap:16px;margin:10px 0 8px;font-family:var(--mono);font-size:12px;color:var(--text2)}
+.crawl-stats span b{color:var(--text);font-weight:700}
+.crawl-page-list{max-height:170px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg2);padding:6px 10px}
+.cp-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-family:var(--mono);font-size:11px;color:var(--text2);border-bottom:1px dashed var(--line)}
+.cp-row:last-child{border:none}
+.cp-row .cp-ic{flex-shrink:0;width:14px;text-align:center}
+.cp-row.done{color:var(--text2)}
+.cp-row.done .cp-ic{color:var(--green)}
+.cp-row.fail{color:var(--text3);text-decoration:line-through}
+.cp-row.fail .cp-ic{color:var(--red);text-decoration:none}
+.cp-row span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crawl-proxy-note{font-size:11px;color:var(--yellow);margin-bottom:10px;font-family:var(--mono)}
+.crawl-out{width:100%;min-height:220px;max-height:420px;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.65;resize:vertical;outline:none}
+.crawl-out:focus{border-color:var(--accent2)}
