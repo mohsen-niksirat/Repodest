@@ -42,6 +42,9 @@ Select files in the tree → Generate → get a formatted prompt with repo metad
 ### 🗂️ File Explorer
 Lazy-rendered tree with sizes, type distribution, and the heaviest files in the repo.
 
+### 🗺️ Repo Map
+An Archify-inspired interactive system map: folders, entry points, manifests and config files become a force-directed graph. Pan, zoom, search (`/`), focus a node to trace upstream/downstream reach, probe routes between nodes (`R`), compare kinds with a semantic lens (`L`), jump via the minimap, present (`F`), cycle visual styles (`S`), and export a PNG (`E`). Hit **Trace imports** to fetch source files and add real dependency edges. Views are shareable via `#map&focus=…` deep links.
+
 ### 📈 Activity
 52-week commit chart, top contributors, recent commits, star history.
 
@@ -106,6 +109,9 @@ MIT © [Mohsen Niksirat](https://github.com/mohsen-niksirat)
 
 ### 🗂️ مرورگر فایل
 درخت با رندر تنبل، با اندازه‌ها و توزیع انواع فایل.
+
+### 🗺️ نقشه رپو
+نمای تعاملی سیستم مخزن به سبک Archify: پوشه‌ها، نقاط ورود و فایل‌های تنظیمات به یک گراف تبدیل می‌شوند. بزرگ‌نمایی، جستجو (`/`)، ردیابی وابستگی‌های بالادست/پایین‌دست، یافتن مسیر بین دو گره (`R`)، لنز معنایی (`L`)، نقشه کوچک، حالت ارائه (`F`) و خروجی PNG. با **ردیابی import** یال‌های وابستگی واقعی از کد استخراج می‌شود.
 
 ### 📈 فعالیت
 نمودار کامیت ۵۲ هفته‌ای، مشارکت‌کنندگان برتر، کامیت‌های اخیر.

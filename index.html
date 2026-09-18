@@ -184,6 +184,7 @@
       <button class="tab active" data-tab="overview">🩺 Overview</button>
       <button class="tab" data-tab="languages">📊 Languages</button>
       <button class="tab" data-tab="files">🗂️ Files</button>
+      <button class="tab" data-tab="map">🗺️ Map</button>
       <button class="tab" data-tab="digest">🤖 Digest</button>
       <button class="tab" data-tab="activity">📈 Activity</button>
       <button class="tab" data-tab="fun">🏆 Fun</button>
@@ -341,6 +342,37 @@
         <div class="minititle">🔌 API Endpoints <span class="ep-badge" id="epBadge">0</span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Detected API routes from file paths (Next.js, Express, Flask patterns).</p>
         <div id="endpointsContent"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-map">
+      <div class="card" style="margin-bottom:16px;background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Repo Map</b> turns the file tree into an interactive system map — Archify-style. Folders, entry points, manifests and config files become nodes you can <b>pan, zoom and search</b>. Click a node to focus it and trace <b>upstream / downstream</b> reach, press <b>R</b> to probe a route between two nodes, <b>L</b> to compare kinds with a semantic lens, <b>F</b> for presentation mode. Hit <b>Trace imports</b> to fetch source files and add real dependency edges.
+        </p>
+      </div>
+      <div class="card">
+        <div class="minititle">🗺️ Repo Map <span class="help-slot" data-help="map"></span>
+          <span class="map-actions">
+            <button class="btn ghost sm" id="mapTraceBtn" onclick="traceMapImports()" title="Fetch source files and trace real import edges">🧬 <span data-i18n="mapTrace">Trace imports</span></button>
+            <button class="btn ghost sm" onclick="cycleMapPreset()" title="Cycle visual style (S)">🎨 Style: <b id="mapPresetName">Neon</b></button>
+            <button class="btn ghost sm" id="mapMinimapBtn" onclick="toggleMapMinimap()" title="Toggle minimap (M)">🗺 Minimap</button>
+            <button class="btn ghost sm" onclick="mapFit()" title="Fit all nodes (0)">⤢ Fit</button>
+            <button class="btn ghost sm" onclick="exportMapPNG()" title="Export as PNG (E)">⬇️ PNG</button>
+          </span>
+        </div>
+        <div class="map-wrap" id="mapWrap">
+          <canvas id="mapCanvas"></canvas>
+          <canvas class="map-minimap" id="mapMinimap" width="160" height="110" title="Click to jump"></canvas>
+          <div class="map-tooltip" id="mapTooltip"></div>
+          <div class="map-hint" data-i18n-html="mapHint">Click a node to focus it · <b>R</b> route · <b>L</b> lens · <b>/</b> search · <b>M</b> minimap · <b>F</b> present · <b>S</b> style · <b>E</b> export · <b>+ − 0</b> zoom</div>
+          <div class="map-search" id="mapSearch">
+            <input id="mapSearchInput" type="text" data-i18n-ph="mapSearchPh" placeholder="Search nodes… (Esc to close)" spellcheck="false" autocomplete="off">
+            <div id="mapSearchResults"></div>
+          </div>
+          <div class="map-info" id="mapInfo"></div>
+        </div>
+        <div class="dep-graph-legend" id="mapLegend"></div>
       </div>
     </section>
 
@@ -658,7 +690,7 @@
     <div class="shortcuts-grid">
       <div class="shortcut-item"><span class="sc-desc">Command palette</span><kbd>Ctrl+K</kbd></div>
       <div class="shortcut-item"><span class="sc-desc">Show shortcuts</span><kbd>/</kbd></div>
-      <div class="shortcut-item"><span class="sc-desc">Switch tabs</span><kbd>1 – 8</kbd></div>
+      <div class="shortcut-item"><span class="sc-desc">Switch tabs</span><kbd>1 – 9</kbd></div>
       <div class="shortcut-item"><span class="sc-desc">Close modal</span><kbd>Esc</kbd></div>
       <div class="shortcut-item"><span class="sc-desc">Show shortcuts</span><kbd>?</kbd></div>
     </div>
@@ -672,6 +704,7 @@
 <script src="app.js"></script>
 <script src="app.features.js"></script>
 <script src="app.ux.js"></script>
+<script src="app.map.js"></script>
 <script src="app.boot.js"></script>
 </body>
 </html>

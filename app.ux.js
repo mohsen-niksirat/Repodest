@@ -511,7 +511,7 @@ function showShareTemplateModal(){
    ============================================================ */
 function showShortcuts(){
   const shortcuts=[
-    ['Ctrl+K /','Focus search'],['1-6','Switch tabs'],['Esc','Close modal'],['?','Show shortcuts'],['Ctrl+Enter','Submit']
+    ['Ctrl+K /','Focus search'],['1–9','Switch tabs'],['Esc','Close modal'],['?','Show shortcuts'],['Ctrl+Enter','Submit']
   ];
   showModal('⌨️ Keyboard Shortcuts',
     shortcuts.map(([k,d])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)"><span style="font-family:var(--mono);color:var(--accent2);font-size:12px">'+esc(k)+'</span><span style="color:var(--text2);font-size:13px">'+esc(d)+'</span></div>').join('')
@@ -521,10 +521,12 @@ document.addEventListener('keydown',e=>{
   const tag=document.activeElement.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
   if(e.key==='?'||e.key==='/'){e.preventDefault();showShortcuts();return}
-  if(e.key>='1'&&e.key<='8'){
+  /* Tab switching by digit — bound by the actual tab count so new tabs
+     are reachable and there is no out-of-range key */
+  if(e.key>='1'&&e.key<='9'){
     const tabs=$$('#tabs .tab');
     const idx=parseInt(e.key)-1;
-    if(tabs[idx]){e.preventDefault();switchTab(tabs[idx].dataset.tab)}
+    if(idx<tabs.length){e.preventDefault();switchTab(tabs[idx].dataset.tab)}
   }
 });
 document.addEventListener('keydown',e=>{
@@ -534,69 +536,9 @@ document.addEventListener('keydown',e=>{
 /* Feature: i18n — second block removed (was duplicate of earlier I18N/currentLang/t/toggleLang) */
 
 /* ============================================================
-   Feature: Dependency Graph (simple canvas)
-   ============================================================ */
-function renderDepsGraph(){
-  const canvas=$('#depsCanvas');if(!canvas)return;
-  const ctx=canvas.getContext('2d');
-  const W=canvas.width=canvas.offsetWidth||500;
-  const H=canvas.height=300;
-  ctx.clearRect(0,0,W,H);
-  /* Collect deps from manifests */
-  const deps=[];
-  const depCols=$$('.depcol .dep b');
-  depCols.forEach(el=>{if(el.textContent.trim())deps.push(el.textContent.trim())});
-  if(!deps.length){ctx.fillStyle='#64748b';ctx.font='13px Inter';ctx.textAlign='center';ctx.fillText('No dependencies detected',W/2,H/2);return}
-  /* Simple force layout */
-  const nodes=deps.slice(0,30).map((d,i)=>({
-    name:d,
-    x:W/2+Math.cos(i*2*Math.PI/Math.min(deps.length,30))*100+Math.random()*40,
-    y:H/2+Math.sin(i*2*Math.PI/Math.min(deps.length,30))*80+Math.random()*40,
-    vx:0,vy:0,r:6
-  }));
-  /* Center node */
-  const center={name:S.repo.name,x:W/2,y:H/2,r:12};
-  /* Simple physics */
-  for(let iter=0;iter<50;iter++){
-    for(const n of nodes){
-      /* Attract to center */
-      const dx=center.x-n.x,dy=center.y-n.y;
-      const dist=Math.sqrt(dx*dx+dy*dy)||1;
-      n.vx+=dx/dist*0.5;n.vy+=dy/dist*0.5;
-      /* Repel from other nodes */
-      for(const m of nodes){
-        if(m===n)continue;
-        const ddx=n.x-m.x,ddy=n.y-m.y;
-        const dd=Math.sqrt(ddx*ddx+ddy*ddy)||1;
-        if(dd<40){n.vx+=ddx/dd*2;n.vy+=ddy/dd*2}
-      }
-      n.vx*=0.8;n.vy*=0.8;
-      n.x+=n.vx;n.y+=n.vy;
-      n.x=Math.max(20,Math.min(W-20,n.x));
-      n.y=Math.max(20,Math.min(H-20,n.y));
-    }
-  }
-  /* Draw edges */
-  for(const n of nodes){
-    ctx.beginPath();ctx.moveTo(center.x,center.y);ctx.lineTo(n.x,n.y);
-    ctx.strokeStyle='rgba(168,85,247,.2)';ctx.lineWidth=1;ctx.stroke();
-  }
-  /* Draw center */
-  ctx.beginPath();ctx.arc(center.x,center.y,center.r,0,7);
-  ctx.fillStyle='rgba(124,58,237,.6)';ctx.fill();
-  ctx.fillStyle='#fff';ctx.font='bold 10px Inter';ctx.textAlign='center';ctx.fillText(center.name,center.x,center.y+4);
-  /* Draw nodes */
-  for(const n of nodes){
-    ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,7);
-    ctx.fillStyle='rgba(34,211,238,.5)';ctx.fill();
-    ctx.fillStyle='#94a3b8';ctx.font='9px JetBrains Mono';ctx.textAlign='center';ctx.fillText(n.name.slice(0,12),n.x,n.y+n.r+10);
-  }
-}
-
-/* ============================================================
    Feature 1: Dependency Graph Visualization
    ============================================================ */
-let depGraphNodes=[], depGraphEdges=[], depGraphAnimId=null;
+let depGraphNodes=[], depGraphEdges=[], depGraphAnimId=null, depGraphResizeCtl=null;
 const ECOSYSTEM_COLORS={
   'npm':'#f1e05a','pip':'#3572A5','pyproject':'#3572A5','Cargo':'#dea584',
   'Go modules':'#00ADD8','Composer':'#4F5D95','Bundler':'#701516','Maven':'#b07219'
@@ -646,10 +588,22 @@ function startDepGraphAnimation(){
   const wrap=$('#depGraphWrap');
   const ctx=canvas.getContext('2d');
   const tooltip=$('#depGraphTooltip');
-  let W,H;
-  function resize(){W=canvas.width=wrap.clientWidth;H=canvas.height=wrap.clientHeight}
+  let W=0,H=0;
+  /* Hi-DPI scaling so the graph stays crisp on retina displays
+     (the old code drew 1:1 CSS pixels and looked soft) */
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  function resize(){
+    W=wrap.clientWidth;H=wrap.clientHeight;
+    canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
+    canvas.style.width=W+'px';canvas.style.height=H+'px';
+    if(!depGraphAnimId)render(); /* repaint the settled frame too */
+  }
   resize();
-  window.addEventListener('resize',resize);
+  /* AbortController replaces the old bare addEventListener, which leaked a
+     new resize listener on every tab visit */
+  if(depGraphResizeCtl)depGraphResizeCtl.abort();
+  depGraphResizeCtl=new AbortController();
+  window.addEventListener('resize',resize,{signal:depGraphResizeCtl.signal});
   let mouseX=-1,mouseY=-1;
   canvas.addEventListener('mousemove',e=>{
     const rect=canvas.getBoundingClientRect();
@@ -668,9 +622,10 @@ function startDepGraphAnimation(){
   });
   canvas.addEventListener('mouseleave',()=>tooltip.classList.remove('show'));
   if(depGraphAnimId)cancelAnimationFrame(depGraphAnimId);
-  function tick(){
-    ctx.clearRect(0,0,W,H);
-    const cx=W/2,cy=H/2;
+  /* Finite motion: once the layout settles we stop the rAF loop instead of
+     spinning forever (the old loop ran even while the tab was hidden) */
+  let calmFrames=0;
+  function physics(){
     for(let i=0;i<depGraphNodes.length;i++){
       for(let j=i+1;j<depGraphNodes.length;j++){
         const a=depGraphNodes[i],b=depGraphNodes[j];
@@ -694,15 +649,23 @@ function startDepGraphAnimation(){
       if(!b.fixed){b.vx+=fx;b.vy+=fy}
       if(!a.fixed){a.vx-=fx;a.vy-=fy}
     }
+    let energy=0;
     for(const n of depGraphNodes){
       if(n.fixed)continue;
       n.vx-=n.x*0.001;n.vy-=n.y*0.001;
       n.vx*=0.92;n.vy*=0.92;
       n.x+=n.vx;n.y+=n.vy;
+      energy+=Math.abs(n.vx)+Math.abs(n.vy);
       const bound=Math.min(W,H)/2-30;
       const dist=Math.sqrt(n.x*n.x+n.y*n.y);
       if(dist>bound){n.x=n.x/dist*bound;n.y=n.y/dist*bound}
     }
+    return energy;
+  }
+  function render(){
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,W,H);
+    const cx=W/2,cy=H/2;
     ctx.strokeStyle='rgba(100,100,160,.3)';ctx.lineWidth=1;
     for(const e of depGraphEdges){
       const a=depGraphNodes.find(n=>n.id===e.source);
@@ -719,6 +682,12 @@ function startDepGraphAnimation(){
         ctx.fillText(n.label.length>16?n.label.slice(0,14)+'…':n.label,cx+n.x,cy+n.y+n.r+14);
       }
     }
+  }
+  function tick(){
+    const energy=physics();
+    render();
+    if(energy<0.35){calmFrames++;if(calmFrames>30){depGraphAnimId=null;return}}
+    else calmFrames=0;
     depGraphAnimId=requestAnimationFrame(tick);
   }
   tick();
@@ -1140,6 +1109,9 @@ const _origSwitchTab=window.switchTab;
 if(typeof _origSwitchTab==='function'){
   window.switchTab=function(name){
     _origSwitchTab(name);
+    /* Stop the dependency-graph physics loop when the Deps tab is not visible
+       (buildDepGraph restarts it on re-entry) */
+    if(name!=='deps'&&depGraphAnimId){cancelAnimationFrame(depGraphAnimId);depGraphAnimId=null}
     $$('#tabs .tab').forEach(tab=>{
       tab.setAttribute('aria-selected',tab.dataset.tab===name?'true':'false');
     });
@@ -1553,6 +1525,7 @@ const HELP_TEXTS={
   langs:'Byte-accurate language breakdown computed from the GitHub languages API. The doughnut chart shows the top 10 languages.',
   treeTools:'Expand/collapse folders, select all text files, copy the tree as text, filter by name, or scope a monorepo to a single subfolder.',
   badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
+  map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
   wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
 };
 function helpChip(topic){
@@ -1714,6 +1687,7 @@ function cmdActions(){
     {icon:'🩺',label:'Go to Overview',kw:'tab overview home',run:()=>switchTab('overview')},
     {icon:'📊',label:'Go to Languages',kw:'tab languages chart',run:()=>switchTab('languages')},
     {icon:'🗂️',label:'Go to Files',kw:'tab files tree',run:()=>switchTab('files')},
+    {icon:'🗺️',label:'Go to Repo Map',kw:'tab map architecture graph interactive',run:()=>switchTab('map')},
     {icon:'🤖',label:'Go to Digest',kw:'tab digest prompt llm',run:()=>switchTab('digest')},
     {icon:'📈',label:'Go to Activity',kw:'tab activity commits',run:()=>switchTab('activity')},
     {icon:'🏆',label:'Go to Fun',kw:'tab fun trophies roast',run:()=>switchTab('fun')},
@@ -2216,6 +2190,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_tokenModal:'Without a token you get 60 GitHub API calls per hour. A free personal access token raises that to 5,000/hour and is stored only in your browser.',
       help_langs:'Byte-accurate language breakdown computed from the platform languages API. The doughnut chart shows the top 10 languages.',
       help_badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
+      help_map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
       help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
     },
     fa:{
@@ -2242,6 +2217,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_tokenModal:'بدون توکن ۶۰ درخواست GitHub در ساعت دارید. توکن رایگان personal access این را به ۵۰۰۰ در ساعت می‌رساند و فقط در مرورگر شما ذخیره می‌شود.',
       help_langs:'تفکیک دقیق بایتی زبان‌ها از API زبان‌های پلتفرم. نمودار دونات ۱۰ زبان اصلی را نشان می‌دهد.',
       help_badge:'برچسب امتیاز سلامت برای README پروژه بسازید: SVG استاتیک با نمره ثبت‌شده یا برچسب دینامیک shields.io.',
+      help_map:'نقشه رپو یک نمای تعاملی از سیستم مخزن است. پوشه‌ها، نقطه‌های ورود، فایل‌های manifest و تنظیمات به گره تبدیل می‌شوند. روی یک گره کلیک کنید تا متمرکز شود، R را برای یافتن مسیر بین دو گره، L برای مقایسه نوع‌ها، / برای جستجو و F برای حالت ارائه بزنید.',
       help_wrapped:'داستان سرگرم‌کننده ۱۲ ماه این رپو: ریتم کامیت‌ها، هفته اوج، مشارکت‌کننده برتر و رتبه ستاره‌ها.'
     },
     es:{
@@ -2324,7 +2300,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     },
     ar:{
       tabOverview:'🩺 نظرة عامة',tabLanguages:'📊 اللغات',tabFiles:'🗂️ الملفات',
-      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',
+      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',tabMap:'🗺️ الخريطة',
       btnHome:'← الرئيسية',btnCard:'📸 بطاقة',btnReport:'📄 تقرير',btnLink:'🔗 رابط',
       btnCompare:'⚖️ مقارنة',btnBattle:'⚔️ معركة',btnClone:'📋 استنساخ',
       btnToken:'🔑 رمز',btnShortcuts:'❓ اختصارات',
@@ -2362,7 +2338,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     },
     de:{
       tabOverview:'🩺 Überblick',tabLanguages:'📊 Sprachen',tabFiles:'🗂️ Dateien',
-      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',
+      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',tabMap:'🗺️ Karte',
       btnHome:'← Start',btnCard:'📸 Karte',btnReport:'📄 Bericht',btnLink:'🔗 Link',
       btnCompare:'⚖️ Vergleichen',btnBattle:'⚔️ Battle',btnClone:'📋 Klonen',
       btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',

@@ -1045,7 +1045,11 @@ function renderDash(){
     renderLicenseAnalysis();
     try{renderBadgeGenerator()}catch(e){}
     computeComplexity();
-    switchTab('overview');
+    /* Preserve the tab the user is already on (language switch, favorite
+       toggle etc. re-run renderDash and used to kick the user back to
+       Overview). Falls back to Overview on first load. */
+    const activeTab=document.querySelector('#tabs .tab.active');
+    switchTab(activeTab?activeTab.dataset.tab:'overview');
   }catch(e){console.warn('renderDash error:',e)}
 }
 
@@ -1431,7 +1435,8 @@ function updateSelMeta(){
   const toks=Math.round(bytes/cpt);
   const pct=Math.min(999,Math.round(toks/ctx*100));
   const ctxColor=pct>90?'var(--red)':pct>60?'var(--yellow)':'var(--green)';
-  $('#selMeta').innerHTML='<span><b>'+S.sel.size+'</b> files</span><span><b>'+fmtSize(bytes)+'</b> '+(text?'prompt':'selected')+'</span><span>~<b>'+fmt(toks)+'</b> tokens</span>';
+  const selMeta=$('#selMeta');
+  if(selMeta)selMeta.innerHTML='<span><b>'+S.sel.size+'</b> files</span><span><b>'+fmtSize(bytes)+'</b> '+(text?'prompt':'selected')+'</span><span>~<b>'+fmt(toks)+'</b> tokens</span>';
   const status=$('#ctxStatus');
   if(status)status.innerHTML='Fits in <b style="color:'+ctxColor+'">'+pct+'%</b> of context window ('+fmt(ctx)+' tok)';
 }

@@ -309,10 +309,11 @@ function parseMarkdown(md){
   /* Bold and italic */
   html=html.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   html=html.replace(/\*([^*]+)\*/g,'<em>$1</em>');
-  /* Links */
-  html=html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-  /* Images */
-  html=html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,'<img src="$2" alt="$1">');
+  /* Images MUST be handled before links — otherwise the link regex
+     swallows the [alt](src) tail of "![](…)" and images never render */
+  html=html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,(m,alt,src)=>'<img src="'+esc(src)+'" alt="'+esc(alt)+'" loading="lazy">');
+  /* Links (href escaped to prevent attribute injection) */
+  html=html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,(m,c,href)=>'<a href="'+esc(href)+'" target="_blank" rel="noopener">'+c+'</a>');
   /* Blockquotes */
   html=html.replace(/^>\s+(.+)$/gm,'<blockquote>$1</blockquote>');
   /* Horizontal rules */
@@ -362,7 +363,7 @@ function closeShortcutsModal(){$('#shortcutsModalBg').classList.add('hidden')}
 const I18N={
   en:{
     tabOverview:'🩺 Overview',tabLanguages:'📊 Languages',tabFiles:'🗂️ Files',
-    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',tabDeep:'🔬 Deep',
+    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',tabDeep:'🔬 Deep',tabMap:'🗺️ Map',
     btnHome:'← Home',btnCard:'📸 Card',btnReport:'📄 Report',btnLink:'🔗 Link',
     btnCompare:'⚖️ Compare',btnBattle:'⚔️ Battle',btnClone:'📋 Clone',
     btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
@@ -418,7 +419,7 @@ const I18N={
   },
   fa:{
     tabOverview:'🩺 نمای کلی',tabLanguages:'📊 زبان‌ها',tabFiles:'🗂️ فایل‌ها',
-    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',tabDeep:'🔬 تحلیل عمیق',
+    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',tabDeep:'🔬 تحلیل عمیق',tabMap:'🗺️ نقشه',
     btnHome:'← خانه',btnCard:'📸 کارت',btnReport:'📄 گزارش',btnLink:'🔗 لینک',
     btnCompare:'⚖️ مقایسه',btnBattle:'⚔️ نبرد',btnClone:'📋 کلون',
     btnToken:'🔑 توکن',btnShortcuts:'❓ میانبرها',
@@ -474,7 +475,7 @@ const I18N={
   },
   es:{
     tabOverview:'🩺 Resumen',tabLanguages:'📊 Idiomas',tabFiles:'🗂️ Archivos',
-    tabDigest:'🤖 Resumen LLM',tabActivity:'📈 Actividad',tabFun:'🏆 Divertido',tabDeps:'🔗 Deps',tabDeep:'🔬 Profundo',
+    tabDigest:'🤖 Resumen LLM',tabActivity:'📈 Actividad',tabFun:'🏆 Divertido',tabDeps:'🔗 Deps',tabDeep:'🔬 Profundo',tabMap:'🗺️ Mapa',
     btnHome:'← Inicio',btnCard:'📸 Tarjeta',btnReport:'📄 Informe',btnLink:'🔗 Enlace',
     btnCompare:'⚖️ Comparar',btnBattle:'⚔️ Batalla',btnClone:'📋 Clonar',
     btnToken:'🔑 Token',btnShortcuts:'❓ Atajos',
@@ -530,7 +531,7 @@ const I18N={
   },
   zh:{
     tabOverview:'🩺 概览',tabLanguages:'📊 语言',tabFiles:'🗂️ 文件',
-    tabDigest:'🤖 摘要',tabActivity:'📈 活动',tabFun:'🏆 趣味',tabDeps:'🔗 依赖',tabDeep:'🔬 深度分析',
+    tabDigest:'🤖 摘要',tabActivity:'📈 活动',tabFun:'🏆 趣味',tabDeps:'🔗 依赖',tabDeep:'🔬 深度分析',tabMap:'🗺️ 图谱',
     btnHome:'← 首页',btnCard:'📸 卡片',btnReport:'📄 报告',btnLink:'🔗 链接',
     btnCompare:'⚖️ 对比',btnBattle:'⚔️ 对战',btnClone:'📋 克隆',
     btnToken:'🔑 令牌',btnShortcuts:'❓ 快捷键',
@@ -586,7 +587,7 @@ const I18N={
   },
   fr:{
     tabOverview:'🩺 Vue d\'ensemble',tabLanguages:'📊 Langages',tabFiles:'🗂️ Fichiers',
-    tabDigest:'🤖 Résumé LLM',tabActivity:'📈 Activité',tabFun:'🏆 Fun',tabDeps:'🔗 Déps',tabDeep:'🔬 Approfondi',
+    tabDigest:'🤖 Résumé LLM',tabActivity:'📈 Activité',tabFun:'🏆 Fun',tabDeps:'🔗 Déps',tabDeep:'🔬 Approfondi',tabMap:'🗺️ Carte',
     btnHome:'← Accueil',btnCard:'📸 Carte',btnReport:'📄 Rapport',btnLink:'🔗 Lien',
     btnCompare:'⚖️ Comparer',btnBattle:'⚔️ Battle',btnClone:'📋 Cloner',
     btnToken:'🔑 Token',btnShortcuts:'❓ Raccourcis',
@@ -666,7 +667,7 @@ function applyLang(){
   const tabMap={
     'overview':t('tabOverview'),'languages':t('tabLanguages'),'files':t('tabFiles'),
     'digest':t('tabDigest'),'activity':t('tabActivity'),'fun':t('tabFun'),'deps':t('tabDeps'),
-    'deep':t('tabDeep')
+    'deep':t('tabDeep'),'map':t('tabMap')
   };
   $$('#tabs .tab').forEach(b=>{const k=b.dataset.tab;if(tabMap[k])b.textContent=tabMap[k]});
   /* Update search placeholders */

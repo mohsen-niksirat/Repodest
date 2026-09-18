@@ -19,11 +19,12 @@ const html=fs.readFileSync(path.join(__dirname,'index.html'),'utf8');
 const appjs=fs.readFileSync(path.join(__dirname,'app.js'),'utf8');
 const appfeatures=fs.readFileSync(path.join(__dirname,'app.features.js'),'utf8');
 const appux=fs.readFileSync(path.join(__dirname,'app.ux.js'),'utf8');
+const appmap=fs.readFileSync(path.join(__dirname,'app.map.js'),'utf8');
 const appboot=fs.readFileSync(path.join(__dirname,'app.boot.js'),'utf8');
 const corejs=fs.readFileSync(path.join(__dirname,'core.js'),'utf8');
 const swjs=fs.readFileSync(path.join(__dirname,'sw.js'),'utf8');
 const manifest=JSON.parse(fs.readFileSync(path.join(__dirname,'manifest.json'),'utf8'));
-const alljs=corejs+appjs+appfeatures+appux+appboot;
+const alljs=corejs+appjs+appfeatures+appux+appmap+appboot;
 
 console.log('\nHTML ↔ JS wiring');
 check('all onclick handlers resolve to JS functions',()=>{
@@ -43,8 +44,8 @@ check('all IDs used by JS $(...) exist in HTML (spot check)',()=>{
   const missing=uniq.filter(id=>!html.includes('id="'+id+'"')&&!dynamicOk.has(id));
   assert(missing.length===0,'missing HTML ids: '+missing.slice(0,8).join(', '));
 });
-check('script load order: core → app → features → ux → boot',()=>{
-  const order=['core.js','app.js','app.features.js','app.ux.js','app.boot.js'];
+check('script load order: core → app → features → ux → map → boot',()=>{
+  const order=['core.js','app.js','app.features.js','app.ux.js','app.map.js','app.boot.js'];
   const pos=order.map(o=>html.indexOf('"'+o+'"'));
   pos.forEach((p,i)=>assert(p>=0,'script missing: '+order[i]));
   for(let i=1;i<pos.length;i++)assert(pos[i-1]<pos[i],'order wrong at '+order[i]);
@@ -87,6 +88,11 @@ const features=[
   ['Part navigation','showDigestPart'],
   ['Ask-a-question','smartSelectForQuestion'],
   ['Monorepo scope','filterScope'],
+  ['Repo Map tab (HTML panel)','p-map'],
+  ['Repo Map builder','buildRepoMap'],
+  ['Repo Map import tracing','mapParseImports'],
+  ['Repo Map route probe','mapBFSPath'],
+  ['Repo Map deep links','mapApplyHash'],
 ];
 features.forEach(([name,needle])=>{
   check(name,()=>assert(alljs.includes(needle)||html.includes(needle),needle+' not found'));
