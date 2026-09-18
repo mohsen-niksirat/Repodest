@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+async function clickTab(page, name){
+  const tab = page.locator(`[data-tab="${name}"]`);
+  await tab.waitFor({ state: 'attached', timeout: 30000 });
+  await tab.scrollIntoViewIfNeeded();
+  await tab.click();
+}
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     /* quiet the network for deterministic tests */
@@ -53,15 +60,16 @@ test('help chips open popovers with content', async ({ page }) => {
 test('dashboard renders for a real repo with tabs', async ({ page }) => {
   await page.goto('/?repo=mohsen-niksirat/Repodest');
   await expect(page.locator('#repoHero')).toContainText(/repodest/i, { timeout: 30000 });
-  await expect(page.locator('#tabs .tab')).toHaveCount(8);
+  await expect(page.locator('#tabs .tab')).toHaveCount(10);
   /* switch to Files tab and check the tree rendered */
-  await page.click('[data-tab="files"]');
+  await clickTab(page,'files');
   await expect(page.locator('#tree .trow').first()).toBeVisible();
 });
 
 test('digest tab exposes presets and generate button', async ({ page }) => {
   await page.goto('/?repo=mohsen-niksirat/Repodest');
-  await page.click('[data-tab="digest"]');
+  await expect(page.locator('#repoHero')).toContainText(/repodest/i, { timeout: 30000 });
+  await clickTab(page,'digest');
   await expect(page.locator('.rec-btn[data-preset]')).toHaveCount(6);
   await expect(page.locator('#genBtn')).toBeVisible();
   await page.click('.rec-btn[data-preset="review"]');
