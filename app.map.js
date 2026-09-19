@@ -50,7 +50,7 @@ const MAP={
   W:0,H:0,dpr:1
 };
 const MAP_NOISE=/(^|\/)(node_modules|\.git|dist|build|vendor|\.next|__pycache__|\.cache|coverage|\.turbo|tmp|temp|out|\.output|target|\.gradle|\.idea|\.vscode|pods|venv|\.pytest_cache|bower_components)(\/|$)/i;
-const MAP_PRESETS=['neon','blueprint','minimal'];
+const MAP_PRESETS=['neon','blueprint','signal-flow','classic','minimal'];
 const MAP_KIND_COLOR={
   root:'#a855f7',folder:'#22d3ee',entry:'#22c55e',manifest:'#eab308',
   readme:'#38bdf8',config:'#f97316',test:'#ec4899',file:'#8b9bd4'
@@ -409,15 +409,29 @@ function mapPresetStyle(){
   if(p==='blueprint'){
     return{bg:light?'#dfe9f5':'#0b1626',grid:light?'rgba(20,60,110,.12)':'rgba(90,160,255,.10)',
       edge:light?'rgba(30,70,130,.35)':'rgba(110,160,255,.28)',edgeHi:'#38bdf8',
-      node:light?'#0f2a4a':'#dbeafe',glow:'rgba(56,189,248,.5)',vignette:false};
+      node:light?'#0f2a4a':'#dbeafe',glow:'rgba(56,189,248,.5)',vignette:false,
+      edgeDash:null,nodeShape:'rect'};
+  }
+  if(p==='signal-flow'){
+    return{bg:light?'#f0fdf4':'#071210',grid:light?'rgba(34,197,94,.08)':'rgba(34,197,94,.06)',
+      edge:light?'rgba(22,163,74,.30)':'rgba(74,222,128,.25)',edgeHi:'#4ade80',
+      node:light?'#14532d':'#bbf7d0',glow:'rgba(74,222,128,.55)',vignette:true,
+      edgeDash:[6,4],nodeShape:'circle'};
+  }
+  if(p==='classic'){
+    return{bg:light?'#ffffff':'#1a1a2e',grid:light?'rgba(0,0,0,.04)':'rgba(255,255,255,.03)',
+      edge:light?'rgba(0,0,0,.18)':'rgba(255,255,255,.15)',edgeHi:'#f59e0b',
+      node:light?'#1e293b':'#e2e8f0',glow:'rgba(245,158,11,.45)',vignette:false,
+      edgeDash:null,nodeShape:'circle'};
   }
   if(p==='minimal'){
     return{bg:light?'#f4f4f7':'#101018',grid:'rgba(120,120,150,.06)',edge:light?'rgba(60,60,90,.25)':'rgba(140,140,180,.22)',edgeHi:'#a855f7',
-      node:light?'#1c1c28':'#cbd5e1',glow:'rgba(168,85,247,.35)',vignette:false};
+      node:light?'#1c1c28':'#cbd5e1',glow:'rgba(168,85,247,.35)',vignette:false,
+      edgeDash:null,nodeShape:'circle'};
   }
-  /* neon (default) */
   return{bg:light?'#0d0d18':'#0a0a14',grid:'rgba(124,58,237,.07)',edge:light?'rgba(80,80,140,.25)':'rgba(120,110,200,.30)',edgeHi:'#22d3ee',
-    node:'#e2e8f0',glow:'rgba(34,211,238,.55)',vignette:true};
+    node:'#e2e8f0',glow:'rgba(34,211,238,.55)',vignette:true,
+    edgeDash:null,nodeShape:'mixed'};
 }
 
 function mapDrawScene(ctx,W,H,dpr,time){
@@ -450,9 +464,13 @@ function mapDrawScene(ctx,W,H,dpr,time){
     const on=edgeInHl(i);
     ctx.beginPath();
     ctx.moveTo(ax,ay);
-    const mx=(ax+bx)/2,my=(ay+by)/2;
-    const bend=Math.min(26,Math.hypot(bx-ax,by-ay)*0.12);
-    ctx.quadraticCurveTo(mx-bend*0.5,my+bend,bx,by);
+    if(st.nodeShape==='rect'&&e.kind!=='import'){
+      ctx.lineTo(bx,by);
+    }else{
+      const mx=(ax+bx)/2,my=(ay+by)/2;
+      const bend=Math.min(26,Math.hypot(bx-ax,by-ay)*0.12);
+      ctx.quadraticCurveTo(mx-bend*0.5,my+bend,bx,by);
+    }
     if(on&&hasHl){
       ctx.strokeStyle=st.edgeHi;ctx.lineWidth=1.6+(e.kind==='import'?0.8:0);
       ctx.shadowColor=st.edgeHi;ctx.shadowBlur=6;
@@ -461,7 +479,8 @@ function mapDrawScene(ctx,W,H,dpr,time){
       ctx.shadowBlur=0;
       if(hasHl)ctx.globalAlpha=0.14;
     }
-    if(e.kind==='import'&&!hasHl)ctx.setLineDash([4,4]);
+    if(e.kind==='import'&&!hasHl&&st.edgeDash)ctx.setLineDash(st.edgeDash);
+    else if(e.kind==='import'&&!hasHl)ctx.setLineDash([4,4]);
     ctx.stroke();
     ctx.setLineDash([]);ctx.globalAlpha=1;ctx.shadowBlur=0;
   });
@@ -473,7 +492,13 @@ function mapDrawScene(ctx,W,H,dpr,time){
       if(!a||!b)continue;
       const ax=toSX(a.x),ay=toSY(a.y),bx=toSX(b.x),by=toSY(b.y);
       if(j===0)ctx.moveTo(ax,ay);
-      ctx.lineTo(bx,by);
+      if(MAP.preset==='signal-flow'){
+        const mx=(ax+bx)/2,my=(ay+by)/2;
+        const bend=Math.min(30,Math.hypot(bx-ax,by-ay)*0.15);
+        ctx.quadraticCurveTo(mx-bend*0.5,my+bend,bx,by);
+      }else{
+        ctx.lineTo(bx,by);
+      }
     }
     ctx.strokeStyle=st.edgeHi;ctx.lineWidth=2.4;ctx.lineCap='round';
     ctx.setLineDash([8,7]);ctx.lineDashOffset=-(time||0)/45;
@@ -494,7 +519,11 @@ function mapDrawScene(ctx,W,H,dpr,time){
       ctx.shadowColor=st.glow;ctx.shadowBlur=focused?22:12;
     }
     ctx.beginPath();
-    mapNodePath(ctx,n.kind,sx,sy,Math.max(3,r));
+    if(st.nodeShape==='rect'&&n.kind!=='root'){
+      ctx.rect(sx-Math.max(3,r),sy-Math.max(3,r)*0.8,Math.max(3,r)*2,Math.max(3,r)*1.6);
+    }else{
+      mapNodePath(ctx,n.kind,sx,sy,Math.max(3,r));
+    }
     ctx.fillStyle=color;ctx.fill();
     ctx.shadowBlur=0;
     ctx.lineWidth=focused?2.2:1;
