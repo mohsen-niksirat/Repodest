@@ -1484,6 +1484,7 @@ async function generateDigest(){
   }
   /* Pass 2: pack sections into context-sized parts */
   S.digestParts=packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkipped,sigShrunk);
+  try{collectSmellSections(sections)}catch(e){}
   S.digestPartIdx=0;
   showDigestPart(0);
   updateSelMeta();

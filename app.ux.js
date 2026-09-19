@@ -1241,6 +1241,7 @@ async function runDeepScan(){
   loadPRAnalytics();
   loadFixRate();
   loadChurn();
+  try{S.deep.commitStyle=analyzeCommitStyle(S.commits);renderCommitStyle()}catch(e){}
 }
 
 /* ---------- PR Analytics ---------- */
@@ -1366,6 +1367,74 @@ function renderChurn(d){
       const short=h.path.length>44?'…'+h.path.slice(-43):h.path;
       return '<div class="langrow"><span class="ln" style="width:44%" title="'+esc(h.path)+'">'+esc(short)+'</span><span class="lb"><i style="width:'+pct+'%;background:'+(h.changes>=max*0.8?'#ef4444':h.changes>=max*0.5?'#f59e0b':'#22d3ee')+'"></i></span><span class="lp">'+h.changes+'×</span></div>';
     }).join('');
+}
+
+/* ---------- Commit Style Fingerprint ---------- */
+const CC_TYPES=['feat','fix','docs','style','refactor','perf','test','build','ci','chore','revert'];
+const POS_W=/\b(add|improve|better|fast|optimize|enhance|support|new|clean|robust|solid|smooth|clear|simple|secure|stable|efficient|elegant|nice|great|easy|fix|simplify|upgrade)\b/gi;
+const NEG_W=/\b(bug|break|broken|fail|failing|error|crash|hack|temp|workaround|remove|delete|deprecate|revert|rollback|urgent|hacky|messy|dirty|slow|leak|race|deadlock|flaky|wrong|issue|problem)\b/gi;
+function analyzeCommitStyle(commits){
+  const msgs=(commits||[]).map(c=>{
+    const m=c.commit&&c.commit.message?c.commit.message:'';
+    return{subject:m.split('\n')[0],body:m,author:(c.author&&(c.author.login||(c.commit.author&&c.commit.author.name)))||'unknown',date:c.commit&&c.commit.author?c.commit.author.date:null};
+  }).filter(m=>m.subject);
+  if(!msgs.length)return null;
+  let ccCount=0,emojiCount=0,posScore=0,negScore=0,totalLen=0,multiLine=0,reverts=0;
+  const typeFreq={},authors=new Map(),coAuthors=new Map();
+  for(const m of msgs){
+    totalLen+=m.subject.length;
+    if(m.body.includes('\n'))multiLine++;
+    if(/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?:/i.test(m.subject)){
+      ccCount++;
+      const t=m.subject.match(/^([a-z]+)(\(.+\))?!?:/i);
+      if(t)typeFreq[t[1].toLowerCase()]=(typeFreq[t[1].toLowerCase()]||0)+1;
+    }
+    if(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(m.subject))emojiCount++;
+    posScore+=(m.subject.match(POS_W)||[]).length+(m.body.match(POS_W)||[]).length;
+    negScore+=(m.subject.match(NEG_W)||[]).length+(m.body.match(NEG_W)||[]).length;
+    if(/^revert\b|^Revert "/i.test(m.subject))reverts++;
+    authors.set(m.author,(authors.get(m.author)||0)+1);
+    const co=m.body.matchAll(/^Co-authored-by:\s*(.+?)\s*<([^>]+)>/gmi);
+    for(const c of co){const k=c[1].trim();coAuthors.set(k,(coAuthors.get(k)||0)+1)}
+  }
+  const n=msgs.length;
+  const topTypes=Object.entries(typeFreq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const topAuthors=[...authors.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const busFactor=topAuthors.length>=2?(topAuthors[0][1]+topAuthors[1][1])/n:1;
+  let persona='The Pragmatist';
+  const avgLen=Math.round(totalLen/n);
+  if(ccCount/n>0.8&&emojiCount/n<0.1)persona='The Robot';
+  else if(emojiCount/n>0.3)persona='The Poet';
+  else if(negScore>posScore*1.5)persona='The Firefighter';
+  else if(posScore>negScore*2)persona='The Cheerleader';
+  else if(avgLen<25)persona='The Minimalist';
+  else if(multiLine/n>0.5)persona='The Essayist';
+  return{n,ccRate:Math.round(ccCount/n*100),emojiRate:Math.round(emojiCount/n*100),avgWords:avgLen,multiLineRate:Math.round(multiLine/n*100),reverts,topTypes,topAuthors,coAuthors:[...coAuthors.entries()].sort((a,b)=>b[1]-a[1]).slice(0,5),sentiment:{pos:posScore,neg:negScore},busFactor:Math.round(busFactor*100)/100,persona};
+}
+function renderCommitStyle(){
+  const el=$('#commitStyleContent');if(!el)return;
+  const d=S.deep&&S.deep.commitStyle;
+  if(!d){el.innerHTML='<p style="color:var(--text3);font-size:12px">Run a deep scan to analyze commit messages.</p>';return}
+  const bar=(label,val,max,color)=>'<div class="langrow"><span class="ln" style="width:44%">'+esc(label)+'</span><span class="lb"><i style="width:'+Math.min(Math.round(val/max*100),100)+'%;background:'+color+'"></i></span><span class="lp">'+val+'</span></div>';
+  const maxType=Math.max(...d.topTypes.map(t=>t[1]),1);
+  const maxAuth=Math.max(...d.topAuthors.map(a=>a[1]),1);
+  el.innerHTML=
+    '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">'+
+      '<div class="stat-box"><div class="sv">'+d.n+'</div><div class="sl">Commits analyzed</div></div>'+
+      '<div class="stat-box"><div class="sv" style="color:'+(d.ccRate>70?'var(--green)':d.ccRate>30?'var(--yellow)':'var(--red)')+'">'+d.ccRate+'%</div><div class="sl">Conventional Commits</div></div>'+
+      '<div class="stat-box"><div class="sv">'+d.avgWords+'</div><div class="sl">Avg subject length</div></div>'+
+      '<div class="stat-box"><div class="sv" style="color:var(--purple)">'+esc(d.persona)+'</div><div class="sl">Team fingerprint</div></div>'+
+    '</div>'+
+    (d.topTypes.length?'<div class="minititle" style="font-size:12px;color:var(--text2)">Top types</div>'+d.topTypes.map(t=>bar(t[0]+'()',t[1],maxType,'#22d3ee')).join(''):'')+
+    (d.topAuthors.length?'<div class="minititle" style="font-size:12px;color:var(--text2);margin-top:10px">Most active authors</div>'+d.topAuthors.map(a=>bar(a[0],a[1],maxAuth,'#7c3aed')).join(''):'')+
+    '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--text2)">'+
+      '<span>😊 Emoji: <b>'+d.emojiRate+'%</b></span>'+
+      '<span>📄 Multi-line: <b>'+d.multiLineRate+'%</b></span>'+
+      '<span>↩️ Reverts: <b>'+d.reverts+'</b></span>'+
+      '<span>❤️ Pos/Neg words: <b>'+d.sentiment.pos+'/'+d.sentiment.neg+'</b></span>'+
+      '<span>🚌 Bus factor: <b>'+d.busFactor+'</b></span>'+
+    '</div>'+
+    (d.coAuthors.length?'<div class="minititle" style="font-size:12px;color:var(--text2);margin-top:10px">Co-authorship network</div>'+d.coAuthors.map(c=>'<div style="font-size:11.5px;padding:2px 0">↳ '+esc(c[0])+' · '+c[1]+'×</div>').join(''):'');
 }
 
 /* ---------- OSV vulnerability scan ---------- */
@@ -1526,7 +1595,9 @@ const HELP_TEXTS={
   treeTools:'Expand/collapse folders, select all text files, copy the tree as text, filter by name, or scope a monorepo to a single subfolder.',
   badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
   map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
+  smells:'The Code Smell Detector scans the files you selected for the digest and flags common anti-patterns: leftover TODO/FIXME markers, console.log/debugger statements, legacy var usage, loose equality, bare except clauses, wildcard imports, hardcoded IPs and suspicious magic numbers. It reports a density score (smells per 1000 lines) plus the top offending files. The card appears after you generate a digest.',
   crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle. Use it for offline reading, RAG, or append the bundle to your LLM digest. It stays on the starting domain, and you can lock it to the starting subpath.',
+  onboard:'The Onboarding Guide generates a step-by-step first-contribution path for this repo: setup commands derived from detected manifests, architecture reading order from entry-point files, test directories, CI workflows, good-first-issue links, and key contacts from top contributors. Click Build guide after loading a repository.',
   wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
 };
 function helpChip(topic){
@@ -1700,6 +1771,7 @@ function cmdActions(){
     {icon:'🏆',label:'Go to Fun',kw:'tab fun trophies roast',run:()=>switchTab('fun')},
     {icon:'🔗',label:'Go to Deps',kw:'tab deps dependencies',run:()=>switchTab('deps')},
     {icon:'🔬',label:'Go to Deep Analysis',kw:'tab deep pr osv churn',run:()=>switchTab('deep')},
+    {icon:'🚀',label:'Go to Onboarding Guide',kw:'tab onboard guide contribute first setup',run:()=>switchTab('onboard')},
     {icon:'🌙',label:'Toggle theme',kw:'dark light theme',run:()=>toggleTheme()},
     {icon:'🌐',label:'Switch language',kw:'language i18n fa en es zh fr ar de',run:()=>toggleLangMenu()},
     {icon:'🔑',label:'Set GitHub token',kw:'token pat api',run:()=>openModal()},
@@ -2199,7 +2271,8 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
       help_map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
       help_crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle — for offline reading, RAG, or appending to your LLM digest.',
-      help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
+      help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.',
+      help_onboard:'The Onboarding Guide generates a step-by-step first-contribution path: setup commands, architecture reading order, test directories, CI workflows, good-first-issue links, and key contacts.'
     },
     fa:{
       feat1Desc:'مجوز، README، تست‌ها، CI، مستندات و تازگی — ۱۰ بررسی وزن‌دار در یک عدد صادقانه.',
@@ -2226,7 +2299,8 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_langs:'تفکیک دقیق بایتی زبان‌ها از API زبان‌های پلتفرم. نمودار دونات ۱۰ زبان اصلی را نشان می‌دهد.',
       help_badge:'برچسب امتیاز سلامت برای README پروژه بسازید: SVG استاتیک با نمره ثبت‌شده یا برچسب دینامیک shields.io.',
       help_map:'نقشه رپو یک نمای تعاملی از سیستم مخزن است. پوشه‌ها، نقطه‌های ورود، فایل‌های manifest و تنظیمات به گره تبدیل می‌شوند. روی یک گره کلیک کنید تا متمرکز شود، R را برای یافتن مسیر بین دو گره، L برای مقایسه نوع‌ها، / برای جستجو و F برای حالت ارائه بزنید.',
-      help_wrapped:'داستان سرگرم‌کننده ۱۲ ماه این رپو: ریتم کامیت‌ها، هفته اوج، مشارکت‌کننده برتر و رتبه ستاره‌ها.'
+      help_wrapped:'داستان سرگرم‌کننده ۱۲ ماه این رپو: ریتم کامیت‌ها، هفته اوج، مشارکت‌کننده برتر و رتبه ستاره‌ها.',
+      help_onboard:'راهنمای شروع مشارکت: دستورات نصب، ترتیب خواندن فایل‌های معماری، مسیرهای تست، CI، لینک issueهای مناسب تازه‌کارها و مخاطبین کلیدی.'
     },
     es:{
       feat1Desc:'Licencia, README, tests, CI, docs, frescura — 10 verificaciones ponderadas en un número honesto.',
@@ -2308,7 +2382,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     },
     ar:{
       tabOverview:'🩺 نظرة عامة',tabLanguages:'📊 اللغات',tabFiles:'🗂️ الملفات',
-      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',tabMap:'🗺️ الخريطة',tabCrawl:'🦎 الزحف',
+      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',tabMap:'🗺️ الخريطة',tabCrawl:'🦎 الزحف',tabOnboard:'🚀 البدء',
       btnHome:'← الرئيسية',btnCard:'📸 بطاقة',btnReport:'📄 تقرير',btnLink:'🔗 رابط',
       btnCompare:'⚖️ مقارنة',btnBattle:'⚔️ معركة',btnClone:'📋 استنساخ',
       btnToken:'🔑 رمز',btnShortcuts:'❓ اختصارات',
@@ -2346,7 +2420,7 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
     },
     de:{
       tabOverview:'🩺 Überblick',tabLanguages:'📊 Sprachen',tabFiles:'🗂️ Dateien',
-      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',tabMap:'🗺️ Karte',tabCrawl:'🦎 Crawlen',
+      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',tabMap:'🗺️ Karte',tabCrawl:'🦎 Crawlen',tabOnboard:'🚀 Einstieg',
       btnHome:'← Start',btnCard:'📸 Karte',btnReport:'📄 Bericht',btnLink:'🔗 Link',
       btnCompare:'⚖️ Vergleichen',btnBattle:'⚔️ Battle',btnClone:'📋 Klonen',
       btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',

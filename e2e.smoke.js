@@ -97,6 +97,8 @@ const features=[
   ['Docs Crawler tab (HTML panel)','p-crawl'],
   ['Docs Crawler engine','startCrawl'],
   ['Docs Crawler noise filter','crawlHtmlToPage'],
+  ['Onboarding Guide tab (HTML panel)','p-onboard'],
+  ['Onboarding Guide generator','generateOnboarding'],
 ];
 features.forEach(([name,needle])=>{
   check(name,()=>assert(alljs.includes(needle)||html.includes(needle),needle+' not found'));

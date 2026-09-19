@@ -236,6 +236,85 @@ function renderSecurityScan(){
 }
 
 /* ============================================================
+   Feature 12.5: Code Smell Detector
+   Scans already-fetched text content (digest sections, full-text
+   search cache) for common anti-patterns and renders a scorecard.
+   ============================================================ */
+const SMELL_PATTERNS=[
+  {id:'todo',label:'TODO / FIXME / HACK / XXX',severity:'warn',re:/\b(TODO|FIXME|HACK|XXX)\b[:\s]/gi},
+  {id:'console',label:'console.log / debugger left in',severity:'danger',re:/(console\.(log|debug|info|warn)\s*\(|\bdebugger\b)/g},
+  {id:'var',label:'Legacy var usage (JS)',severity:'warn',re:/^\s*var\s+[A-Za-z_$]/gm},
+  {id:'eqeq',label:'Loose equality == / !=',severity:'warn',re:/[^=!<>]==[^=]|!=[^=]/g},
+  {id:'bareexcept',label:'Bare except: (Python)',severity:'danger',re:/^\s*except\s*:/gm},
+  {id:'importstar',label:'Wildcard import * ',severity:'warn',re:/from\s+[\w.]+\s+import\s+\*/g},
+  {id:'hardcodedip',label:'Hardcoded IP address',severity:'warn',re:/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b(?!\.)/g},
+  {id:'longline',label:'Very long lines (>200 chars)',severity:'note',re:/^.{200,}$/gm},
+  {id:'magicnum',label:'Suspicious magic numbers',severity:'note',re:/(?<![\w.])(?:[4][09]8|[6][0-9]{2}|[8][0-9]{3}|1000000)(?![\w.])/g}
+];
+const SMELL_CACHE=new Map();
+function scanSmellsForContent(content,path){
+  const ext=extOf(path||'');
+  const isJsLike=['js','ts','jsx','tsx','mjs','cjs'].includes(ext);
+  const isPy=['py','pyw'].includes(ext);
+  const findings=[];let loc=0;
+  const lines=(content||'').split('\n');loc=lines.length;
+  for(const pat of SMELL_PATTERNS){
+    if(pat.id==='var'||pat.id==='eqeq'||pat.id==='console'){if(!isJsLike&&ext!=='')continue}
+    if(pat.id==='bareexcept'||pat.id==='importstar'){if(!isPy)continue}
+    const re=new RegExp(pat.re.source,pat.re.flags);
+    let count=0,m;
+    while((m=re.exec(content))!==null){count++;if(m.index===re.lastIndex)re.lastIndex++}
+    if(count)findings.push({id:pat.id,label:pat.label,severity:pat.severity,count});
+  }
+  return{path,loc,findings};
+}
+function renderCodeSmells(){
+  const el=$('#smellsContent'),card=$('#smellsCard');
+  if(!el||!card)return;
+  const secs=S.smellSections||[];
+  if(!secs.length){card.style.display='none';return}
+  card.style.display='';
+  const agg=new Map();let totalLoc=0,totalSmells=0,dangerCount=0,warnCount=0;
+  for(const sec of secs){
+    totalLoc+=sec.loc;
+    for(const f of sec.findings){
+      totalSmells+=f.count;
+      if(f.severity==='danger')dangerCount+=f.count;
+      else if(f.severity==='warn')warnCount+=f.count;
+      const cur=agg.get(f.id)||{label:f.label,severity:f.severity,count:0,files:new Set()};
+      cur.count+=f.count;cur.files.add(sec.path);
+      agg.set(f.id,cur);
+    }
+  }
+  const density=totalLoc?+(totalSmells/Math.max(totalLoc,1)*1000).toFixed(1):0;
+  const grade=density<1?'Clean':density<3?'Light':density<8?'Moderate':'Heavy';
+  const gradeColor=density<1?'var(--green)':density<3?'var(--cyan)':density<8?'var(--yellow)':'var(--red)';
+  const rows=Array.from(agg.entries()).sort((a,b)=>b[1].count-a[1].count);
+  const topFiles=secs.filter(s=>s.findings.length).sort((a,b)=>{
+    const ca=a.findings.reduce((t,f)=>t+f.count,0),cb=b.findings.reduce((t,f)=>t+f.count,0);return cb-ca}).slice(0,5);
+  el.innerHTML=
+    '<div class="security-score">'+
+      '<div class="sec-ring" style="border:3px solid '+gradeColor+';color:'+gradeColor+'">'+density+'</div>'+
+      '<div><div style="font-weight:700;font-size:15px">Smell Density <span style="color:'+gradeColor+'">· '+grade+'</span></div>'+
+      '<div class="sec-label">'+totalSmells+' smells in '+fmt(totalLoc)+' LOC · '+dangerCount+' critical · '+warnCount+' warnings</div></div>'+
+    '</div>'+
+    '<div class="security-checklist">'+rows.map(([id,r])=>{
+      const cls=r.severity==='danger'?'danger':r.severity==='warn'?'warn':'safe';
+      const icon=r.severity==='danger'?'!':r.severity==='warn'?'△':'○';
+      return '<div class="sec-item '+cls+'"><span class="sec-icon">'+icon+'</span><span>'+esc(r.label)+' · <b>'+r.count+'</b> in '+r.files.size+' file'+(r.files.size!==1?'s':'')+'</span></div>';
+    }).join('')+'</div>'+
+    (topFiles.length?'<div class="minititle" style="margin-top:12px;font-size:12px;color:var(--text2)">Top offenders</div>'+
+      '<div class="endpoint-list">'+topFiles.map(s=>{
+        const c=s.findings.reduce((t,f)=>t+f.count,0);
+        return '<div class="endpoint-row"><span class="ep-method warn">'+c+'</span><span class="ep-path" style="font-family:var(--mono);font-size:11.5px">'+esc(s.path)+'</span></div>';
+      }).join('')+'</div>':'');
+}
+function collectSmellSections(sections){
+  S.smellSections=(sections||[]).map(sec=>scanSmellsForContent(sec.content,sec.path));
+  renderCodeSmells();
+}
+
+/* ============================================================
    Feature 13: API Endpoint Detector
    ============================================================ */
 function renderEndpoints(){
@@ -363,7 +442,7 @@ function closeShortcutsModal(){$('#shortcutsModalBg').classList.add('hidden')}
 const I18N={
   en:{
     tabOverview:'🩺 Overview',tabLanguages:'📊 Languages',tabFiles:'🗂️ Files',
-    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',tabDeep:'🔬 Deep',tabMap:'🗺️ Map',tabCrawl:'🦎 Crawl',
+    tabDigest:'🤖 Digest',tabActivity:'📈 Activity',tabFun:'🏆 Fun',tabDeps:'🔗 Deps',tabDeep:'🔬 Deep',tabMap:'🗺️ Map',tabCrawl:'🦎 Crawl',tabOnboard:'🚀 Onboard',
     btnHome:'← Home',btnCard:'📸 Card',btnReport:'📄 Report',btnLink:'🔗 Link',
     btnCompare:'⚖️ Compare',btnBattle:'⚔️ Battle',btnClone:'📋 Clone',
     btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
@@ -419,7 +498,7 @@ const I18N={
   },
   fa:{
     tabOverview:'🩺 نمای کلی',tabLanguages:'📊 زبان‌ها',tabFiles:'🗂️ فایل‌ها',
-    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',tabDeep:'🔬 تحلیل عمیق',tabMap:'🗺️ نقشه',tabCrawl:'🦎 خزش',
+    tabDigest:'🤖 دایجست',tabActivity:'📈 فعالیت',tabFun:'🏆 سرگرمی',tabDeps:'🔗 وابستگی‌ها',tabDeep:'🔬 تحلیل عمیق',tabMap:'🗺️ نقشه',tabCrawl:'🦎 خزش',tabOnboard:'🚀 شروع',
     btnHome:'← خانه',btnCard:'📸 کارت',btnReport:'📄 گزارش',btnLink:'🔗 لینک',
     btnCompare:'⚖️ مقایسه',btnBattle:'⚔️ نبرد',btnClone:'📋 کلون',
     btnToken:'🔑 توکن',btnShortcuts:'❓ میانبرها',
@@ -667,7 +746,7 @@ function applyLang(){
   const tabMap={
     'overview':t('tabOverview'),'languages':t('tabLanguages'),'files':t('tabFiles'),
     'digest':t('tabDigest'),'activity':t('tabActivity'),'fun':t('tabFun'),'deps':t('tabDeps'),
-    'deep':t('tabDeep'),'map':t('tabMap'),'crawl':t('tabCrawl')
+    'deep':t('tabDeep'),'map':t('tabMap'),'crawl':t('tabCrawl'),'onboard':t('tabOnboard')
   };
   $$('#tabs .tab').forEach(b=>{const k=b.dataset.tab;if(tabMap[k])b.textContent=tabMap[k]});
   /* Update search placeholders */
@@ -697,3 +776,64 @@ renderDash=function(){
   try{renderEndpoints()}catch(e){}
   try{renderReadmePreview()}catch(e){}
 };
+
+var onboardMd='';
+function generateOnboarding(){
+  var m=S.repo;if(!m||!m.full_name){toast('Load a repository first','err');return}
+  var btn=$('#onboardBtn');if(btn){btn.disabled=true;btn.textContent='\u23F3 Building\u2026'}
+  var paths=[];FILEMAP.forEach(function(v,k){paths.push(k)});
+  var branch=(m.default_branch)||'main';
+  var setupCmds=[];
+  if(paths.some(function(p){return /(^|\/)package\.json$/i.test(p)}))setupCmds.push('npm install','npm run build','npm test');
+  if(paths.some(function(p){return /(^|\/)requirements\.txt$/i.test(p)}))setupCmds.push('pip install -r requirements.txt');
+  if(paths.some(function(p){return /(^|\/)Cargo\.toml$/i.test(p)}))setupCmds.push('cargo build','cargo test');
+  if(paths.some(function(p){return /(^|\/)go\.mod$/i.test(p)}))setupCmds.push('go build ./...','go test ./...');
+  if(paths.some(function(p){return /(^|\/)Makefile$/i.test(p)}))setupCmds.push('make');
+  if(paths.some(function(p){return /(^|\/)docker-compose/i.test(p)}))setupCmds.push('docker-compose up');
+  if(!setupCmds.length)setupCmds.push('(check README for setup instructions)');
+  var entryFiles=paths.filter(function(p){return /(^|\/)(index|main|app|server|cli|cmd)\.(js|ts|py|go|rs|rb|java|jsx|tsx)$/i.test(p)}).slice(0,5);
+  var configFiles=paths.filter(function(p){return /(^|\/)(package\.json|tsconfig|webpack|vite|rollup|eslint|prettier|babel|jest|pytest|cargo\.toml|go\.mod|dockerfile|docker-compose|\.github)/i.test(p)}).slice(0,8);
+  var testDirs=paths.filter(function(p){return /(^|\/)(tests?|spec|__tests__)/i.test(p)}).slice(0,5);
+  var ciPaths=paths.filter(function(p){return p.indexOf('.github/workflows/')===0});
+  var md='# Onboarding Guide: '+m.full_name+'\n\n';
+  md+='## 1. Setup\n\n```bash\ngit clone '+(m.html_url||('https://github.com/'+m.full_name))+'\ncd '+m.name+'\n'+setupCmds.join('\n')+'\n```\n\n';
+  md+='## 2. Architecture Tour\n\nRead these files in order to understand the codebase structure:\n\n';
+  if(entryFiles.length)entryFiles.forEach(function(f){md+='1. `'+f+'`\n'});
+  else md+='1. Browse the **Files** tab to find entry points.\n';
+  md+='\n';
+  md+='## 3. Key Configuration\n\n';
+  if(configFiles.length)configFiles.forEach(function(f){md+='- `'+f+'`\n'});
+  else md+='No standard config files detected.\n';
+  md+='\n';
+  md+='## 4. Testing\n\n';
+  if(testDirs.length)md+='Test directories found: `'+testDirs.join('`, `')+'`\n';
+  else md+='No test directories detected.\n';
+  md+='\n';
+  md+='## 5. CI/CD\n\n';
+  if(ciPaths.length)md+='Workflows: `'+ciPaths.join('`, `')+'`\n';
+  else md+='No CI workflows detected.\n';
+  md+='\n';
+  md+='## 6. Good First Issues\n\nCheck: ['+m.full_name+' issues]('+(m.html_url||('https://github.com/'+m.full_name))+'/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)\n\n';
+  md+='## 7. Key Contacts\n\n';
+  if(S.contribs&&S.contribs.length)S.contribs.slice(0,3).forEach(function(c){md+='- [@'+c.login+']('+c.html_url+') ('+c.contributions+' commits)\n'});
+  else md+='Check the Activity tab for top contributors.\n';
+  md+='\n---\nGenerated by Repodest on '+new Date().toISOString().slice(0,10)+'\n';
+  onboardMd=md;
+  var el=$('#onboardContent');
+  if(el)el.innerHTML='<pre style="white-space:pre-wrap;font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--text);max-height:500px;overflow-y:auto;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--line)">'+esc(md)+'</pre>';
+  var dlBtn=$('#onboardDlBtn');if(dlBtn)dlBtn.disabled=false;
+  var cpBtn=$('#onboardCopyBtn');if(cpBtn)cpBtn.disabled=false;
+  if(btn){btn.disabled=false;btn.textContent='\uD83E\uDDED Build guide'}
+  toast('Onboarding guide generated','ok');
+}
+function downloadOnboarding(){
+  if(!onboardMd)return;
+  var m=S.repo;var name=(m&&m.name)||'repo';
+  var blob=new Blob([onboardMd],{type:'text/markdown'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'-onboarding.md';a.click();
+  URL.revokeObjectURL(a.href);toast('Guide downloaded','ok');
+}
+function copyOnboarding(){
+  if(!onboardMd)return;
+  (navigator.clipboard?navigator.clipboard.writeText(onboardMd):Promise.reject()).then(function(){toast('Guide copied','ok')}).catch(function(){toast('Copy failed','err')});
+}
