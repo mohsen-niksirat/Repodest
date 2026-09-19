@@ -60,7 +60,7 @@ test('help chips open popovers with content', async ({ page }) => {
 test('dashboard renders for a real repo with tabs', async ({ page }) => {
   await page.goto('/?repo=mohsen-niksirat/Repodest');
   await expect(page.locator('#repoHero')).toContainText(/repodest/i, { timeout: 30000 });
-  await expect(page.locator('#tabs .tab')).toHaveCount(10);
+  await expect(page.locator('#tabs .tab')).toHaveCount(11);
   /* switch to Files tab and check the tree rendered */
   await clickTab(page,'files');
   await expect(page.locator('#tree')).toBeVisible({ timeout: 15000 });
