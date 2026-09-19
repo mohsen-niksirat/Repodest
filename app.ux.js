@@ -1242,6 +1242,7 @@ async function runDeepScan(){
   loadFixRate();
   loadChurn();
   try{S.deep.commitStyle=analyzeCommitStyle(S.commits);renderCommitStyle()}catch(e){}
+  try{loadIssueTriage()}catch(e){}
 }
 
 /* ---------- PR Analytics ---------- */
@@ -1435,6 +1436,93 @@ function renderCommitStyle(){
       '<span>🚌 Bus factor: <b>'+d.busFactor+'</b></span>'+
     '</div>'+
     (d.coAuthors.length?'<div class="minititle" style="font-size:12px;color:var(--text2);margin-top:10px">Co-authorship network</div>'+d.coAuthors.map(c=>'<div style="font-size:11.5px;padding:2px 0">↳ '+esc(c[0])+' · '+c[1]+'×</div>').join(''):'');
+}
+
+/* ---------- Issue Triage Dashboard ---------- */
+const TRIAGE_BUG=/\b(bug|crash|error|broken|fail|regression|defect|issue|fix|wrong|incorrect|unexpected)\b/i;
+const TRIAGE_FEATURE=/\b(feature|enhancement|request|add|support|implement|new|improve|proposal|suggestion|wish)\b/i;
+const TRIAGE_CRITICAL=/\b(critical|urgent|blocker|security|vulnerability|data.loss|crash|p0|sev1|breaking)\b/i;
+function classifyIssue(issue){
+  const text=(issue.title||'')+' '+(issue.body||'').slice(0,500);
+  const labels=(issue.labels||[]).map(l=>typeof l==='string'?l:(l.name||'')).join(' ');
+  const all=text+' '+labels;
+  let type='other';
+  if(TRIAGE_BUG.test(all))type='bug';
+  else if(TRIAGE_FEATURE.test(all))type='feature';
+  const critical=TRIAGE_CRITICAL.test(all);
+  const created=new Date(issue.created_at);
+  const daysOpen=Math.floor((Date.now()-created)/864e5);
+  const stale=daysOpen>30;
+  const comments=issue.comments||0;
+  const score=(critical?40:0)+(stale?Math.min(30,daysOpen/3):0)+comments*2+(type==='bug'?10:0);
+  return{id:issue.number,title:issue.title||'',url:issue.html_url||'',type,critical,stale,daysOpen,comments,score:Math.round(score),author:issue.user&&issue.user.login||'',labels:(issue.labels||[]).map(l=>typeof l==='string'?l:(l.name||'')).filter(Boolean)};
+}
+async function loadIssueTriage(){
+  const el=$('#triageContent');if(!el)return;
+  const m=S.repo;if(!m||!m.full_name){toast('Load a repository first','err');return}
+  const btn=$('#triageBtn');
+  if(btn){btn.disabled=true;btn.textContent='\u23F3 Scanning\u2026'}
+  el.innerHTML='<p style="color:var(--text3);font-size:12px">\u23F3 Fetching open issues\u2026</p>';
+  try{
+    const data=await api('/repos/'+m.full_name+'/issues?state=open&per_page=100&sort=created&direction=desc');
+    if(!Array.isArray(data))throw new Error('Bad response');
+    const issues=data.filter(i=>!i.pull_request);
+    S.deep.triage=issues.map(classifyIssue).sort((a,b)=>b.score-a.score);
+    renderIssueTriage();
+  }catch(e){
+    el.innerHTML='<p style="color:var(--red);font-size:12px">Failed: '+esc(e.message||'error')+'</p>';
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='\uD83D\uDCCB Scan issues'}
+  }
+}
+function renderIssueTriage(){
+  const el=$('#triageContent');if(!el)return;
+  const all=S.deep.triage;
+  if(!all||!all.length){el.innerHTML='<p style="color:var(--text3);font-size:12px">No open issues found or not scanned yet.</p>';return}
+  const filter=$('#triageFilter');
+  const fv=filter?filter.value:'all';
+  let list=all;
+  if(fv==='bug')list=all.filter(i=>i.type==='bug');
+  else if(fv==='feature')list=all.filter(i=>i.type==='feature');
+  else if(fv==='stale')list=all.filter(i=>i.stale);
+  else if(fv==='critical')list=all.filter(i=>i.critical);
+  const bugs=all.filter(i=>i.type==='bug').length;
+  const features=all.filter(i=>i.type==='feature').length;
+  const stales=all.filter(i=>i.stale).length;
+  const crits=all.filter(i=>i.critical).length;
+  const avgScore=all.length?Math.round(all.reduce((s,i)=>s+i.score,0)/all.length):0;
+  let html='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">';
+  html+='<div class="kv" style="flex:1;min-width:80px"><span>Total open</span><b>'+all.length+'</b></div>';
+  html+='<div class="kv" style="flex:1;min-width:80px"><span>Bugs</span><b style="color:var(--red)">'+bugs+'</b></div>';
+  html+='<div class="kv" style="flex:1;min-width:80px"><span>Features</span><b style="color:var(--cyan)">'+features+'</b></div>';
+  html+='<div class="kv" style="flex:1;min-width:80px"><span>Stale &gt;30d</span><b style="color:var(--yellow)">'+stales+'</b></div>';
+  html+='<div class="kv" style="flex:1;min-width:80px"><span>Critical</span><b style="color:'+(crits?'var(--red)':'var(--green)')+'">'+crits+'</b></div>';
+  html+='<div class="kv" style="flex:1;min-width:80px"><span>Avg priority</span><b>'+avgScore+'</b></div>';
+  html+='</div>';
+  if(!list.length){html+='<p style="color:var(--text3);font-size:12px">No issues match this filter.</p>';el.innerHTML=html;return}
+  html+='<div style="max-height:320px;overflow-y:auto">';
+  for(const issue of list.slice(0,50)){
+    const typeColor=issue.type==='bug'?'var(--red)':issue.type==='feature'?'var(--cyan)':'var(--text3)';
+    const typeIcon=issue.type==='bug'?'\uD83D\uDC1B':issue.type==='feature'?'\u2728':'\uD83D\uDCC4';
+    const badges=[];
+    if(issue.critical)badges.push('<span style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.4);padding:1px 6px;border-radius:6px;font-size:10px">CRITICAL</span>');
+    if(issue.stale)badges.push('<span style="background:rgba(234,179,8,.12);color:var(--yellow);border:1px solid rgba(234,179,8,.3);padding:1px 6px;border-radius:6px;font-size:10px">'+issue.daysOpen+'d</span>');
+    html+='<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:12px">';
+    html+='<span style="flex-shrink:0">'+typeIcon+'</span>';
+    html+='<div style="flex:1;min-width:0">';
+    html+='<a href="'+esc(issue.url)+'" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">#'+issue.id+' '+esc(issue.title)+'</a>';
+    html+='<div style="display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap">';
+    html+='<span style="color:'+typeColor+';font-size:10.5px;font-weight:600">'+issue.type+'</span>';
+    html+='<span style="color:var(--text3);font-size:10.5px">'+esc(issue.author)+'</span>';
+    html+='<span style="color:var(--text3);font-size:10.5px">\uD83D\uDCAC '+issue.comments+'</span>';
+    html+=badges.join('');
+    if(issue.labels.length)html+=issue.labels.slice(0,3).map(l=>'<span style="background:var(--card2);color:var(--text2);padding:1px 6px;border-radius:6px;font-size:10px">'+esc(l)+'</span>').join('');
+    html+='</div></div>';
+    html+='<span style="flex-shrink:0;font-family:var(--mono);font-size:11px;color:'+(issue.score>30?'var(--red)':issue.score>15?'var(--yellow)':'var(--text3)')+'">'+issue.score+'</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
 }
 
 /* ---------- OSV vulnerability scan ---------- */
@@ -1772,6 +1860,7 @@ function cmdActions(){
     {icon:'🔗',label:'Go to Deps',kw:'tab deps dependencies',run:()=>switchTab('deps')},
     {icon:'🔬',label:'Go to Deep Analysis',kw:'tab deep pr osv churn',run:()=>switchTab('deep')},
     {icon:'🚀',label:'Go to Onboarding Guide',kw:'tab onboard guide contribute first setup',run:()=>switchTab('onboard')},
+    {icon:'📋',label:'Go to Issue Triage',kw:'tab deep issue triage bugs priority',run:()=>switchTab('deep')},
     {icon:'🌙',label:'Toggle theme',kw:'dark light theme',run:()=>toggleTheme()},
     {icon:'🌐',label:'Switch language',kw:'language i18n fa en es zh fr ar de',run:()=>toggleLangMenu()},
     {icon:'🔑',label:'Set GitHub token',kw:'token pat api',run:()=>openModal()},
@@ -2272,7 +2361,8 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
       help_crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle — for offline reading, RAG, or appending to your LLM digest.',
       help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.',
-      help_onboard:'The Onboarding Guide generates a step-by-step first-contribution path: setup commands, architecture reading order, test directories, CI workflows, good-first-issue links, and key contacts.'
+      help_onboard:'The Onboarding Guide generates a step-by-step first-contribution path: setup commands, architecture reading order, test directories, CI workflows, good-first-issue links, and key contacts.',
+      help_triage:'Issue Triage fetches up to 100 open issues and auto-classifies them as bugs or features using keyword heuristics on titles, bodies and labels. Each issue gets a priority score based on staleness, comment count, critical keywords and type. Filter by category or run it from the Deep tab.'
     },
     fa:{
       feat1Desc:'مجوز، README، تست‌ها، CI، مستندات و تازگی — ۱۰ بررسی وزن‌دار در یک عدد صادقانه.',
@@ -2300,7 +2390,8 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_badge:'برچسب امتیاز سلامت برای README پروژه بسازید: SVG استاتیک با نمره ثبت‌شده یا برچسب دینامیک shields.io.',
       help_map:'نقشه رپو یک نمای تعاملی از سیستم مخزن است. پوشه‌ها، نقطه‌های ورود، فایل‌های manifest و تنظیمات به گره تبدیل می‌شوند. روی یک گره کلیک کنید تا متمرکز شود، R را برای یافتن مسیر بین دو گره، L برای مقایسه نوع‌ها، / برای جستجو و F برای حالت ارائه بزنید.',
       help_wrapped:'داستان سرگرم‌کننده ۱۲ ماه این رپو: ریتم کامیت‌ها، هفته اوج، مشارکت‌کننده برتر و رتبه ستاره‌ها.',
-      help_onboard:'راهنمای شروع مشارکت: دستورات نصب، ترتیب خواندن فایل‌های معماری، مسیرهای تست، CI، لینک issueهای مناسب تازه‌کارها و مخاطبین کلیدی.'
+      help_onboard:'راهنمای شروع مشارکت: دستورات نصب، ترتیب خواندن فایل‌های معماری، مسیرهای تست، CI، لینک issueهای مناسب تازه‌کارها و مخاطبین کلیدی.',
+      help_triage:'تریاز issueها تا ۱۰۰ مورد باز را از API گیت‌هاب می‌خواند و با هیوریستیک کلمات کلیدی به باگ یا فیچر دسته‌بندی می‌کند. هر issue امتیاز اولویت بر اساس قدمت، تعداد کامنت و کلمات بحرانی می‌گیرد.'
     },
     es:{
       feat1Desc:'Licencia, README, tests, CI, docs, frescura — 10 verificaciones ponderadas en un número honesto.',

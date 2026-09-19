@@ -631,6 +631,21 @@
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Linguistic profile of the last 100 commit messages: convention adherence, verbosity, emoji culture, sentiment and co-authorship network.</p>
         <div id="commitStyleContent"><p style="color:var(--text3);font-size:12px">Runs automatically after a deep scan.</p></div>
       </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="minititle">📋 Issue Triage <span class="help-slot" data-help="triage"></span></div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Auto-classifies open issues by type, staleness and priority. Click "Run deep scan" or the button below.</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="btn sm" onclick="loadIssueTriage()" id="triageBtn">📋 Scan issues</button>
+          <select id="triageFilter" onchange="renderIssueTriage()" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none">
+            <option value="all">All</option>
+            <option value="bug">Bugs</option>
+            <option value="feature">Features</option>
+            <option value="stale">Stale (&gt;30d)</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+        <div id="triageContent"><p style="color:var(--text3);font-size:12px">Not scanned yet.</p></div>
+      </div>
       <div class="card">
         <div class="minititle">🛡️ Dependency Vulnerability Scan <span class="ep-badge" id="osvBadge">—</span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Checks parsed dependencies against the OSV.dev database. No API key needed.</p>
