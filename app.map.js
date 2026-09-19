@@ -12,7 +12,7 @@
 /* ---------- i18n (merged into the shared dictionary) ---------- */
 Object.assign(I18N.en,{
   tabMap:'🗺️ Map',
-  mapHint:'Click a node to focus it · <b>R</b> route · <b>L</b> lens · <b>/</b> search · <b>M</b> minimap · <b>F</b> present · <b>S</b> style · <b>E</b> export · <b>+ − 0</b> zoom',
+  mapHint:'Click a node to focus it · <b>R</b> route · <b>L</b> lens · <b>/</b> search · <b>M</b> minimap · <b>F</b> present · <b>S</b> style · <b>G</b> layout · <b>E</b> export · <b>+ − 0</b> zoom',
   mapTrace:'🧬 Trace imports',mapFit:'⤢ Fit',mapExport:'⬇️ PNG',
   mapNoFiles:'No files to map — load a repository first.',
   mapTracing:'Tracing imports…',mapTraced:'Import tracing done — {n} dependency edges added.',
@@ -39,11 +39,12 @@ Object.assign(I18N.fa,{
 const MAP={
   nodes:[],edges:[],byId:new Map(),
   view:{x:0,y:0,k:1},
-  focusId:null,reach:null,           /* reach: 'upstream'|'downstream' */
-  hl:null,hlEdges:null,              /* computed highlight sets */
+  focusId:null,reach:null,
+  hl:null,hlEdges:null,
   routeFrom:null,routePath:null,
   lensA:null,lensB:null,
   preset:LS.get('repodest_map_preset','neon'),
+  layout:LS.get('repodest_map_layout','force'),
   present:false,minimap:LS.get('repodest_map_minimap','1')!=='0',
   raf:null,calm:0,drag:null,pan:null,
   traced:false,tracing:false,
@@ -51,6 +52,7 @@ const MAP={
 };
 const MAP_NOISE=/(^|\/)(node_modules|\.git|dist|build|vendor|\.next|__pycache__|\.cache|coverage|\.turbo|tmp|temp|out|\.output|target|\.gradle|\.idea|\.vscode|pods|venv|\.pytest_cache|bower_components)(\/|$)/i;
 const MAP_PRESETS=['neon','blueprint','signal-flow','classic','minimal'];
+const MAP_LAYOUTS=['force','tree','radial','grid','concentric','layered','spiral'];
 const MAP_KIND_COLOR={
   root:'#a855f7',folder:'#22d3ee',entry:'#22c55e',manifest:'#eab308',
   readme:'#38bdf8',config:'#f97316',test:'#ec4899',file:'#8b9bd4'
@@ -154,21 +156,97 @@ function buildRepoMap(){
   const rd=kindNodes('readme')[0];
   if(rd)mapAddEdge(rd.id,'__root__','couple');
 
-  /* deterministic radial initial layout (avoids a chaotic start) */
-  const byKind={};MAP.nodes.forEach(n=>{(byKind[n.kind]=byKind[n.kind]||[]).push(n)});
-  const ring={root:0,folder:1,manifest:2,config:2,entry:3,readme:2,test:3,file:4};
-  Object.entries(byKind).forEach(([kind,arr])=>{
-    const rr=110*(ring[kind]||3);
-    arr.forEach((n,i)=>{
-      const a=(i/Math.max(1,arr.length))*Math.PI*2+kind.length;
-      n.x=Math.cos(a)*rr*(0.8+((i*7)%10)/25);n.y=Math.sin(a)*rr*(0.8+((i*3)%10)/25);
-    });
-  });
+  mapApplyLayout();
 
   renderMapLegend();
   mapFit(true);
   mapApplyHash();
   mapWake();
+}
+
+function mapApplyLayout(){
+  const L=MAP.layout;
+  const nodes=MAP.nodes;
+  const root=MAP.byId.get('__root__');
+  if(!nodes.length)return;
+  const children={};
+  nodes.forEach(n=>{children[n.id]=[]});
+  MAP.edges.forEach(e=>{if(e.kind==='tree'||e.kind==='couple'){children[e.t].push(e.s);children[e.s].push(e.t)}});
+  const depth={};
+  (function walk(id,d,parent){
+    if(depth[id]!==undefined&&depth[id]<=d)return;
+    depth[id]=d;
+    (children[id]||[]).forEach(c=>{if(c!==parent)walk(c,d+1,id)});
+  })(root?root.id:nodes[0].id,0,null);
+  const maxD=Math.max(1,...Object.values(depth));
+  const byKind={};nodes.forEach(n=>{(byKind[n.kind]=byKind[n.kind]||[]).push(n)});
+  const ring={root:0,folder:1,manifest:2,config:2,entry:3,readme:2,test:3,file:4};
+  if(L==='force'){
+    Object.entries(byKind).forEach(([kind,arr])=>{
+      const rr=110*(ring[kind]||3);
+      arr.forEach((n,i)=>{
+        const a=(i/Math.max(1,arr.length))*Math.PI*2+kind.length;
+        n.x=Math.cos(a)*rr*(0.8+((i*7)%10)/25);n.y=Math.sin(a)*rr*(0.8+((i*3)%10)/25);
+      });
+    });
+  }else if(L==='tree'){
+    const levels={};
+    nodes.forEach(n=>{const d=depth[n.id]||0;(levels[d]=levels[d]||[]).push(n)});
+    const keys=Object.keys(levels).map(Number).sort((a,b)=>a-b);
+    keys.forEach((d,li)=>{
+      const arr=levels[d];
+      const spacing=Math.max(60,800/Math.max(1,arr.length));
+      const startX=-(arr.length-1)*spacing/2;
+      arr.forEach((n,i)=>{n.x=startX+i*spacing;n.y=li*120-((keys.length-1)*60);n.fixed=n.kind!=='root'});
+    });
+  }else if(L==='radial'){
+    Object.entries(byKind).forEach(([kind,arr])=>{
+      const rr=110*(ring[kind]||3);
+      arr.forEach((n,i)=>{
+        const a=(i/Math.max(1,arr.length))*Math.PI*2+kind.length*0.5;
+        n.x=Math.cos(a)*rr;n.y=Math.sin(a)*rr;
+      });
+    });
+  }else if(L==='grid'){
+    const cols=Math.ceil(Math.sqrt(nodes.length));
+    const gap=90;
+    nodes.forEach((n,i)=>{
+      n.x=(i%cols-(cols-1)/2)*gap;
+      n.y=(Math.floor(i/cols)-(Math.ceil(nodes.length/cols)-1)/2)*gap;
+    });
+  }else if(L==='concentric'){
+    const kinds=['root','folder','manifest','config','entry','readme','test','file'];
+    kinds.forEach((k,ri)=>{
+      const arr=byKind[k]||[];
+      const rr=ri===0?0:70+ri*65;
+      arr.forEach((n,i)=>{
+        if(rr===0){n.x=0;n.y=0}else{
+          const a=(i/Math.max(1,arr.length))*Math.PI*2-Math.PI/2;
+          n.x=Math.cos(a)*rr;n.y=Math.sin(a)*rr;
+        }
+      });
+    });
+  }else if(L==='layered'){
+    const layers={};
+    nodes.forEach(n=>{const d=depth[n.id]||0;(layers[d]=layers[d]||[]).push(n)});
+    const keys=Object.keys(layers).map(Number).sort((a,b)=>a-b);
+    const gapX=130,gapY=70;
+    keys.forEach((d,li)=>{
+      const arr=layers[d];
+      arr.forEach((n,i)=>{
+        n.x=li*gapX-(keys.length-1)*gapX/2;
+        n.y=i*gapY-(arr.length-1)*gapY/2;
+      });
+    });
+  }else if(L==='spiral'){
+    nodes.forEach((n,i)=>{
+      if(n.kind==='root'){n.x=0;n.y=0;return}
+      const a=i*0.618*Math.PI*2;
+      const r=30+i*12;
+      n.x=Math.cos(a)*r;n.y=Math.sin(a)*r;
+    });
+  }
+  nodes.forEach(n=>{n.vx=0;n.vy=0});
 }
 
 function renderMapLegend(){
@@ -609,13 +687,14 @@ function mapTick(time){
   const canvas=$('#mapCanvas');
   if(!wrap||!canvas){MAP.raf=null;return}
   const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if(!reduced){
+  if(!reduced&&MAP.layout==='force'){
     const energy=mapPhysics();
     if(energy<0.4){MAP.calm++;if(MAP.calm>40){MAP.raf=null;mapDraw();return}}
     else MAP.calm=0;
   }
   mapDraw(time);
-  MAP.raf=requestAnimationFrame(mapTick);
+  if(MAP.layout==='force')MAP.raf=requestAnimationFrame(mapTick);
+  else{MAP.raf=null;mapDraw()}
 }
 function mapDraw(time){
   const canvas=$('#mapCanvas');
@@ -815,6 +894,18 @@ function cycleMapPreset(){
   mapDraw();
   toast('Style: '+MAP.preset,'ok');
 }
+function cycleMapLayout(){
+  const i=MAP_LAYOUTS.indexOf(MAP.layout);
+  MAP.layout=MAP_LAYOUTS[(i+1)%MAP_LAYOUTS.length];
+  LS.set('repodest_map_layout',MAP.layout);
+  const name=$('#mapLayoutName');
+  if(name)name.textContent=MAP.layout[0].toUpperCase()+MAP.layout.slice(1);
+  MAP.nodes.forEach(n=>{if(n.kind!=='root')n.fixed=MAP.layout!=='force'});
+  mapApplyLayout();
+  mapFit(true);
+  mapWake();
+  toast('Layout: '+MAP.layout,'ok');
+}
 function toggleMapMinimap(){
   MAP.minimap=!MAP.minimap;
   LS.set('repodest_map_minimap',MAP.minimap?'1':'0');
@@ -856,6 +947,7 @@ function mapWriteHash(){
   if(MAP.routePath&&MAP.routePath.length>1)parts.push('route='+encodeURIComponent(MAP.routePath.join('~')));
   if(MAP.lensA&&MAP.lensB)parts.push('lens='+MAP.lensA+'~'+MAP.lensB);
   if(MAP.preset!=='neon')parts.push('view='+MAP.preset);
+  if(MAP.layout!=='force')parts.push('layout='+MAP.layout);
   const h='#'+parts.join('&');
   if(location.hash!==h)history.replaceState(null,'',h);
 }
@@ -867,6 +959,7 @@ function mapApplyHash(){
     const i=p.indexOf('=');if(i>0)params[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1));
   });
   if(params.view&&MAP_PRESETS.includes(params.view)){MAP.preset=params.view;const name=$('#mapPresetName');if(name)name.textContent=MAP.preset[0].toUpperCase()+MAP.preset.slice(1)}
+  if(params.layout&&MAP_LAYOUTS.includes(params.layout)){MAP.layout=params.layout;const ln=$('#mapLayoutName');if(ln)ln.textContent=MAP.layout[0].toUpperCase()+MAP.layout.slice(1);MAP.nodes.forEach(n=>{if(n.kind!=='root')n.fixed=MAP.layout!=='force'});mapApplyLayout()}
   if(params.lens&&params.lens.includes('~')){const[a,b]=params.lens.split('~');MAP.lensA=a;MAP.lensB=b}
   if(params.focus&&MAP.byId.has(params.focus)){
     MAP.focusId=params.focus;
@@ -909,6 +1002,7 @@ document.addEventListener('keydown',e=>{
   if(k==='m'||k==='M'){e.preventDefault();toggleMapMinimap();return}
   if(k==='f'||k==='F'){e.preventDefault();toggleMapPresent();return}
   if(k==='s'||k==='S'){e.preventDefault();cycleMapPreset();return}
+  if(k==='g'||k==='G'){e.preventDefault();cycleMapLayout();return}
   if(k==='e'||k==='E'){e.preventDefault();exportMapPNG();return}
   if(k==='+'||k==='='){e.preventDefault();mapZoomAt(MAP.W/2,MAP.H/2,1.25);mapDraw();return}
   if(k==='-'||k==='_'){e.preventDefault();mapZoomAt(MAP.W/2,MAP.H/2,0.8);mapDraw();return}
@@ -930,6 +1024,7 @@ window.addEventListener('hashchange',()=>{if(mapIsActive()&&MAP.nodes.length){ma
         startMapAnimation();
         const btn=$('#mapMinimapBtn');if(btn)btn.style.opacity=MAP.minimap?'1':'.5';
         const name2=$('#mapPresetName');if(name2)name2.textContent=MAP.preset[0].toUpperCase()+MAP.preset.slice(1);
+        const ln=$('#mapLayoutName');if(ln)ln.textContent=MAP.layout[0].toUpperCase()+MAP.layout.slice(1);
       }else if(MAP.raf){cancelAnimationFrame(MAP.raf);MAP.raf=null}
     };
   }
