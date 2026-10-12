@@ -1532,11 +1532,12 @@ function packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkippe
     parts.push(buildDigestHeader(m,branch,group.length+' of '+paths.length+' files (part '+(gi+1)+'/'+groups.length+')'));
     if($('#optTree').checked){
       if(digestFormat==='xml')parts.push('  <file_tree>\n'+asciiTree(group.map(s=>s.path)).split('&').join('&amp;').split('<').join('&lt;')+'\n  </file_tree>');
+      else if(digestFormat==='repomix')parts.push('<directory_structure>\n'+asciiTree(group.map(s=>s.path))+'\n</directory_structure>');
       else if(digestFormat==='json')parts.push('    "file_tree": '+JSON.stringify(asciiTree(group.map(s=>s.path)))+',');
       else parts.push('\n# File Tree\n\n```text\n'+asciiTree(group.map(s=>s.path))+'\n```');
     }
     group.forEach(sec=>parts.push(wrapFileSection(sec.path,sec.ext,sec.content)));
-    if(gi===groups.length-1&&skipped)parts.push(digestFormat==='xml'?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
+    if(gi===groups.length-1&&skipped)parts.push((digestFormat==='xml'||digestFormat==='repomix')?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
     finalizeDigestFooter(parts);
     out.push(parts.join('\n'));
   });
@@ -1673,10 +1674,13 @@ async function shareDigestGist(){
 function downloadDigest(){
   const t=$('#digestOut').value||S.digestText;
   if(!t)return;
-  const blob=new Blob([t],{type:'text/markdown;charset=utf-8'});
+  const ext=digestFormat==='json'?'json':digestFormat==='xml'||digestFormat==='repomix'?'xml':digestFormat==='llmstxt'?'txt':'md';
+  const mime=digestFormat==='json'?'application/json':digestFormat==='xml'||digestFormat==='repomix'?'application/xml':'text/plain;charset=utf-8';
+  const blob=new Blob([t],{type:mime});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=((S.repo&&S.repo.full_name)||'repo').replace('/','-')+'-digest.md';
+  const name=digestFormat==='llmstxt'?'llms.txt':((S.repo&&S.repo.full_name)||'repo').replace('/','-')+'-digest.'+ext;
+  a.download=name;
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
 }

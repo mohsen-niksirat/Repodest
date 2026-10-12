@@ -1631,7 +1631,7 @@ function digestTaskLabel(){
   if(digestPreset==='custom')return'Custom';
   return (DIGEST_PRESETS[digestPreset]||DIGEST_PRESETS.general).label;
 }
-const DIGEST_FORMATS=['md','xml','json'];
+const DIGEST_FORMATS=['md','xml','json','llmstxt','repomix'];
 let digestPreset=LS.get('repodest_preset','general');
 let digestFormat=LS.get('repodest_format','md');
 let sigOnly=LS.get('repodest_sigonly',false);
@@ -1805,6 +1805,42 @@ function buildDigestHeader(m,branch,partLabel){
       '  </meta>','  <task>'+esc(digestTask())+'</task>',
       partLabel?'  <part>'+esc(partLabel)+'</part>':''].filter(Boolean).join('\n');
   }
+  if(digestFormat==='repomix'){
+    return ['This file is a merged representation of the entire codebase, combined into a single document by Repodest / Repomix format.',
+      '<file_summary>',
+      'This section contains a summary of this file.',
+      '<purpose>',
+      'This file contains a packed representation of the entire repository\'s contents.',
+      'It is designed to be easily consumable by AI systems for analysis, code review, or other automated processes.',
+      '</purpose>',
+      '<file_format>',
+      'The content is organized as follows:',
+      '1. Repository overview and instruction',
+      '2. Directory structure',
+      '3. Repository files (enclosed in <file> tags)',
+      '</file_format>',
+      '</file_summary>',
+      '<repository_instruction>',
+      digestTask(),
+      '</repository_instruction>',
+      '<repository_files>'].join('\n');
+  }
+  if(digestFormat==='llmstxt'){
+    return ['# '+(m&&m.full_name||'Repository'),
+      '',
+      '> '+(m&&m.description||'Repository overview and documentation context for LLMs'),
+      '',
+      '## Overview',
+      '- Source: '+(m&&m.html_url||''),
+      '- Language: '+(m&&m.language||'N/A'),
+      '- Stars: '+fmt(m&&m.stargazers_count)+' · Forks: '+fmt(m&&m.forks_count)+' · License: '+(m&&m.license?m.license.spdx_id:'none'),
+      partLabel?'- '+partLabel:'',
+      '',
+      '## Prompt Instructions',
+      digestTask(),
+      '',
+      '## Files'].join('\n');
+  }
   if(digestFormat==='json'){
     return ['{','  "repository": "'+(m&&m.full_name)+'",','  "platform": "'+(S.platform||'github')+'",','  "branch": "'+branch+'",',
       '  "meta": '+JSON.stringify({description:m&&m.description,primary_language:m&&m.language,stars:m&&m.stargazers_count,forks:m&&m.forks_count,license:m&&m.license?m.license.spdx_id:null,generated:new Date().toISOString().slice(0,10),part:partLabel||null})+',',
@@ -1822,16 +1858,21 @@ function buildDigestHeader(m,branch,partLabel){
 function wrapFileSection(p,ext,content){
   if(p==='__docs_bundle__.txt'){
     if(digestFormat==='xml')return '  <docs_bundle>\n<![CDATA[\n'+content+'\n]]>\n  </docs_bundle>';
+    if(digestFormat==='repomix')return '<file path="'+esc(p)+'">\n'+content+'\n</file>';
     if(digestFormat==='json')return '    '+JSON.stringify({docs_bundle:content})+',';
     return '\n# Crawled documentation (from the Crawl tab)\n\n'+content;
   }
   if(digestFormat==='xml')return '  <file path="'+esc(p)+'">\n<![CDATA[\n'+content+'\n]]>\n  </file>';
+  if(digestFormat==='repomix')return '<file path="'+esc(p)+'">\n'+content+'\n</file>';
+  if(digestFormat==='llmstxt')return '\n### '+p+'\n\n```'+ext+'\n'+content+'\n```';
   if(digestFormat==='json')return '    '+JSON.stringify({path:p,content})+',';
   return '\n# File: '+p+'\n\n````'+ext+'\n'+content+'\n````';
 }
 
 function finalizeDigestFooter(parts){
   if(digestFormat==='xml')parts.push('</repository>');
+  else if(digestFormat==='repomix')parts.push('</repository_files>');
+  else if(digestFormat==='llmstxt')parts.push('\n---\nEnd of llms.txt repository documentation.');
   else if(digestFormat==='json'){
     let s=parts.join('\n');
     if(s.endsWith(','))s=s.slice(0,-1);
