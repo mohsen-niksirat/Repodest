@@ -1621,6 +1621,7 @@ const DIGEST_FORMATS=['md','xml','json'];
 let digestPreset=LS.get('repodest_preset','general');
 let digestFormat=LS.get('repodest_format','md');
 let sigOnly=LS.get('repodest_sigonly',false);
+let tokenShrink=LS.get('repodest_shrink',false);
 const MODEL_CTX={gpt5:128000,claude:200000,gemini:1000000,llama:8000};
 const MODEL_CHARS_PER_TOK={gpt5:4,claude:3.6,gemini:3.8,llama:4.2};
 
@@ -1642,10 +1643,16 @@ function toggleSigOnly(){
   const b=$('#sigBtn');if(b)b.classList.toggle('preset-sel',sigOnly);
   toast(sigOnly?'Signatures-only mode ON':'Signatures-only mode OFF','ok');
 }
+function toggleTokenShrink(){
+  tokenShrink=!tokenShrink;LS.set('repodest_shrink',tokenShrink);
+  const b=$('#shrinkBtn');if(b)b.classList.toggle('preset-sel',tokenShrink);
+  toast(tokenShrink?'Token shrinker ON (comments & spaces stripped)':'Token shrinker OFF','ok');
+}
 function initDigestControls(){
   $$('.rec-btn[data-preset]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.preset===digestPreset));
   $$('.rec-btn[data-format]').forEach(b=>b.classList.toggle('preset-sel',b.dataset.format===digestFormat));
   const sb=$('#sigBtn');if(sb)sb.classList.toggle('preset-sel',sigOnly);
+  const shb=$('#shrinkBtn');if(shb)shb.classList.toggle('preset-sel',tokenShrink);
 }
 
 /* ============================================================

@@ -1483,6 +1483,9 @@ async function generateDigest(){
       if(!r.ok){skipped++;continue}
       let t=await r.text();
       if(t.includes('\0')||/[ --]{5,}/.test(t)){binSkipped++;skipped++;continue}
+      if(typeof tokenShrink!=='undefined'&&tokenShrink){
+        t=stripCommentsAndWhitespace(t,ext);
+      }
       if(sigOnly&&(f.size||0)>10*1024){const shrunk=extractSignatures(t,ext);if(shrunk.length<t.length){t=shrunk;sigShrunk++}}
       sections.push({path:p,ext,content:t});
     }catch(e){skipped++}

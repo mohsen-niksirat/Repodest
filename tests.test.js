@@ -23,6 +23,7 @@ const esc=core.esc,fmt=core.fmt,fmtSize=core.fmtSize,timeAgo=core.timeAgo;
 const langColor=core.langColor,extOf=core.extOf,isText=core.isText,isLock=core.isLock;
 const parseRepoInput=core.parseRepoInput,detectPlatform=core.detectPlatform;
 const asciiTree=core.asciiTree,SPDX_MAP=core.SPDX_MAP,healthCheck=core.healthCheckPaths;
+const stripCommentsAndWhitespace=core.stripCommentsAndWhitespace;
 
 /* ============================================================
    Tests
@@ -221,6 +222,42 @@ describe('SPDX License Map', () => {
   });
   it('covers 20+ licenses', () => {
     if(Object.keys(SPDX_MAP).length<20)throw new Error('Expected 20+ SPDX entries, got '+Object.keys(SPDX_MAP).length);
+  });
+});
+
+describe('stripCommentsAndWhitespace() — token shrinker', () => {
+  it('strips JS single-line and multi-line comments without breaking strings', () => {
+    const input = '// this is a comment\nconst url = "https://example.com//test"; /* block comment */\nconsole.log(url);';
+    const res = stripCommentsAndWhitespace(input, 'js');
+    expect(res).toContain('const url = "https://example.com//test";');
+    expect(res).toContain('console.log(url);');
+    if(res.includes('this is a comment')) throw new Error('Expected single line comment to be stripped');
+    if(res.includes('block comment')) throw new Error('Expected block comment to be stripped');
+  });
+
+  it('strips Python hash comments while preserving strings', () => {
+    const input = '# Python comment\ndef test():\n    msg = "# not a comment"\n    return msg';
+    const res = stripCommentsAndWhitespace(input, 'py');
+    expect(res).toContain('msg = "# not a comment"');
+    if(res.includes('# Python comment')) throw new Error('Expected Python comment to be stripped');
+  });
+
+  it('strips HTML and CSS comments', () => {
+    const html = '<!-- html comment --><div>hello</div>';
+    expect(stripCommentsAndWhitespace(html, 'html')).toEqual('<div>hello</div>');
+    const css = '/* css comment */body { color: red; }';
+    expect(stripCommentsAndWhitespace(css, 'css')).toEqual('body { color: red; }');
+  });
+
+  it('collapses excessive blank lines and trims whitespace', () => {
+    const input = 'a = 1;   \n\n\n\n\nb = 2;  ';
+    const res = stripCommentsAndWhitespace(input, 'js');
+    expect(res).toEqual('a = 1;\n\nb = 2;');
+  });
+
+  it('handles empty or non-string input safely', () => {
+    expect(stripCommentsAndWhitespace(null, 'js')).toEqual('');
+    expect(stripCommentsAndWhitespace('', 'py')).toEqual('');
   });
 });
 

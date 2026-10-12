@@ -111,6 +111,63 @@ RepodestCore.SPDX_MAP={
   'BSL-1.0':{name:'Boost Software License 1.0',perms:['Commercial use','Modification','Distribution','Private use'],conds:['Include copyright','Include license'],lims:['Liability','Warranty']},
 };
 
+/* ---------- Token Shrinker: strip comments & excess whitespace ---------- */
+RepodestCore.stripCommentsAndWhitespace=function(src,ext){
+  if(!src||typeof src!=='string')return '';
+  ext=(ext||'').toLowerCase();
+  let code=src;
+
+  /* C-style languages: js, ts, jsx, tsx, c, cpp, cs, java, go, rs, swift, php, kt, etc. */
+  if(/^(js|ts|jsx|tsx|mjs|cjs|c|h|cpp|cc|cxx|hpp|hh|cs|java|go|rs|swift|kt|kts|dart|scala|php)$/.test(ext)){
+    /* Replace strings and regex literals with placeholders or preserve them safely */
+    const strings=[];
+    code=code.replace(/(["'`])(?:\\.|(?!\1)[^\\\r\n])*\1/g,m=>{
+      strings.push(m);
+      return '__STR_'+(strings.length-1)+'__';
+    });
+    /* Strip single line comments // ... */
+    code=code.replace(/\/\/.*$/gm,'');
+    /* Strip multi-line comments /* ... * / */
+    code=code.replace(/\/\*[\s\S]*?\*\//g,'');
+    /* Restore strings */
+    code=code.replace(/__STR_(\d+)__/g,(_,i)=>strings[i]!==undefined?strings[i]:'');
+  } else if(/^(py|pyw|rb|sh|bash|zsh|yaml|yml|r)$/.test(ext)){
+    /* Python, Ruby, Shell, YAML: # comments */
+    const strings=[];
+    /* Handle triple-quotes in Python */
+    if(ext.startsWith('py')){
+      code=code.replace(/("""[\s\S]*?"""|'''[\s\S]*?''')/g,m=>{
+        strings.push(m);
+        return '__STR_'+(strings.length-1)+'__';
+      });
+    }
+    code=code.replace(/(["'])(?:\\.|(?!\1)[^\\\r\n])*\1/g,m=>{
+      strings.push(m);
+      return '__STR_'+(strings.length-1)+'__';
+    });
+    code=code.replace(/#.*$/gm,'');
+    code=code.replace(/__STR_(\d+)__/g,(_,i)=>strings[i]!==undefined?strings[i]:'');
+  } else if(/^(html|htm|xml|svg|vue|svelte)$/.test(ext)){
+    /* HTML comments <!-- ... --> */
+    code=code.replace(/<!--[\s\S]*?-->/g,'');
+  } else if(/^(css|scss|less)$/.test(ext)){
+    /* CSS comments /* ... * / */
+    code=code.replace(/\/\*[\s\S]*?\*\//g,'');
+  } else if(/^(sql)$/.test(ext)){
+    /* SQL comments -- and /* ... * / */
+    code=code.replace(/--.*$/gm,'');
+    code=code.replace(/\/\*[\s\S]*?\*\//g,'');
+  }
+
+  /* Clean up whitespace: trim trailing spaces and collapse 3+ consecutive blank lines into 1 */
+  return code
+    .split('\n')
+    .map(line=>line.replace(/[ \t]+$/,''))
+    .join('\n')
+    .replace(/\n{3,}/g,'\n\n')
+    .trim();
+};
+
 /* ---------- UMD export ---------- */
 if(typeof module!=='undefined'&&module.exports)module.exports=RepodestCore;
 if(typeof globalThis!=='undefined'){
