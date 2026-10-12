@@ -36,8 +36,13 @@ Repodest is a **client-side GitHub repository analyzer** and **LLM-ready digest 
 ### 📊 Language Breakdown
 Byte-accurate bar + doughnut chart showing the true composition of the codebase.
 
-### 🤖 LLM Digest
-Select files in the tree → Generate → get a formatted prompt with repo metadata, README, file tree, and full file contents. Live token estimate, size guardrails, lockfile/binary skipping.
+### 🤖 LLM Digest & Agent Formats
+Select files in the tree → Generate → get a formatted prompt with repo metadata, README, file tree, and full file contents.
+- **Export formats**: Markdown, XML, JSON, official `llms.txt`, and `Repomix` XML schema.
+- **Token Shrinker (✂️)**: Strips single/multi-line comments and extraneous whitespace to save up to 40% context tokens.
+- **Smart Goal Presets**: One-click selection for 🐞 Bug Hunter, 🏗️ Architecture, and 🛡️ Security Audit.
+- **Signature Extraction (🗜️)**: Preserves only function/class signatures and types for ultra-compact digests.
+- **Live Token Estimates**: Context-aware budgeting with auto-chunking for GPT-5, Claude, Gemini, and Llama.
 
 ### 🗂️ File Explorer
 Lazy-rendered tree with sizes, type distribution, and the heaviest files in the repo.
@@ -104,8 +109,13 @@ MIT © [Mohsen Niksirat](https://github.com/mohsen-niksirat)
 ### 📊 تفکیک زبان‌ها
 نمودار میله‌ای و دایره‌ای دقیق بر اساس بایت.
 
-### 🤖 خلاصه LLM
+### 🤖 خلاصه LLM و فرمت‌های ایجنت
 فایل‌ها را در درخت انتخاب کنید → تولید → پرامپت قالب‌بندی شده با فراداده رپو، README، درخت فایل و محتوای کامل.
+- **فرمت‌های خروجی**: فرمت‌های Markdown، XML، JSON و استانداردهای جدید `llms.txt` و `Repomix`.
+- **کاهش حجم توکن (✂️ Token Shrinker)**: حذف هوشمند کامنت‌ها و فاصله‌های اضافی جهت صرفه‌جویی تا ۴۰٪ توکن کانتکست.
+- **انتخاب هوشمند هدف‌محور**: انتخاب خودکار فایل‌ها با یک کلیک برای 🐞 شکارچی باگ، 🏗️ معماری و تایپ‌ها، و 🛡️ ممیزی امنیت.
+- **استخراج امضای کد (🗜️ Signatures only)**: حفظ اینترفیس‌ها، کلاس‌ها و توابع برای خلاصه‌سازی فوق فشرده.
+- **تخمین زنده توکن**: پیش‌بینی حجم پرامپت برای مدل‌های GPT-5، Claude، Gemini و Llama با قطعه‌بندی خودکار در صورت عبور از پنجره زمینه.
 
 ### 🗂️ مرورگر فایل
 درخت با رندر تنبل، با اندازه‌ها و توزیع انواع فایل.
