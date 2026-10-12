@@ -24,6 +24,7 @@ const langColor=core.langColor,extOf=core.extOf,isText=core.isText,isLock=core.i
 const parseRepoInput=core.parseRepoInput,detectPlatform=core.detectPlatform;
 const asciiTree=core.asciiTree,SPDX_MAP=core.SPDX_MAP,healthCheck=core.healthCheckPaths;
 const stripCommentsAndWhitespace=core.stripCommentsAndWhitespace;
+const filterPathsByGoal=core.filterPathsByGoal;
 
 /* ============================================================
    Tests
@@ -258,6 +259,47 @@ describe('stripCommentsAndWhitespace() — token shrinker', () => {
   it('handles empty or non-string input safely', () => {
     expect(stripCommentsAndWhitespace(null, 'js')).toEqual('');
     expect(stripCommentsAndWhitespace('', 'py')).toEqual('');
+  });
+});
+
+describe('filterPathsByGoal() — smart goal presets', () => {
+  const samplePaths = [
+    'src/index.js',
+    'src/app.js',
+    'src/auth/login.js',
+    'tests/app.test.js',
+    'package.json',
+    'package-lock.json',
+    'README.md',
+    '.github/workflows/ci.yml',
+    'src/types.ts',
+    'node_modules/foo/index.js'
+  ];
+
+  it('selects entry points and test files for bug hunter goal', () => {
+    const res = filterPathsByGoal(samplePaths, 'bug');
+    expect(res).toContain('tests/app.test.js');
+    expect(res).toContain('src/index.js');
+    if(res.includes('package-lock.json')) throw new Error('Lockfile should not be selected');
+    if(res.includes('node_modules/foo/index.js')) throw new Error('node_modules should be excluded');
+  });
+
+  it('selects types, interfaces and manifests for architecture goal', () => {
+    const res = filterPathsByGoal(samplePaths, 'arch');
+    expect(res).toContain('src/types.ts');
+    expect(res).toContain('package.json');
+  });
+
+  it('selects auth, security and workflows for security goal', () => {
+    const res = filterPathsByGoal(samplePaths, 'security');
+    expect(res).toContain('src/auth/login.js');
+    expect(res).toContain('.github/workflows/ci.yml');
+    expect(res).toContain('package.json');
+  });
+
+  it('handles empty or invalid paths safely', () => {
+    expect(filterPathsByGoal([], 'bug')).toHaveLength(0);
+    expect(filterPathsByGoal(null, 'arch')).toHaveLength(0);
   });
 });
 

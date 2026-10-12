@@ -240,6 +240,20 @@ function selectSmartCategory(cat){
 }
 function selectRecCategory(cat){selectSmartCategory(cat)}
 
+function selectRecGoal(goal){
+  const paths=Array.from(FILEMAP.keys());
+  const selected=RepodestCore.filterPathsByGoal(paths,goal);
+  if(!selected.length){
+    toast('No matching files found for this preset','err');
+    return;
+  }
+  selected.forEach(p=>S.sel.add(p));
+  $$('#tree .fcb').forEach(cb=>cb.checked=S.sel.has(cb.dataset.path));
+  updateSelMeta();
+  const labels={bug:'Bug Hunter',arch:'Architecture',security:'Security Audit'};
+  toast(selected.length+' files selected for '+(labels[goal]||goal),'ok');
+}
+
 /* ---------- Ask-a-question smart file selection ----------
    Scores candidate files by keyword overlap with paths and
    (lazily fetched) contents; picks the top matches. */

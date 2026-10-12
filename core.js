@@ -168,6 +168,47 @@ RepodestCore.stripCommentsAndWhitespace=function(src,ext){
     .trim();
 };
 
+/* ---------- Smart Goal-Oriented File Presets ---------- */
+RepodestCore.filterPathsByGoal=function(paths,goal){
+  if(!Array.isArray(paths)||!paths.length)return[];
+  goal=(goal||'').toLowerCase();
+  const isExcluded=p=>/(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|dist|build|coverage|\.git|node_modules|vendor)\//i.test(p);
+  const valid=paths.filter(p=>!isExcluded(p));
+
+  if(goal==='bug'||goal==='bughunter'){
+    /* Source files + tests + configs */
+    const testRx=/(^|\/)(tests?|specs?|__tests__)(\/|$)|(\.|\b)(test|spec)\.[a-z]+$/i;
+    const entryRx=/(^|\/)(index|main|app|server|cli|router|routes|api)\.[a-z]+$/i;
+    const isTest=valid.filter(p=>testRx.test(p));
+    const isEntry=valid.filter(p=>entryRx.test(p));
+    const otherCode=valid.filter(p=>/^(src|lib|app|pkg|internal)\//i.test(p));
+    return Array.from(new Set([...isTest,...isEntry,...otherCode])).slice(0,18);
+  }
+
+  if(goal==='arch'||goal==='architecture'){
+    /* Types, interfaces, entry points, manifests */
+    const archRx=/(^|\/)(types?|interfaces?|models?|schema|schemas?|routes?|api|index|main|app)\.[a-z]+$/i;
+    const manifestRx=/(^|\/)(package\.json|pyproject\.toml|Cargo\.toml|go\.mod|pom\.xml|composer\.json)$/i;
+    return valid.filter(p=>archRx.test(p)||manifestRx.test(p)||p.endsWith('.d.ts')).slice(0,15);
+  }
+
+  if(goal==='security'||goal==='audit'){
+    /* Auth, middleware, crypto, env, manifests, workflows */
+    const secRx=/(auth|login|jwt|token|crypt|secret|key|session|guard|perm|middleware|protect|security|\.env|\.github\/workflows)/i;
+    const manifestRx=/(^|\/)(package\.json|requirements\.txt|pyproject\.toml|Cargo\.toml|go\.mod)$/i;
+    return valid.filter(p=>secRx.test(p)||manifestRx.test(p)).slice(0,15);
+  }
+
+  if(goal==='docs'||goal==='document'){
+    /* Readme, docs folder, contributing, changelog, comments */
+    const docRx=/(^|\/)(readme|contributing|changelog|license|security|architecture|api)\.md$/i;
+    const docFolder=/(^|\/)docs?\//i;
+    return valid.filter(p=>docRx.test(p)||docFolder.test(p)).slice(0,12);
+  }
+
+  return valid.slice(0,10);
+};
+
 /* ---------- UMD export ---------- */
 if(typeof module!=='undefined'&&module.exports)module.exports=RepodestCore;
 if(typeof globalThis!=='undefined'){
