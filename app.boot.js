@@ -11,6 +11,7 @@
 (function boot(){
   refreshRate();
   renderHistory();
+  try{renderFavorites()}catch(e){}
   try{applyUrlAutomation()}catch(e){}
   const q=new URLSearchParams(location.search);
   if(q.get('repo')){

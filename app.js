@@ -1049,6 +1049,7 @@ function renderDash(){
     renderOverview();renderLanguages();renderFiles();resetDigest();renderActivity();renderFun();
     renderLicenseAnalysis();
     try{renderBadgeGenerator()}catch(e){}
+    try{if(typeof updateFavBtn==='function')updateFavBtn()}catch(e){}
     computeComplexity();
     /* Preserve the tab the user is already on (language switch, favorite
        toggle etc. re-run renderDash and used to kick the user back to
