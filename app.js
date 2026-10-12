@@ -918,6 +918,11 @@ function applyRepo(key,data,fromCache){
     parseTree(data.tree);
     S.repo=data.meta;S.langs=data.langs||{};S.contribs=data.contribs||[];S.commits=data.commits||[];
     S.activity=null;S.sel.clear();S.digestText='';
+    if(S.deep)S.deep={pr:null,fix:null,churn:null,osv:null,loaded:false};
+    S.docsBundle=null;
+    const crawlHint=$('#crawlDigestHint');if(crawlHint)crawlHint.style.display='none';
+    S.smellSections=null;
+    S._parsedDeps=null;
     show($('#userView'),false);
 
     updateSEO(data.meta);
@@ -1058,9 +1063,9 @@ function switchTab(name){
   $$('#dash .panel').forEach(p=>p.classList.toggle('active',p.id==='p-'+name));
   if(name==='overview'){
     renderComplexity();
-    renderSecurity();
-    findSimilarRepos();
-    loadReadmePreview();
+    if(typeof renderSecurityScan==='function')renderSecurityScan();else renderSecurity();
+    if(typeof renderSimilarRepos==='function')renderSimilarRepos();else findSimilarRepos();
+    if(typeof renderReadmePreview==='function')renderReadmePreview();else loadReadmePreview();
     renderEndpoints();
   }
   if(name==='activity'){

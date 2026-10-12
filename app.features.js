@@ -429,6 +429,7 @@ async function renderReadmePreview(){
     el.innerHTML='<span style="color:var(--text3);font-size:12.5px">Could not load README content.</span>';
   }
 }
+const loadReadmePreview=renderReadmePreview;
 
 /* ============================================================
    Feature 15: Keyboard Shortcuts

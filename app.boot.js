@@ -14,12 +14,12 @@
   try{applyUrlAutomation()}catch(e){}
   const q=new URLSearchParams(location.search);
   if(q.get('repo')){
-    const m=q.get('repo').match(/^([^\/]+)\/([^\/]+)$/);
-    if(m){
-      const platform=q.get('platform')||detectPlatform(q.get('repo'))||'github';
+    const p=parseRepoInput(q.get('repo'));
+    if(p){
+      const platform=q.get('platform')||p.platform||'github';
       if(platform==='ghe'&&!gheBase()){setGheBase(location.origin)} /* GHE deep link from inside the instance */
-      loadRepo(m[1],m[2],platform);
-      return
+      loadRepo(p.owner,p.repo,platform);
+      return;
     }
   }
   if(q.get('user')&&/^[\w-]+$/.test(q.get('user'))){loadUser(q.get('user'));return}

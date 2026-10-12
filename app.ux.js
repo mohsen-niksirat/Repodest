@@ -414,9 +414,7 @@ async function loadReleases(){
    Feature: Repo Battle Mode
    ============================================================ */
 function toggleBattle(){
-  const modal=$('#battleModal');
-  if(!modal)return;
-  modal.classList.toggle('hidden');
+  openBattle();
 }
 async function loadBattle(){
   const input=$('#battleInput');
@@ -466,24 +464,7 @@ async function loadBattle(){
    Feature: Quick Clone Panel
    ============================================================ */
 function showCloneModal(){
-  const m=S.repo;if(!m)return;
-  const url=m.html_url;
-  const modal=$('#cloneModal');
-  if(!modal)return;
-  const content=$('#cloneContent');
-  if(content)content.innerHTML=
-    '<div style="display:flex;flex-direction:column;gap:10px">'+
-      ['git clone '+url,'git clone --depth 1 '+url,'git clone --recursive '+url].map(cmd=>
-        '<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:var(--rs);border:1px solid var(--line)">'+
-          '<code style="flex:1;font-size:12px;color:var(--text2);word-break:break-all">'+esc(cmd)+'</code>'+
-          '<button class="btn sm ghost" onclick="copyText(this,\''+esc(cmd)+'\')">📋</button>'+
-        '</div>'
-      ).join('')+
-      '<div style="text-align:center;margin-top:10px">'+
-        '<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener">Open on GitHub ↗</a>'+
-      '</div>'+
-    '</div>';
-  modal.classList.remove('hidden');
+  openCloneModal();
 }
 function copyText(btn,text){
   (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>{
@@ -755,7 +736,7 @@ function renderBusFactor(){
   try{
     const el=$('#busFactorContent');
     if(!el)return;
-    const contribs=S.contribs.filter(c=>c.type!=='Bot');
+    const contribs=Array.isArray(S.contribs)?S.contribs.filter(c=>c&&c.type!=='Bot'):[];
     if(!contribs.length){el.innerHTML='<p style="color:var(--text3);font-size:13px">No contributor data.</p>';return}
     const total=contribs.reduce((a,c)=>a+(c.contributions||0),0)||1;
     const sorted=contribs.slice().sort((a,b)=>(b.contributions||0)-(a.contributions||0));
@@ -1686,7 +1667,9 @@ const HELP_TEXTS={
   smells:'The Code Smell Detector scans the files you selected for the digest and flags common anti-patterns: leftover TODO/FIXME markers, console.log/debugger statements, legacy var usage, loose equality, bare except clauses, wildcard imports, hardcoded IPs and suspicious magic numbers. It reports a density score (smells per 1000 lines) plus the top offending files. The card appears after you generate a digest.',
   crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle. Use it for offline reading, RAG, or append the bundle to your LLM digest. It stays on the starting domain, and you can lock it to the starting subpath.',
   onboard:'The Onboarding Guide generates a step-by-step first-contribution path for this repo: setup commands derived from detected manifests, architecture reading order from entry-point files, test directories, CI workflows, good-first-issue links, and key contacts from top contributors. Click Build guide after loading a repository.',
-  wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.'
+  wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.',
+  deps:'The Dependency Graph visualizes project dependencies extracted from manifests (package.json, requirements.txt, Cargo.toml, go.mod, etc.) as an interactive force-directed graph.',
+  triage:'Issue Triage automatically categorizes open GitHub issues by type (bugs, features), staleness, and priority to help you understand current project activity and focus areas.'
 };
 function helpChip(topic){
   return '<button class="help-chip" data-help="'+topic+'" title="What is this?" aria-label="Help: '+topic+'">?</button>';
