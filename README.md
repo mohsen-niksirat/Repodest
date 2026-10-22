@@ -44,6 +44,12 @@ Select files in the tree → Generate → get a formatted prompt with repo metad
 - **Signature Extraction (🗜️)**: Preserves only function/class signatures and types for ultra-compact digests.
 - **Live Token Estimates**: Context-aware budgeting with auto-chunking for GPT-5, Claude, Gemini, and Llama.
 
+### 🔀 PR X-Ray
+Paste any pull request URL (`github.com/owner/repo/pull/123`), an `owner/repo#123` ref, or just a number — or pick one from the current repo's open-PR list — and get a human-readable review brief:
+- **Change summary** — additions/deletions, change type (fix / feature / refactor / docs), size class, test share
+- **Risk flags** — weighted alerts when the PR touches auth, crypto, migrations, CI, lockfiles or other sensitive areas, with a 0–10 risk score
+- **LLM review digest** — the PR metadata, the risk report and the full diffs packed into one ready-to-paste code-review prompt (copy or download `.md`)
+
 ### 🗂️ File Explorer
 Lazy-rendered tree with sizes, type distribution, and the heaviest files in the repo.
 
@@ -116,6 +122,12 @@ MIT © [Mohsen Niksirat](https://github.com/mohsen-niksirat)
 - **انتخاب هوشمند هدف‌محور**: انتخاب خودکار فایل‌ها با یک کلیک برای 🐞 شکارچی باگ، 🏗️ معماری و تایپ‌ها، و 🛡️ ممیزی امنیت.
 - **استخراج امضای کد (🗜️ Signatures only)**: حفظ اینترفیس‌ها، کلاس‌ها و توابع برای خلاصه‌سازی فوق فشرده.
 - **تخمین زنده توکن**: پیش‌بینی حجم پرامپت برای مدل‌های GPT-5، Claude، Gemini و Llama با قطعه‌بندی خودکار در صورت عبور از پنجره زمینه.
+
+### 🔀 PR X-Ray (اشعه ایکس پول‌ریکوئست)
+آدرس هر PR را بچسبانید (`github.com/owner/repo/pull/123`) یا از لیست PRهای باز ریپو انتخاب کنید تا یک گزارش بازبینی خوانا بگیرید:
+- **خلاصه تغییرات** — خطوط اضافه/حذف، نوع تغییر (فیکس / فیچر / ریفکتور / مستندات)، کلاس اندازه، سهم تست
+- **پرچم‌های ریسک** — هشدارهای وزن‌دار وقتی PR به احراز هویت، رمزنگاری، مایگریشن، CI یا لاک‌فایل‌ها دست می‌زند، با امتیاز ریسک ۰ تا ۱۰
+- **دایجست بازبینی LLM** — فراداده PR، گزارش ریسک و دیف‌های کامل در یک پرامپت آماده برای بازبینی کد (کپی یا دانلود `.md`)
 
 ### 🗂️ مرورگر فایل
 درخت با رندر تنبل، با اندازه‌ها و توزیع انواع فایل.

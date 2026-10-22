@@ -25,6 +25,7 @@ const parseRepoInput=core.parseRepoInput,detectPlatform=core.detectPlatform;
 const asciiTree=core.asciiTree,SPDX_MAP=core.SPDX_MAP,healthCheck=core.healthCheckPaths;
 const stripCommentsAndWhitespace=core.stripCommentsAndWhitespace;
 const filterPathsByGoal=core.filterPathsByGoal;
+const parsePRInput=core.parsePRInput,analyzePR=core.analyzePR,buildPRDigest=core.buildPRDigest;
 
 /* ============================================================
    Tests
@@ -300,6 +301,183 @@ describe('filterPathsByGoal() — smart goal presets', () => {
   it('handles empty or invalid paths safely', () => {
     expect(filterPathsByGoal([], 'bug')).toHaveLength(0);
     expect(filterPathsByGoal(null, 'arch')).toHaveLength(0);
+  });
+});
+
+/* ============================================================
+   PR X-Ray tests
+   ============================================================ */
+
+describe('parsePRInput() — PR URL / ref parsing', () => {
+  it('parses a full GitHub PR URL', () => {
+    const r = parsePRInput('https://github.com/facebook/react/pull/12345');
+    expect(r.owner).toEqual('facebook');
+    expect(r.repo).toEqual('react');
+    expect(r.number).toEqual(12345);
+  });
+  it('parses a PR URL without https and with /pulls/', () => {
+    const r = parsePRInput('github.com/owner/repo/pulls/7');
+    expect(r.owner).toEqual('owner');
+    expect(r.number).toEqual(7);
+  });
+  it('parses owner/repo#123 refs', () => {
+    const r = parsePRInput('owner/repo#42');
+    expect(r.owner).toEqual('owner');
+    expect(r.repo).toEqual('repo');
+    expect(r.number).toEqual(42);
+  });
+  it('parses a bare PR number (current repo)', () => {
+    const r = parsePRInput('42');
+    expect(r.number).toEqual(42);
+    if(r.owner) throw new Error('bare number should not carry an owner');
+  });
+  it('returns null for repo URLs, junk and empty input', () => {
+    expect(parsePRInput('https://github.com/owner/repo')).toBeFalsy();
+    expect(parsePRInput('hello world')).toBeFalsy();
+    expect(parsePRInput('')).toBeFalsy();
+    expect(parsePRInput(null)).toBeFalsy();
+  });
+});
+
+describe('analyzePR() — PR change analysis', () => {
+  const pr = { title: 'feat: add OAuth login', labels: [], user: { login: 'alice' } };
+  const files = [
+    { filename: 'src/auth/login.js', additions: 100, deletions: 10, status: 'modified' },
+    { filename: 'src/auth/oauth.js', additions: 50, deletions: 0, status: 'added' },
+    { filename: 'tests/auth.test.js', additions: 30, deletions: 0, status: 'added' },
+    { filename: 'README.md', additions: 5, deletions: 2, status: 'modified' },
+    { filename: 'package.json', additions: 3, deletions: 0, status: 'modified' },
+  ];
+
+  it('sums additions and deletions across files', () => {
+    const an = analyzePR(pr, files);
+    expect(an.totals.add).toEqual(188);
+    expect(an.totals.del).toEqual(12);
+    expect(an.totalLines).toEqual(200);
+  });
+
+  it('groups files by type (source / test / docs / config)', () => {
+    const an = analyzePR(pr, files);
+    expect(an.byType.source.files).toEqual(2);
+    expect(an.byType.test.files).toEqual(1);
+    expect(an.byType.docs.files).toEqual(1);
+    expect(an.byType.config.files).toEqual(1);
+  });
+
+  it('flags auth and dependency-manifest risk areas', () => {
+    const an = analyzePR(pr, files);
+    const labels = an.risks.map(r => r.label);
+    expect(labels.join('|')).toContain('Authentication');
+    expect(labels.join('|')).toContain('Dependency manifest');
+    if(an.riskScore <= 0) throw new Error('riskScore should be positive, got ' + an.riskScore);
+  });
+
+  it('detects the change type from the PR title', () => {
+    const an = analyzePR(pr, files);
+    expect(an.changeType).toEqual('feature');
+  });
+
+  it('classifies change size', () => {
+    const an = analyzePR(pr, files);
+    expect(an.sizeClass).toEqual('small'); /* 200 lines */
+    expect(analyzePR(pr, [{filename:'a.js',additions:10,deletions:5}]).sizeClass).toEqual('tiny');
+    expect(analyzePR(pr, [{filename:'a.js',additions:4000,deletions:10}]).sizeClass).toEqual('XL');
+  });
+
+  it('computes test share of changed lines', () => {
+    const an = analyzePR(pr, files);
+    expect(an.testShare).toEqual(15); /* 30 of 200 */
+  });
+
+  it('classifies docs-only PRs as docs', () => {
+    const an = analyzePR({ title: 'update stuff' }, [
+      { filename: 'docs/guide.md', additions: 20, deletions: 5 },
+      { filename: 'README.md', additions: 10, deletions: 0 },
+    ]);
+    expect(an.changeType).toEqual('docs');
+    expect(an.risks).toHaveLength(0);
+    expect(an.verdict).toEqual('low');
+  });
+
+  it('handles empty and missing file lists safely', () => {
+    const an = analyzePR(pr, []);
+    expect(an.totals.add).toEqual(0);
+    expect(an.risks).toHaveLength(0);
+    expect(an.sizeClass).toEqual('tiny');
+    const an2 = analyzePR(pr, null);
+    expect(an2.totals.add).toEqual(0);
+  });
+
+  it('marks 100+ file lists as truncated', () => {
+    const many = Array.from({length: 105}, (_, i) => ({ filename: 'src/f'+i+'.js', additions: 1, deletions: 0 }));
+    const an = analyzePR(pr, many);
+    if(!an.truncated) throw new Error('should be marked truncated');
+  });
+
+  it('caps the risk score at 10', () => {
+    const risky = [
+      { filename: 'src/auth/session.js', additions: 1, deletions: 0 },
+      { filename: 'src/crypto/secret.pem', additions: 1, deletions: 0 },
+      { filename: 'migrations/001.sql', additions: 1, deletions: 0 },
+      { filename: 'package.json', additions: 1, deletions: 0 },
+      { filename: '.github/workflows/deploy.yml', additions: 1, deletions: 0 },
+      { filename: 'Dockerfile', additions: 1, deletions: 0 },
+      { filename: 'LICENSE', additions: 1, deletions: 0 },
+    ];
+    const an = analyzePR(pr, risky);
+    if(an.riskScore > 10) throw new Error('risk score must cap at 10, got ' + an.riskScore);
+    expect(an.verdict).toEqual('high');
+  });
+});
+
+describe('buildPRDigest() — LLM review prompt', () => {
+  const pr = {
+    number: 42, title: 'feat: add OAuth login', body: 'Adds OAuth via Google.',
+    state: 'open', html_url: 'https://github.com/owner/repo/pull/42',
+    user: { login: 'alice' }, head: { ref: 'feat-oauth' }, base: { ref: 'main', repo: { full_name: 'owner/repo' } },
+    created_at: '2026-10-01T00:00:00Z', labels: [],
+  };
+  const files = [
+    { filename: 'src/auth/login.js', additions: 100, deletions: 10, status: 'modified', patch: '@@ -1,3 +1,5 @@\n+import oauth from \'./oauth\';' },
+    { filename: 'tests/auth.test.js', additions: 30, deletions: 0, status: 'added', patch: '@@ -0,0 +1,2 @@\n+test(\'oauth\')' },
+  ];
+
+  it('includes PR metadata, stats and review task', () => {
+    const an = analyzePR(pr, files);
+    const d = buildPRDigest(pr, files, an);
+    expect(d).toContain('Pull Request Review Digest');
+    expect(d).toContain('#42');
+    expect(d).toContain('feat: add OAuth login');
+    expect(d).toContain('owner/repo');
+    expect(d).toContain('Adds OAuth via Google.');
+    expect(d).toContain('senior code reviewer');
+    expect(d).toContain('merge verdict');
+  });
+
+  it('embeds diff patches in fenced diff blocks', () => {
+    const an = analyzePR(pr, files);
+    const d = buildPRDigest(pr, files, an);
+    expect(d).toContain('```diff');
+    expect(d).toContain('src/auth/login.js');
+  });
+
+  it('truncates very long patches and PR bodies', () => {
+    const longFiles = [{ filename: 'big.js', additions: 1, deletions: 0, patch: 'x'.repeat(9000) }];
+    const longPr = Object.assign({}, pr, { body: 'y'.repeat(5000) });
+    const d = buildPRDigest(longPr, longFiles, analyzePR(longPr, longFiles));
+    expect(d).toContain('truncated');
+    if(d.length > 20000) throw new Error('digest should stay compact, got ' + d.length);
+  });
+
+  it('omits patches when includePatches is false', () => {
+    const an = analyzePR(pr, files);
+    const d = buildPRDigest(pr, files, an, { includePatches: false });
+    if(d.includes('```diff')) throw new Error('patches should be omitted');
+  });
+
+  it('handles a PR with no body and no files', () => {
+    const d = buildPRDigest({ number: 1, title: 't', user: {} }, [], analyzePR({}, []));
+    expect(d).toContain('Pull Request Review Digest');
   });
 });
 

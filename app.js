@@ -798,6 +798,9 @@ function submitInput(){
   /* GitHub Enterprise full URL? */
   const ghe=normalizeGheRepo(v);
   if(ghe){setGheBase(ghe.host);loadRepo(ghe.owner,ghe.repo,'ghe');return}
+  /* A GitHub PR link? Load the repo, then open it in PR X-Ray */
+  const prq=parsePRInput(v);
+  if(prq&&prq.owner&&prq.repo){S.pr=S.pr||{};S.pr.pending=prq.number;S.pr.loaded=false;loadRepo(prq.owner,prq.repo,'github');return}
   const p=parseRepoInput(v);
   if(p){loadRepo(p.owner,p.repo,p.platform);return}
   if(/^[\w-]+$/.test(v)){loadUser(v);return}
@@ -807,6 +810,8 @@ function submitJump(){
   const v=$('#jump').value.trim();if(!v)return;
   const ghe=normalizeGheRepo(v);
   if(ghe){setGheBase(ghe.host);loadRepo(ghe.owner,ghe.repo,'ghe');return}
+  const prq=parsePRInput(v);
+  if(prq&&prq.owner&&prq.repo){S.pr=S.pr||{};S.pr.pending=prq.number;S.pr.loaded=false;loadRepo(prq.owner,prq.repo,'github');return}
   const p=parseRepoInput(v);
   if(p){loadRepo(p.owner,p.repo,p.platform);return}
   if(/^[\w-]+$/.test(v)){loadUser(v);return}
@@ -1078,6 +1083,7 @@ function switchTab(name){
   if(name==='languages')ensureChartJs().then(()=>drawLangChart());
   if(name==='deps')buildDepGraph();
   if(name==='deep')renderDeepPanel();
+  if(name==='pr')renderPRPanel();
 }
 document.addEventListener('DOMContentLoaded',()=>{
   $$('#tabs .tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));

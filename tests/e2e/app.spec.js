@@ -60,7 +60,7 @@ test('help chips open popovers with content', async ({ page }) => {
 test('dashboard renders for a real repo with tabs', async ({ page }) => {
   await page.goto('/?repo=mohsen-niksirat/Repodest');
   await expect(page.locator('#repoHero')).toContainText(/repodest/i, { timeout: 30000 });
-  await expect(page.locator('#tabs .tab')).toHaveCount(11);
+  await expect(page.locator('#tabs .tab')).toHaveCount(12);
   /* switch to Files tab and check the tree rendered */
   await clickTab(page,'files');
   await expect(page.locator('#tree')).toBeVisible({ timeout: 15000 });
@@ -75,6 +75,38 @@ test('digest tab exposes presets and generate button', async ({ page }) => {
   await expect(page.locator('#genBtn')).toBeVisible();
   await page.click('.rec-btn[data-preset="review"]');
   await expect(page.locator('.rec-btn[data-preset="review"]')).toHaveClass(/preset-sel/);
+});
+
+test('PR X-Ray tab analyzes a real merged PR end to end', async ({ page }) => {
+  await page.goto('/?repo=mohsen-niksirat/Repodest');
+  await expect(page.locator('#repoHero')).toContainText(/repodest/i, { timeout: 30000 });
+  await clickTab(page, 'pr');
+  await expect(page.locator('#prInput')).toBeVisible();
+  /* paste a PR from another repo — full X-Ray flow incl. repo switch */
+  await page.fill('#prInput', 'https://github.com/facebook/react/pull/1');
+  await page.click('button:has-text("X-Ray it")');
+  const analysis = page.locator('#prAnalysis');
+  await expect(analysis).toContainText('#1', { timeout: 30000 });
+  await expect(analysis).toContainText(/merged/i, { timeout: 30000 });
+  await expect(analysis).toContainText(/additions/i);
+  /* the LLM digest must generate and contain the review task */
+  const genBtn = page.locator('#prGenBtn');
+  await expect(genBtn).toBeEnabled({ timeout: 10000 });
+  await genBtn.click();
+  const out = page.locator('#prDigestOut');
+  await expect(out).toHaveValue(/Pull Request Review Digest/, { timeout: 10000 });
+  await expect(out).toHaveValue(/senior code reviewer/);
+  await expect(page.locator('#prCopyBtn')).toBeEnabled();
+});
+
+test('PR X-Ray deep link: pasting a PR URL in the main search opens the PR tab', async ({ page }) => {
+  await page.goto('/');
+  await page.fill('#inp', 'https://github.com/facebook/react/pull/1');
+  await page.click('.searchbox .btn');
+  await expect(page.locator('#repoHero')).toContainText(/react/i, { timeout: 30000 });
+  /* pending PR routes straight to the analysis in the PR tab */
+  await expect(page.locator('#p-pr')).toHaveClass(/active/, { timeout: 15000 });
+  await expect(page.locator('#prAnalysis')).toContainText('#1', { timeout: 30000 });
 });
 
 test('toolbar more-tools tray toggles on mobile viewport', async ({ page }) => {

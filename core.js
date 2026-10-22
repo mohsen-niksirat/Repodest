@@ -209,6 +209,138 @@ RepodestCore.filterPathsByGoal=function(paths,goal){
   return valid.slice(0,10);
 };
 
+/* ---------- Pull Request analysis (pure) ---------- */
+RepodestCore.parsePRInput=function(v){
+  if(!v)return null;
+  v=String(v).trim();
+  let m=v.match(/github\.com\/([^\/\s]+)\/([^\/\s]+)\/(?:pull|pulls)\/(\d+)/i);
+  if(m)return{owner:m[1],repo:m[2].replace(/\.git+$/,''),number:parseInt(m[3],10),platform:'github'};
+  m=v.match(/^([\w.-]+)\/([\w.-]+)\s*#(\d+)$/);
+  if(m)return{owner:m[1],repo:m[2],number:parseInt(m[3],10),platform:'github'};
+  m=v.match(/^(\d{1,7})$/);
+  if(m)return{number:parseInt(m[1],10),platform:'github'};
+  return null;
+};
+
+RepodestCore.PR_RISK=[
+  {re:/(^|\/)(auth|login|logout|session|passport|jwt|oauth|sso|identity)([\/._-]|$)/i,label:'Authentication / session handling',w:3},
+  {re:/(crypto|cipher|secret|password|passwd|private[-_]?key|\.pem$|token)/i,label:'Cryptography or secrets',w:3},
+  {re:/(^|\/)migrations?\//i,label:'Database schema / migration',w:3},
+  {re:/\.(env|pem|key|p12|pfx|crt)$/i,label:'Sensitive file type',w:3},
+  {re:/(^|\/)(package\.json|requirements\.txt|pyproject\.toml|Cargo\.toml|go\.mod|pom\.xml|composer\.json|Gemfile|yarn\.lock|package-lock\.json|pnpm-lock\.yaml|poetry\.lock|Cargo\.lock|go\.sum)$/i,label:'Dependency manifest / lockfile',w:2},
+  {re:/(^|\/)\.github\/(workflows|actions)\//i,label:'CI/CD pipeline',w:2},
+  {re:/(^|\/|_)(dockerfile|docker-compose|dockerignore)/i,label:'Container / deployment config',w:2},
+  {re:/(^|\/)(nginx|haproxy|traefik|kubernetes|helm|terraform|k8s)([\/._-]|$)/i,label:'Infrastructure config',w:2},
+  {re:/(security|csp|xss|sanitize|escape|shell|exec|spawn|eval)/i,label:'Security-sensitive code',w:2},
+  {re:/(^|\/)(licen[cs]e|copying)(\.|$)/i,label:'License change',w:2}
+];
+
+RepodestCore.analyzePR=function(pr,files){
+  files=Array.isArray(files)?files:[];
+  const totals=files.reduce((a,f)=>{a.add+=f.additions||0;a.del+=f.deletions||0;a.changes+=(f.changes||(f.additions||0)+(f.deletions||0));return a},{add:0,del:0,changes:0});
+  const byType={};
+  files.forEach(f=>{
+    const p=f.filename||'';
+    let t='source';
+    if(/(^|\/)(tests?|__tests__|specs?)(\/|$)|\.(test|spec)\.[a-z]+$/i.test(p))t='test';
+    else if(/(^|\/)(docs?)(\/|$)|\.(md|mdx|rst)$|^readme\./i.test(p))t='docs';
+    else if(/(^|\/)(package\.json|requirements\.txt|pyproject\.toml|Cargo\.toml|go\.mod|pom\.xml|composer\.json|Gemfile)|\.(config|rc)\.[a-z]+$|(^|\/)(tsconfig|babel|webpack|vite|rollup|jest|vitest|eslint|prettier|biome)/i.test(p))t='config';
+    else if(RepodestCore.BINARY_EXT.has(RepodestCore.extOf(p)))t='asset';
+    else if(!RepodestCore.TEXT_EXT.has(RepodestCore.extOf(p))&&RepodestCore.extOf(p))t='other';
+    const g=byType[t]=byType[t]||{files:0,add:0,del:0,list:[]};
+    g.files++;g.add+=f.additions||0;g.del+=f.deletions||0;g.list.push(p);
+  });
+  /* risks: one entry per risk type, with the matching files */
+  const riskMap={};
+  files.forEach(f=>{
+    const p=f.filename||'';
+    RepodestCore.PR_RISK.forEach(r=>{
+      if(r.re.test(p)){
+        const e=riskMap[r.label]=riskMap[r.label]||{label:r.label,w:r.w,files:[]};
+        e.files.push(p);
+      }
+    });
+  });
+  const risks=Object.values(riskMap).sort((a,b)=>b.w-a.w||b.files.length-a.files.length);
+  const riskScore=Math.min(10,risks.reduce((a,r)=>a+r.w,0));
+  /* change type from title / labels / file mix */
+  const title=(pr&&pr.title)||'';
+  const labels=((pr&&pr.labels)||[]).map(l=>(l&&l.name)||l);
+  const labelTxt=labels.join(' ').toLowerCase();
+  let changeType='other';
+  if(/^(fix|fixes|fixup|bugfix|hotfix|patch|revert)\b/i.test(title)||/\bbug\b|\bfix\b/.test(labelTxt))changeType='fix';
+  else if(/^(feat|feature|add|implement|support|introduce)\b/i.test(title)||/\benhancement\b|\bfeature\b/.test(labelTxt))changeType='feature';
+  else if(/^(docs?|readme)\b/i.test(title)||/\bdocumentation\b/.test(labelTxt))changeType='docs';
+  else if(/^(refactor|chore|clean|reorg|simplify|rename)\b/i.test(title))changeType='refactor';
+  else if(byType.docs&&byType.docs.files===files.length)changeType='docs';
+  else if(byType.test&&byType.test.files===files.length)changeType='test';
+  /* size class by total changed lines */
+  const totalLines=totals.add+totals.del;
+  const sizeClass=totalLines<50?'tiny':totalLines<300?'small':totalLines<1000?'medium':totalLines<3000?'large':'XL';
+  /* test coverage of the change: share of test lines among changed lines */
+  const testLines=byType.test?(byType.test.add+byType.test.del):0;
+  const testShare=totalLines?Math.round(testLines/totalLines*100):0;
+  return{totals,byType,risks,riskScore,changeType,sizeClass,totalLines,testShare,
+    verdict:riskScore>=7?'high':riskScore>=4?'medium':'low',
+    truncated:files.length>=100};
+};
+
+RepodestCore.buildPRDigest=function(pr,files,an,opts){
+  opts=opts||{};
+  const m=pr||{};
+  const lines=[];
+  lines.push('# Pull Request Review Digest');
+  lines.push('');
+  lines.push('- **Repository**: '+(m.base&&m.base.repo&&m.base.repo.full_name||''));
+  lines.push('- **PR #'+(m.number||'?')+'**: '+(m.title||''));
+  lines.push('- **Author**: '+(m.user&&m.user.login||'unknown'));
+  lines.push('- **State**: '+(m.merged_at?'merged':m.state||'open'));
+  lines.push('- **Branch**: '+(m.head&&m.head.ref||'?')+' → '+(m.base&&m.base.ref||'?'));
+  lines.push('- **Created**: '+(m.created_at||''));
+  lines.push('- **Link**: '+(m.html_url||''));
+  lines.push('');
+  lines.push('## Change summary');
+  lines.push('');
+  lines.push('- Files changed: **'+(files?files.length:0)+'**');
+  lines.push('- Additions: **+'+(an&&an.totals?an.totals.add:0)+'** / Deletions: **−'+(an&&an.totals?an.totals.del:0)+'**');
+  lines.push('- Change type: **'+(an&&an.changeType||'other')+'** · Size: **'+(an&&an.sizeClass||'?')+'** ('+(an&&an.totalLines||0)+' lines)');
+  lines.push('- Risk level: **'+(an&&an.verdict||'low')+' ('+(an&&an.riskScore||0)+'/10)**');
+  if(an&&an.risks&&an.risks.length){
+    lines.push('- ⚠️ Touched risk areas: '+an.risks.map(r=>r.label+' ('+r.files.length+' file'+(r.files.length>1?'s':'')+')').join('; '));
+  }else{
+    lines.push('- No high-risk areas touched');
+  }
+  if(an&&an.truncated)lines.push('- Note: the file list is truncated at 100 files — request the rest via pagination before deep review');
+  if(m.body){
+    lines.push('');
+    lines.push('## PR description');
+    lines.push('');
+    lines.push(String(m.body).slice(0,2000));
+  }
+  lines.push('');
+  lines.push('## Changed files');
+  lines.push('');
+  (files||[]).forEach(f=>{
+    lines.push('### '+(f.filename||'')+(f.status&&f.status!=='modified'?' ('+f.status+')':''));
+    lines.push('+'+(f.additions||0)+' / −'+(f.deletions||0));
+    if(opts.includePatches!==false&&f.patch){
+      const patch=String(f.patch);
+      lines.push('```diff');
+      lines.push(patch.length>4000?patch.slice(0,4000)+'\n… (truncated — view the full diff on GitHub)':patch);
+      lines.push('```');
+    }
+    lines.push('');
+  });
+  lines.push('## Your task');
+  lines.push('');
+  lines.push('You are a senior code reviewer. Using the diffs above, produce:');
+  lines.push('1. A plain-language summary of what this PR does and why');
+  lines.push('2. The risky spots a reviewer should check first (auth, data loss, concurrency, security)');
+  lines.push('3. Missing tests or edge cases');
+  lines.push('4. A merge verdict: approve / request changes / needs discussion — with reasons');
+  return lines.join('\n');
+};
+
 /* ---------- UMD export ---------- */
 if(typeof module!=='undefined'&&module.exports)module.exports=RepodestCore;
 if(typeof globalThis!=='undefined'){

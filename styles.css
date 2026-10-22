@@ -1222,3 +1222,29 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
 .crawl-proxy-note{font-size:11px;color:var(--yellow);margin-bottom:10px;font-family:var(--mono)}
 .crawl-out{width:100%;min-height:220px;max-height:420px;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;line-height:1.65;resize:vertical;outline:none}
 .crawl-out:focus{border-color:var(--accent2)}
+
+/* ============================================================
+   PR X-Ray tab
+   ============================================================ */
+.pr-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s}
+.pr-row:hover,.pr-row:focus-visible{background:var(--bg2);border-color:var(--line);outline:none}
+.pr-num{font-family:var(--mono);font-size:12px;color:var(--accent2);min-width:52px}
+.pr-num.big{font-size:18px;font-weight:700}
+.pr-title{flex:1;font-size:13px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-meta{font-size:11.5px;color:var(--text3);white-space:nowrap}
+.pr-state{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 10px;border-radius:20px}
+.pr-state.open{background:rgba(34,197,94,.15);color:#4ade80}
+.pr-state.merged{background:rgba(168,85,247,.15);color:#c084fc}
+.pr-state.closed{background:rgba(239,68,68,.15);color:#f87171}
+.pr-state.draft{background:rgba(148,163,184,.15);color:#94a3b8}
+.pr-hero{border:1px solid var(--line);background:var(--bg2);border-radius:16px;padding:18px}
+.pr-hero-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pr-hero-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text2);margin-top:10px}
+.pr-hero-meta a{color:var(--accent2);text-decoration:none}
+.pr-hero-meta code{font-family:var(--mono);font-size:11.5px;background:var(--bg);padding:2px 6px;border-radius:6px}
+.pr-stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.pr-stats .st{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 16px;text-align:center;min-width:86px}
+.pr-stats .st b{display:block;font-size:16px}
+.pr-stats .st span{font-size:10.5px;color:var(--text3)}
+.pr-file-path{font-family:var(--mono);font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;display:inline-block;vertical-align:middle}
+.pr-files .kv{padding:5px 0}

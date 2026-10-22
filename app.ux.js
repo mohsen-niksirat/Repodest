@@ -1904,6 +1904,7 @@ function cmdActions(){
     {icon:'🏆',label:'Go to Fun',kw:'tab fun trophies roast',run:()=>switchTab('fun')},
     {icon:'🔗',label:'Go to Deps',kw:'tab deps dependencies',run:()=>switchTab('deps')},
     {icon:'🔬',label:'Go to Deep Analysis',kw:'tab deep pr osv churn',run:()=>switchTab('deep')},
+    {icon:'🔀',label:'Go to PR X-Ray',kw:'tab pull request review diff risk digest xray',run:()=>switchTab('pr')},
     {icon:'🚀',label:'Go to Onboarding Guide',kw:'tab onboard guide contribute first setup',run:()=>switchTab('onboard')},
     {icon:'📋',label:'Go to Issue Triage',kw:'tab deep issue triage bugs priority',run:()=>switchTab('deep')},
     {icon:'🌙',label:'Toggle theme',kw:'dark light theme',run:()=>toggleTheme()},

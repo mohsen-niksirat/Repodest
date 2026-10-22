@@ -191,6 +191,7 @@
       <button class="tab" data-tab="fun">🏆 Fun</button>
       <button class="tab" data-tab="deps">🔗 Deps</button>
       <button class="tab" data-tab="deep">🔬 Deep</button>
+      <button class="tab" data-tab="pr">🔀 PR X-Ray</button>
       <button class="tab" data-tab="onboard">🚀 Onboard</button>
     </div>
 
@@ -514,6 +515,37 @@
       </div>
     </section>
 
+    <section class="panel" id="p-pr">
+      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>PR X-Ray</b> turns any pull request into a human-readable review brief: what changed, which sensitive areas it touches, how big and risky it is — plus an <b>LLM-ready review digest</b> with the full diffs packed into one prompt. Paste a PR URL (github.com/owner/repo/pull/123), an <span style="font-family:var(--mono)">owner/repo#123</span> ref, or just a number from this repo.
+        </p>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="minititle">🔀 Analyze a pull request</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="prInput" type="text" placeholder="https://github.com/owner/repo/pull/123 · owner/repo#123 · or just 42" spellcheck="false" autocomplete="off" style="flex:1;min-width:220px" onkeydown="if(event.key==='Enter')prSubmitInput()" aria-label="Pull request URL or number">
+          <button class="btn sm" onclick="prSubmitInput()">⚡ X-Ray it</button>
+          <button class="btn ghost sm" onclick="loadPRList()" title="Reload the open-PR list of this repo">🔄 Refresh list</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="minititle">📂 Open pull requests <span class="ep-badge" id="prListBadge">—</span></div>
+        <div id="prList"><p style="color:var(--text3);font-size:12px">Open PRs of the current repo appear here — click one to analyze it.</p></div>
+      </div>
+      <div id="prAnalysis"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="minititle">🤖 LLM review digest</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Analyze a PR, then generate a single prompt containing the PR metadata, the risk report and the full diffs — ready to paste into ChatGPT, Claude or Gemini as a code-review task.</p>
+        <div class="digest-actions" style="margin-bottom:8px">
+          <button class="btn green sm" onclick="generatePRDigest()" id="prGenBtn" disabled>🤖 Generate review digest</button>
+          <button class="btn sm" onclick="copyPRDigest()" id="prCopyBtn" disabled>📋 Copy</button>
+          <button class="btn ghost sm" onclick="downloadPRDigest()" id="prDlBtn" disabled>⬇️ Download .md</button>
+        </div>
+        <textarea class="digest-out" id="prDigestOut" readonly placeholder="The review-ready prompt will appear here after you generate it."></textarea>
+      </div>
+    </section>
+
     <section class="panel" id="p-onboard">
       <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
@@ -791,6 +823,7 @@
 <script src="app.ux.js"></script>
 <script src="app.map.js"></script>
 <script src="app.crawl.js"></script>
+<script src="app.pr.js"></script>
 <script src="app.boot.js"></script>
 </body>
 </html>
