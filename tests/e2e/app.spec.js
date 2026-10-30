@@ -77,18 +77,69 @@ test('digest tab exposes presets and generate button', async ({ page }) => {
   await expect(page.locator('.rec-btn[data-preset="review"]')).toHaveClass(/preset-sel/);
 });
 
-test('PR X-Ray tab analyzes a real merged PR end to end', async ({ page }) => {
-  await page.goto('/?repo=mohsen-niksirat/Repodest');
-  await expect(page.locator('#repoHero')).toContainText(/repodest/i, { timeout: 30000 });
+/* Mocked GitHub API for the PR X-Ray tests — deterministic, no rate limits,
+   no giant repos. Mirrors tests/pr-xray.browser.js. */
+const MOCK_REPO = {
+  full_name: 'acme/widget', name: 'widget', owner: { login: 'acme', avatar_url: '', html_url: '' },
+  html_url: 'https://github.com/acme/widget', description: 'test repo', fork: false,
+  created_at: '2020-01-01T00:00:00Z', pushed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  homepage: '', size: 1000, stargazers_count: 42, watchers_count: 42, forks_count: 7,
+  open_issues_count: 3, language: 'JavaScript', license: { spdx_id: 'MIT' }, topics: [],
+  default_branch: 'main', archived: false,
+};
+const MOCK_PR = {
+  number: 7, title: 'feat: add OAuth login flow', body: 'Adds Google OAuth.',
+  state: 'open', merged_at: null, draft: false,
+  html_url: 'https://github.com/acme/widget/pull/7',
+  user: { login: 'alice' }, created_at: '2026-10-01T00:00:00Z',
+  head: { ref: 'feat-oauth', repo: { full_name: 'acme/widget' } },
+  base: { ref: 'main', repo: { full_name: 'acme/widget' } },
+  labels: [], requested_reviewers: [],
+};
+const MOCK_PR_FILES = [
+  { filename: 'src/auth/login.js', additions: 120, deletions: 10, status: 'modified', patch: '@@ -1,2 +1,4 @@\n+import oauth' },
+  { filename: 'tests/auth.test.js', additions: 40, deletions: 0, status: 'added', patch: '@@ -0,0 +1,2 @@\n+test()' },
+  { filename: 'package.json', additions: 2, deletions: 0, status: 'modified', patch: '@@ +1,2 @@\n+"oauth"' },
+];
+async function mockGitHubApi(page) {
+  const j = (route, o) => route.fulfill({ contentType: 'application/json', body: JSON.stringify(o) });
+  await page.route('**/api.github.com/**', route => {
+    const p = new URL(route.request().url()).pathname;
+    if (p.endsWith('/rate_limit')) return j(route, { resources: { core: { remaining: 5000 } } });
+    if (/\/repos\/[^/]+\/[^/]+$/.test(p)) return j(route, MOCK_REPO);
+    if (p.endsWith('/pulls') || /\/pulls\?/.test(p)) return j(route, [MOCK_PR]);
+    if (/\/pulls\/7\/files$/.test(p)) return j(route, MOCK_PR_FILES);
+    if (/\/pulls\/\d+$/.test(p)) return j(route, MOCK_PR);
+    if (p.endsWith('/commits')) return j(route, []);
+    if (p.endsWith('/languages')) return j(route, { JavaScript: 10000 });
+    if (p.endsWith('/contributors')) return j(route, []);
+    if (/\/git\/trees\//.test(p)) return j(route, { tree: [
+      { path: 'src/auth/login.js', type: 'blob', size: 100 },
+      { path: 'package.json', type: 'blob', size: 500 },
+      { path: 'README.md', type: 'blob', size: 800 },
+      { path: 'LICENSE', type: 'blob', size: 1000 },
+    ], truncated: false });
+    if (p.endsWith('/branches')) return j(route, [{ name: 'main' }]);
+    if (p.endsWith('/tags')) return j(route, []);
+    if (p.endsWith('/releases')) return j(route, []);
+    if (p.includes('/topics')) return j(route, { names: [] });
+    return j(route, []);
+  });
+  await page.route('**/raw.githubusercontent.com/**', r => r.fulfill({ body: '# readme', contentType: 'text/plain' }));
+}
+
+test('PR X-Ray tab analyzes a PR end to end (mocked API)', async ({ page }) => {
+  await mockGitHubApi(page);
+  await page.goto('/?repo=acme/widget');
+  await expect(page.locator('#repoHero')).toContainText(/widget/i, { timeout: 15000 });
   await clickTab(page, 'pr');
   await expect(page.locator('#prInput')).toBeVisible();
-  /* paste a PR from another repo — full X-Ray flow incl. repo switch */
-  await page.fill('#prInput', 'https://github.com/facebook/react/pull/1');
-  await page.click('button:has-text("X-Ray it")');
+  /* analyze PR #7 from the open-PR list */
+  await page.locator('#prList .pr-row').first().click();
   const analysis = page.locator('#prAnalysis');
-  await expect(analysis).toContainText('#1', { timeout: 30000 });
-  await expect(analysis).toContainText(/merged/i, { timeout: 30000 });
+  await expect(analysis).toContainText('#7', { timeout: 10000 });
   await expect(analysis).toContainText(/additions/i);
+  await expect(analysis).toContainText(/authentication/i);
   /* the LLM digest must generate and contain the review task */
   const genBtn = page.locator('#prGenBtn');
   await expect(genBtn).toBeEnabled({ timeout: 10000 });
@@ -99,14 +150,15 @@ test('PR X-Ray tab analyzes a real merged PR end to end', async ({ page }) => {
   await expect(page.locator('#prCopyBtn')).toBeEnabled();
 });
 
-test('PR X-Ray deep link: pasting a PR URL in the main search opens the PR tab', async ({ page }) => {
-  await page.goto('/');
-  await page.fill('#inp', 'https://github.com/facebook/react/pull/1');
-  await page.click('.searchbox .btn');
-  await expect(page.locator('#repoHero')).toContainText(/react/i, { timeout: 30000 });
-  /* pending PR routes straight to the analysis in the PR tab */
+test('PR X-Ray deep link: pasting a PR URL routes to the PR tab (mocked API)', async ({ page }) => {
+  await mockGitHubApi(page);
+  await page.goto('/?repo=acme/widget');
+  await expect(page.locator('#repoHero')).toContainText(/widget/i, { timeout: 15000 });
+  /* a PR URL in the toolbar jump loads the repo and opens the PR analysis */
+  await page.fill('#jump', 'https://github.com/acme/widget/pull/7');
+  await page.press('#jump', 'Enter');
   await expect(page.locator('#p-pr')).toHaveClass(/active/, { timeout: 15000 });
-  await expect(page.locator('#prAnalysis')).toContainText('#1', { timeout: 30000 });
+  await expect(page.locator('#prAnalysis')).toContainText('#7', { timeout: 10000 });
 });
 
 test('toolbar more-tools tray toggles on mobile viewport', async ({ page }) => {

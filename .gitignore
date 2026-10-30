@@ -40,3 +40,5 @@ coverage/
 
 # Tool artifacts
 .freebuff/
+test-results/
+playwright-report/

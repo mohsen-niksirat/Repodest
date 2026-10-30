@@ -1058,9 +1058,11 @@ function renderDash(){
     computeComplexity();
     /* Preserve the tab the user is already on (language switch, favorite
        toggle etc. re-run renderDash and used to kick the user back to
-       Overview). Falls back to Overview on first load. */
+       Overview). Falls back to Overview on first load. A pending PR
+       (user pasted a PR URL) jumps straight to the PR X-Ray tab. */
+    const pendingPR=S.pr&&S.pr.pending!=null;
     const activeTab=document.querySelector('#tabs .tab.active');
-    switchTab(activeTab?activeTab.dataset.tab:'overview');
+    switchTab(pendingPR?'pr':(activeTab?activeTab.dataset.tab:'overview'));
   }catch(e){console.warn('renderDash error:',e)}
 }
 
