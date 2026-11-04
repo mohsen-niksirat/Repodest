@@ -1,6 +1,6 @@
 'use strict';
 /* ============================================================
-   Repodest — Repo Map
+   Repodest, Repo Map
    An Archify-inspired interactive system map: the file tree is
    compiled into a force-directed graph you can pan, zoom, search,
    focus (with upstream/downstream reach), route-probe and lens.
@@ -11,26 +11,26 @@
 
 /* ---------- i18n (merged into the shared dictionary) ---------- */
 Object.assign(I18N.en,{
-  tabMap:'🗺️ Map',
+  tabMap:'Map',
   mapHint:'Click a node to focus it · <b>R</b> route · <b>L</b> lens · <b>/</b> search · <b>M</b> minimap · <b>F</b> present · <b>S</b> style · <b>G</b> layout · <b>E</b> export · <b>+ − 0</b> zoom',
-  mapTrace:'🧬 Trace imports',mapFit:'⤢ Fit',mapExport:'⬇️ PNG',
-  mapNoFiles:'No files to map — load a repository first.',
-  mapTracing:'Tracing imports…',mapTraced:'Import tracing done — {n} dependency edges added.',
+  mapTrace:'Trace imports',mapFit:'⤢ Fit',mapExport:'PNG',
+  mapNoFiles:'No files to map, load a repository first.',
+  mapTracing:'Tracing imports…',mapTraced:'Import tracing done, {n} dependency edges added.',
   mapUpstream:'Upstream (depends on)',mapDownstream:'Downstream (depended on by)',
   mapReach:'reachable',mapFiles:'files',mapBytes:'size',
-  mapRoutePick:'Route probe — click a source node, then a target.',
+  mapRoutePick:'Route probe, click a source node, then a target.',
   mapRouteNone:'No route between these nodes.',
   mapSearchPh:'Search nodes… (Esc to close)'
 });
 Object.assign(I18N.fa,{
-  tabMap:'🗺️ نقشه',
+  tabMap:'نقشه',
   mapHint:'برای تمرکز روی یک گره کلیک کنید · <b>R</b> مسیر · <b>L</b> لنز · <b>/</b> جستجو · <b>M</b> نقشه کوچک · <b>F</b> ارائه · <b>S</b> سبک · <b>E</b> خروجی · <b>+ − 0</b> زوم',
-  mapTrace:'🧬 ردیابی import',mapFit:'⤢ جا دادن',mapExport:'⬇️ PNG',
-  mapNoFiles:'فایلی برای نقشه‌کشی وجود ندارد — اول یک مخزن بارگذاری کنید.',
-  mapTracing:'در حال ردیابی import…',mapTraced:'ردیابی import انجام شد — {n} یال وابستگی اضافه شد.',
+  mapTrace:'ردیابی import',mapFit:'⤢ جا دادن',mapExport:'PNG',
+  mapNoFiles:'فایلی برای نقشه‌کشی وجود ندارد, اول یک مخزن بارگذاری کنید.',
+  mapTracing:'در حال ردیابی import…',mapTraced:'ردیابی import انجام شد, {n} یال وابستگی اضافه شد.',
   mapUpstream:'بالادست (وابسته به)',mapDownstream:'پایین‌دست (وابسته‌یِ)',
   mapReach:'قابل دسترسی',mapFiles:'فایل',mapBytes:'اندازه',
-  mapRoutePick:'یافتن مسیر — یک گره مبدأ و سپس یک گره مقصد انتخاب کنید.',
+  mapRoutePick:'یافتن مسیر, یک گره مبدأ و سپس یک گره مقصد انتخاب کنید.',
   mapRouteNone:'مسیری بین این گره‌ها وجود ندارد.',
   mapSearchPh:'جستجوی گره‌ها… (Esc برای بستن)'
 });
@@ -77,7 +77,7 @@ function mapAddEdge(s,t,kind){
 }
 
 /* ============================================================
-   Graph construction — from the parsed tree only (no network)
+   Graph construction, from the parsed tree only (no network)
    ============================================================ */
 function buildRepoMap(){
   MAP.nodes=[];MAP.edges=[];MAP.byId=new Map();
@@ -95,7 +95,7 @@ function buildRepoMap(){
   /* root */
   mapAddNode({id:'__root__',label:(m&&m.name)||'repo',kind:'root',path:'',bytes:totalBytes,r:20,fixed:true});
 
-  /* folders — prefer the ones carrying the most bytes */
+  /* folders, prefer the ones carrying the most bytes */
   const folders=[];
   NODEMAP.forEach((node,path)=>{
     if(!path||MAP_NOISE.test(path))return;
@@ -125,7 +125,7 @@ function buildRepoMap(){
   });
   for(const s of selected.slice(0,40))mapAddNode({id:s.p,label:mapBaseName(s.p),kind:s.kind,path:s.p,bytes:(FILEMAP.get(s.p)||{}).size||0,r:s.r,ext:extOf(s.p)});
 
-  /* edges — containment */
+  /* edges, containment */
   MAP.nodes.forEach(n=>{
     if(n.kind==='root')return;
     const parent=mapParentDir(n.path);
@@ -137,7 +137,7 @@ function buildRepoMap(){
     }
     if(anchor)mapAddEdge(n.id,anchor.id,'tree');
   });
-  /* edges — heuristic coupling */
+  /* edges, heuristic coupling */
   const kindNodes=k=>MAP.nodes.filter(n=>n.kind===k);
   const entries=kindNodes('entry');
   kindNodes('manifest').forEach(mf=>{
@@ -291,7 +291,7 @@ async function traceMapImports(){
     }catch(e){/* skip this file */}
   }
   MAP.traced=true;MAP.tracing=false;
-  if(btn){btn.disabled=false;btn.innerHTML='🧬 <span>'+esc(mapT('mapTrace').replace('🧬 ',''))+'</span>'}
+  if(btn){btn.disabled=false;btn.innerHTML='<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-branch"/></svg> <span>'+esc(mapT('mapTrace'))+'</span>'}
   renderMapLegend();
   mapWake();
   toast(mapT('mapTraced').replace('{n}',added)+' ('+scanned+' files scanned)','ok');
@@ -408,14 +408,14 @@ function mapRenderInfo(){
   const el=$('#mapInfo');
   if(!el)return;
   if(MAP.routeFrom&&!MAP.routePath){
-    el.innerHTML='<div class="mi-mode">🧭 '+esc(mapT('mapRoutePick'))+'</div>'+
-      '<div class="mi-actions"><button class="btn ghost sm" onclick="mapClearFocus()">✕ Cancel</button></div>';
+    el.innerHTML='<div class="mi-mode">'+esc(mapT('mapRoutePick'))+'</div>'+
+      '<div class="mi-actions"><button class="btn ghost sm" onclick="mapClearFocus()"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-x"/></svg> Cancel</button></div>';
     el.classList.add('show');return;
   }
   if(MAP.routePath&&MAP.routePath.length>1){
-    el.innerHTML='<div class="mi-mode">🧭 Route · '+MAP.routePath.length+' hops</div>'+
+    el.innerHTML='<div class="mi-mode">Route · '+MAP.routePath.length+' hops</div>'+
       '<div class="mi-path">'+MAP.routePath.map(p=>'<span>'+esc(mapBaseName(p))+'</span>').join('<i>→</i>')+'</div>'+
-      '<div class="mi-actions"><button class="btn ghost sm" onclick="mapClearFocus()">✕ Clear</button></div>';
+      '<div class="mi-actions"><button class="btn ghost sm" onclick="mapClearFocus()"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-x"/></svg> Clear</button></div>';
     el.classList.add('show');return;
   }
   const n=MAP.focusId?MAP.byId.get(MAP.focusId):null;
@@ -433,8 +433,8 @@ function mapRenderInfo(){
     '<div class="mi-actions">'+
       '<button class="btn ghost sm" onclick="mapFocus(MAP.focusId,\'upstream\')">↑ '+esc(mapT('mapUpstream'))+'</button>'+
       '<button class="btn ghost sm" onclick="mapFocus(MAP.focusId,\'downstream\')">↓ '+esc(mapT('mapDownstream'))+'</button>'+
-      '<button class="btn ghost sm" onclick="mapToggleSel()">✓ Select file</button>'+
-      '<button class="btn ghost sm" onclick="mapClearFocus()">✕</button>'+
+      '<button class="btn ghost sm" onclick="mapToggleSel()"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px"><use href="#i-check"/></svg> Select file</button>'+
+      '<button class="btn ghost sm" onclick="mapClearFocus()"><svg class="ic" style="width:12px;height:12px"><use href="#i-x"/></svg></button>'+
     '</div>';
   el.classList.add('show');
 }
@@ -534,7 +534,7 @@ function mapDrawScene(ctx,W,H,dpr,time){
   const hasHl=!!(MAP.hl||MAP.routePath);
   const inHl=id=>!hasHl||(MAP.hl&&MAP.hl.has(id))||(MAP.routePath&&MAP.routePath.includes(id));
   const edgeInHl=i=>!hasHl||(MAP.hlEdges&&MAP.hlEdges.has(i))||(MAP.routePath&&MAP.routePath.some((p,j)=>{const q=MAP.routePath[j+1];return q&&((MAP.edges[i].s===p&&MAP.edges[i].t===q)||(MAP.edges[i].t===p&&MAP.edges[i].s===q))}));
-  /* edges — curved for a more organic, "wired" look */
+  /* edges, curved for a more organic, "wired" look */
   MAP.edges.forEach((e,i)=>{
     const a=MAP.byId.get(e.s),b=MAP.byId.get(e.t);
     if(!a||!b)return;
@@ -562,7 +562,7 @@ function mapDrawScene(ctx,W,H,dpr,time){
     ctx.stroke();
     ctx.setLineDash([]);ctx.globalAlpha=1;ctx.shadowBlur=0;
   });
-  /* route overlay — animated dashes along the path */
+  /* route overlay, animated dashes along the path */
   if(MAP.routePath&&MAP.routePath.length>1){
     ctx.beginPath();
     for(let j=0;j<MAP.routePath.length-1;j++){
@@ -937,7 +937,7 @@ function exportMapPNG(){
 }
 
 /* ============================================================
-   Deep links — #map&focus=path&reach=downstream&route=a~b&lens=x~y&view=neon
+   Deep links, #map&focus=path&reach=downstream&route=a~b&lens=x~y&view=neon
    ============================================================ */
 function mapWriteHash(){
   if(!MAP.nodes.length)return;

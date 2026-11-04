@@ -1,11 +1,11 @@
 {
   "name": "Repodest",
   "short_name": "Repodest",
-  "description": "Know a GitHub repo in seconds. Health score, language breakdown, file explorer, commit insights \u00e2\u20ac\u201d and an LLM-ready digest.",
+  "description": "Know a GitHub repo in seconds. Health score, language breakdown, file explorer, commit insights, and an LLM-ready digest.",
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#0a0a12",
-  "background_color": "#0a0a12",
+  "theme_color": "#0A0E14",
+  "background_color": "#0A0E14",
   "orientation": "any",
   "icons": [
     {

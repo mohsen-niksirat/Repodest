@@ -1,5 +1,5 @@
-/* Repodest Service Worker — caches the app shell and CDN resources */
-const CACHE_NAME = 'repodest-v8';
+/* Repodest Service Worker: caches the app shell and CDN resources */
+const CACHE_NAME = 'repodest-v10';
 const SHELL_URLS = [
   './',
   './index.html',
@@ -15,7 +15,7 @@ const SHELL_URLS = [
   './manifest.json'
 ];
 const CDN_URLS = [
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap'
 ];
 
 /* Install: pre-cache the app shell */

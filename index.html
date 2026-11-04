@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repodest — Know a repo in seconds. Feed it to any LLM.</title>
-<meta name="description" content="Paste any GitHub repo or profile. Repodest turns it into a health score, language breakdown, file explorer, commit insights, fun trophies — and an LLM-ready digest.">
-<meta property="og:title" content="Repodest — X-ray for GitHub repos">
-<meta property="og:description" content="Health score, language breakdown, file explorer, commit insights, trophies — and an LLM-ready digest for any GitHub repo.">
+<title>Repodest: Know a repo in seconds. Feed it to any LLM.</title>
+<meta name="description" content="Paste any GitHub repo or profile. Repodest turns it into a health score, language breakdown, file explorer, commit insights, fun trophies, and an LLM-ready digest.">
+<meta property="og:title" content="Repodest: X-ray for GitHub repos">
+<meta property="og:description" content="Health score, language breakdown, file explorer, commit insights, trophies, and an LLM-ready digest for any GitHub repo.">
 <meta property="og:image" content="">
-<meta name="theme-color" content="#0a0a12">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+<meta name="theme-color" content="#0A0E14">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230A0E14'/%3E%3Cpath d='M42 22h16v14l12 26a10 10 0 0 1-9 14H39a10 10 0 0 1-9-14l12-26z' fill='none' stroke='%2334D399' stroke-width='6' stroke-linejoin='round'/%3E%3Cpath d='M34 62h32' stroke='%2334D399' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/favicon.ico" sizes="48x48">
   <link rel="icon" href="icons/favicon-32x32.png" type="image/png" sizes="32x32">
@@ -17,47 +17,104 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <a href="#inp" class="skip-link">Skip to search</a>
-<canvas id="particles" aria-hidden="true"></canvas>
-<div class="bg-glow" aria-hidden="true"></div>
-<div class="world-3d" aria-hidden="true">
-  <div class="geo-shape geo-cube depth-near" data-depth="1.6" style="top:24%;left:7%"></div>
-  <div class="geo-shape geo-ring depth-mid" data-depth="1.1" style="top:58%;right:6%;width:84px;height:84px"></div>
-  <div class="geo-shape geo-diamond depth-mid" data-depth="0.9" style="top:42%;left:14%;width:38px;height:38px"></div>
-  <div class="geo-shape geo-cube depth-far" data-depth="0.5" style="top:68%;right:13%;width:34px;height:34px"></div>
-  <div class="geo-shape geo-ring depth-far" data-depth="0.4" style="top:16%;right:16%;width:44px;height:44px"></div>
-  <div class="geo-shape geo-pyramid depth-near" data-depth="1.3" style="top:74%;left:22%"></div>
-  <div class="geo-shape geo-diamond depth-far" data-depth="0.35" style="top:80%;left:45%;width:26px;height:26px"></div>
-  <div class="geo-shape geo-ring depth-near" data-depth="1.4" style="top:10%;left:55%;width:60px;height:60px"></div>
-</div>
-<div class="floor-grid" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
+<div class="backdrop" aria-hidden="true"></div>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="M9 3h6v4.5l3.5 7.5A2.5 2.5 0 0 1 16.2 19H7.8a2.5 2.5 0 0 1-2.3-4L9 7.5z"/><path d="M7 13h10"/><path d="M10 3v4M14 3v4"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="3.5"/><path d="M10.5 13.5L20 4M17 7l3 3M14 10l2 2"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3a2.6 2.6 0 0 1 5 .9c0 1.6-2.4 2-2.4 3.3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12z"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.3.9-4.5 4.4 1 6.1-5.5-2.9-5.5 2.9 1-6.1L3 9.5l6.3-.9z"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l2.5-7 4.5 14 2.5-7H21"/></symbol>
+  <symbol id="i-robot" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="10" rx="3"/><path d="M12 9V5"/><circle cx="12" cy="4" r="1"/><path d="M9 13h.01M15 13h.01M9.5 16.5h5"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+  <symbol id="i-folder-open" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v2M3 11l2.4 7.2A2 2 0 0 0 7.3 19.5h11a2 2 0 0 0 1.9-1.4L22 11z"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20v-6M10 20V6M15 20v-9M20 20V10M3 20h18"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></symbol>
+  <symbol id="i-rss" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><path d="M5 19h.01"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v6a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 5M17 6h3a3 3 0 0 1-3 5"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1L11 5.9"/><path d="M14 10a5 5 0 0 0-7.1 0l-2.4 2.4a5 5 0 0 0 7.1 7.1l1.4-1.4"/></symbol>
+  <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-4-9 7"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8M4 7h16M6.5 7L3.5 13a3.2 3.2 0 0 0 6 0zM17.5 7l-3 6a3.2 3.2 0 0 0 6 0z"/></symbol>
+  <symbol id="i-vs" viewBox="0 0 24 24"><path d="M8 5L3 12l5 7M16 5l5 7-5 7"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12l5 5L20 7"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 4v6h-6"/><path d="M20.5 15a9 9 0 1 1-2-9.5L21 10"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.2c-.8.7-1 1.3-1 1.8H9c0-.5-.2-1.1-1-1.8A6 6 0 0 1 12 3z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 1 4 4v3a4 4 0 0 1-8 0v-3a4 4 0 0 1 4-4zM9 6L7 4M15 6l2-2M4 13h4M16 13h4M5 19l3-2M19 19l-3-2M12 8V5"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3l4 4L8 20l-5 1 1-5z"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.2 7.8L20 19M8.2 16.2L20 5"/></symbol>
+  <symbol id="i-blocks" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 5h7a3 3 0 0 1 3 3 3 3 0 0 1 3-3h7v14h-7a3 3 0 0 0-3 3 3 3 0 0 0-3-3H2z"/><path d="M12 8v14"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M7 4L3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h.01M15 9h.01M12 12h.01M9 15h.01M15 15h.01"/></symbol>
+  <symbol id="i-chip" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol>
+  <symbol id="i-gitpr" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="18" r="3"/><path d="M6 9v6M13 6h1a4 4 0 0 1 4 4v5"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 9v6M18 9a9 9 0 0 1-9 9"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><circle cx="11" cy="11" r="4"/><path d="M11 11l8-8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4L2.5 20h19z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-5"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5A5.5 5.5 0 0 1 21 20"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3s5 4.5 5 9a5 5 0 0 1-10 0c0-2 1-3.5 2-5 .5 2 1.5 3 3 3-1-2.5 0-5.5 0-7z"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M9 6L3 12l6 6M15 6l6 6-6 6"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="11" rx="2"/><path d="M7 11h.01M11 11h.01M15 11h.01M17 11h.01M7 15h10"/></symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M4 14v6h6M20 10V4h-6M14 10l6-6M4 20l6-6"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.3 5.2-5.2 2.3 2.3-5.2z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.6 13.4L11 3.8A2 2 0 0 0 9.6 3H5a2 2 0 0 0-2 2v4.6c0 .5.2 1 .6 1.4l9.6 9.6a2 2 0 0 0 2.8 0l4.6-4.6a2 2 0 0 0 0-2.8z"/><path d="M7.5 7.5h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
 
 <div class="wrap">
 <header>
   <div class="hwrap">
-    <div class="logo" onclick="goHome()"><span class="lg">🧪</span><span><b>Repo</b>dest</span></div>
+    <div class="logo" onclick="goHome()"><span class="lg"><svg class="ic"><use href="#i-logo"/></svg></span><span><b>Repo</b>dest</span></div>
     <div class="hspace"></div>
-    <span class="chip-lite" id="rateChip" title="GitHub API calls remaining this hour"><span class="dot"></span><span id="rateVal">—</span></span>
-    <button class="chip-lite" onclick="openModal()" title="Optional personal access token">🔑 <span>Token</span></button>
-    <button class="chip-lite" onclick="openShortcutsModal()" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">❓ <span>Shortcuts</span></button>
-    <button class="chip-lite" onclick="toggleLangMenu(event)" title="Switch language" id="langBtn" aria-label="Switch language" aria-haspopup="menu">🌐 <span>EN</span></button>
-    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme" aria-label="Toggle dark/light theme"><span class="icon">🌙</span></button>
-    <a class="chip-lite" href="https://github.com/mohsen-niksirat" target="_blank" rel="noopener">GitHub ↗</a>
+    <span class="chip-lite" id="rateChip" title="GitHub API calls remaining this hour"><span class="dot"></span><span id="rateVal">…</span></span>
+    <button class="chip-lite" onclick="openModal()" title="Optional personal access token"><svg class="ic"><use href="#i-key"/></svg> <span>Token</span></button>
+    <button class="chip-lite" onclick="openShortcutsModal()" title="Keyboard shortcuts" aria-label="Keyboard shortcuts"><svg class="ic"><use href="#i-help"/></svg> <span>Shortcuts</span></button>
+    <button class="chip-lite" onclick="toggleLangMenu(event)" title="Switch language" id="langBtn" aria-label="Switch language" aria-haspopup="menu"><svg class="ic"><use href="#i-globe"/></svg> <span>EN</span></button>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme" aria-label="Toggle dark/light theme"><svg class="ic icon-moon"><use href="#i-moon"/></svg><svg class="ic icon-sun"><use href="#i-sun"/></svg></button>
+    <a class="chip-lite" href="https://github.com/mohsen-niksirat" target="_blank" rel="noopener"><svg class="ic"><use href="#i-ext"/></svg> <span>GitHub</span></a>
   </div>
 </header>
 
 <main id="landing" aria-label="Homepage">
   <section class="hero">
-    <div class="eyebrow">⚡ Free · No login · Runs in your browser</div>
+    <div class="eyebrow">Free · No login · Runs in your browser</div>
     <h1>Know a GitHub repo<br><span class="g">in seconds, not hours.</span></h1>
-    <p class="sub">Paste any repository or profile. Repodest gives you a health score, language breakdown, file explorer, commit insights and fun trophies — then packs the whole thing into an <b>LLM-ready digest</b> you can feed to ChatGPT, Claude or Gemini.</p>
+    <p class="sub">Paste any repository or profile. Repodest gives you a health score, language breakdown, file explorer, commit insights and fun trophies, then packs the whole thing into an <b>LLM-ready digest</b> you can feed to ChatGPT, Claude or Gemini.</p>
     <div class="searchbox">
-      <span class="ico">🔍</span>
+      <span class="ico"><svg class="ic"><use href="#i-search"/></svg></span>
       <input id="inp" type="text" placeholder="owner/repo, a GitHub URL, or a username…" spellcheck="false" autocomplete="off" aria-label="Search for a GitHub repository or username">
       <button class="btn" onclick="submitInput()">Scope it</button>
     </div>
@@ -72,7 +129,7 @@
 
   <!-- Recent History Section -->
   <section class="history-section" id="favSection" style="display:none">
-    <div class="minititle" style="text-align:center"><span data-i18n="favorites">⭐ Favorites</span></div>
+    <div class="minititle" style="text-align:center"><span data-i18n="favorites">Favorites</span></div>
     <div class="history-grid" id="favGrid"></div>
     <div style="text-align:center;margin-top:12px">
       <button class="btn ghost sm" onclick="clearFavorites()" data-i18n="clearFavs">Clear favorites</button>
@@ -80,7 +137,7 @@
   </section>
 
   <section class="history-section" id="historySection" style="display:none">
-    <div class="minititle" style="text-align:center"><span data-i18n="recentReposTitle">🕘 Recent repos</span></div>
+    <div class="minititle" style="text-align:center"><span data-i18n="recentReposTitle">Recent repos</span></div>
     <div class="history-grid" id="historyGrid"></div>
     <div style="text-align:center;margin-top:12px">
       <button class="btn ghost sm" onclick="clearHistory()" data-i18n="clearHistory">Clear history</button>
@@ -89,17 +146,17 @@
 
   <div class="steps">
     <div class="step"><div class="n">1</div><h4 data-i18n="step1">Paste</h4><p data-i18n="step1Desc">Any repo URL, <span style="font-family:var(--mono)">owner/repo</span>, or username.</p></div>
-    <div class="step"><div class="n">2</div><h4 data-i18n="step2">Explore</h4><p data-i18n="step2Desc">Health score, languages, files, activity — all in one dashboard.</p></div>
+    <div class="step"><div class="n">2</div><h4 data-i18n="step2">Explore</h4><p data-i18n="step2Desc">Health score, languages, files, activity, all in one dashboard.</p></div>
     <div class="step"><div class="n">3</div><h4 data-i18n="step3">Feed your AI</h4><p data-i18n="step3Desc">Pick files, hit generate, copy the digest into any LLM chat.</p></div>
   </div>
 
   <div class="featgrid">
-    <div class="feat"><div class="fi">🩺</div><h3 data-i18n="feat1">Health Score</h3><p data-i18n="feat1Desc">License, README, tests, CI, docs, freshness — 10 weighted checks distilled into one honest number.</p></div>
-    <div class="feat"><div class="fi">🤖</div><h3 data-i18n="feat2">LLM Digest</h3><p data-i18n="feat2Desc">The Gitingest trick, client-side. Select files, get a clean prompt with a token estimate. Copy or download.</p></div>
-    <div class="feat"><div class="fi">🗂️</div><h3 data-i18n="feat3">File Explorer</h3><p data-i18n="feat3Desc">Full tree visualizer with sizes, type distribution and the heaviest files in the repo.</p></div>
-    <div class="feat"><div class="fi">📊</div><h3 data-i18n="feat4">Deep Stats</h3><p data-i18n="feat4Desc">Language bytes, dependency scan across 8 ecosystems, commit activity and top contributors.</p></div>
-    <div class="feat"><div class="fi">🏆</div><h3 data-i18n="feat5">Fun Mode</h3><p data-i18n="feat5Desc">Every repo gets a personality, a roast, and trophies — Wrapped-style, shareable as a card.</p></div>
-    <div class="feat"><div class="fi">🔗</div><h3 data-i18n="feat6">Shareable</h3><p data-i18n="feat6Desc">Deep links, PNG cards and a printable A4 report. Everything stays in your browser.</p></div>
+    <div class="feat"><div class="fi"><svg class="ic"><use href="#i-pulse"/></svg></div><h3 data-i18n="feat1">Health Score</h3><p data-i18n="feat1Desc">License, README, tests, CI, docs, freshness, 10 weighted checks distilled into one honest number.</p></div>
+    <div class="feat"><div class="fi"><svg class="ic"><use href="#i-robot"/></svg></div><h3 data-i18n="feat2">LLM Digest</h3><p data-i18n="feat2Desc">The Gitingest trick, client-side. Select files, get a clean prompt with a token estimate. Copy or download.</p></div>
+    <div class="feat"><div class="fi"><svg class="ic"><use href="#i-folder"/></svg></div><h3 data-i18n="feat3">File Explorer</h3><p data-i18n="feat3Desc">Full tree visualizer with sizes, type distribution and the heaviest files in the repo.</p></div>
+    <div class="feat"><div class="fi"><svg class="ic"><use href="#i-chart"/></svg></div><h3 data-i18n="feat4">Deep Stats</h3><p data-i18n="feat4Desc">Language bytes, dependency scan across 8 ecosystems, commit activity and top contributors.</p></div>
+    <div class="feat"><div class="fi"><svg class="ic"><use href="#i-trophy"/></svg></div><h3 data-i18n="feat5">Fun Mode</h3><p data-i18n="feat5Desc">Every repo gets a personality, a roast, and trophies, Wrapped-style, shareable as a card.</p></div>
+    <div class="feat"><div class="fi"><svg class="ic"><use href="#i-link"/></svg></div><h3 data-i18n="feat6">Shareable</h3><p data-i18n="feat6Desc">Deep links, PNG cards and a printable A4 report. Everything stays in your browser.</p></div>
   </div>
 
   <footer>
@@ -110,20 +167,20 @@
 
 <main id="app" style="display:none" aria-label="Repository dashboard">
   <div class="toolbar">
-    <button class="btn ghost sm" onclick="goHome()" data-i18n="btnHome">← Home</button>
+    <button class="btn ghost sm" onclick="goHome()" data-i18n="btnHome"><svg class="ic"><use href="#i-home"/></svg> Home</button>
     <div class="tb-input"><input id="jump" placeholder="scope another repo…" spellcheck="false" onkeydown="if(event.key==='Enter')submitJump()"></div>
-    <button class="btn ghost sm" onclick="toggleFavorite()" id="favBtn" title="Save to favorites">⭐ <span id="favLabel" data-i18n="btnFav">Fav</span></button>
+    <button class="btn ghost sm" onclick="toggleFavorite()" id="favBtn" title="Save to favorites"><svg class="ic"><use href="#i-star"/></svg> <span id="favLabel" data-i18n="btnFav">Fav</span></button>
     <button class="btn ghost sm" onclick="toggleMoreTools()" id="moreBtn" title="More tools" aria-expanded="false">⋯</button>
     <div id="moreTools">
-      <button class="btn ghost sm" onclick="shareCard()" title="Download a shareable PNG"><span data-i18n="btnCard">📸 Card</span></button>
-      <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report"><span data-i18n="btnReport">📄 Report</span></button>
-      <button class="btn ghost sm" onclick="tweet()" title="Tweet the result">🐦</button>
-      <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here"><span data-i18n="btnLink">🔗 Link</span></button>
-      <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo"><span data-i18n="btnCompare">⚖️ Compare</span></button>
-      <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo"><span data-i18n="btnBattle">⚔️ Battle</span></button>
-      <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON"><span data-i18n="btnExportJson">⬇️ JSON</span></button>
-      <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV"><span data-i18n="btnExportCsv">⬇️ CSV</span></button>
-      <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options"><span data-i18n="btnClone">📋 Clone</span></button>
+      <button class="btn ghost sm" onclick="shareCard()" title="Download a shareable PNG"><svg class="ic"><use href="#i-card"/></svg> <span data-i18n="btnCard">Card</span></button>
+      <button class="btn ghost sm" onclick="printReport()" title="Printable A4 report"><svg class="ic"><use href="#i-file"/></svg> <span data-i18n="btnReport">Report</span></button>
+      <button class="btn ghost sm" onclick="tweet()" title="Tweet the result" aria-label="Tweet the result"><svg class="ic"><use href="#i-ext"/></svg></button>
+      <button class="btn ghost sm" onclick="copyLink()" title="Copy a link that opens this repo here"><svg class="ic"><use href="#i-link"/></svg> <span data-i18n="btnLink">Link</span></button>
+      <button class="btn ghost sm" onclick="toggleCompare()" id="compareBtn" title="Compare with another repo"><svg class="ic"><use href="#i-scale"/></svg> <span data-i18n="btnCompare">Compare</span></button>
+      <button class="btn ghost sm" onclick="openBattle()" title="Battle another repo"><svg class="ic"><use href="#i-vs"/></svg> <span data-i18n="btnBattle">Battle</span></button>
+      <button class="btn ghost sm" onclick="exportJSON()" title="Export as JSON"><svg class="ic"><use href="#i-download"/></svg> <span data-i18n="btnExportJson">JSON</span></button>
+      <button class="btn ghost sm" onclick="exportCSV()" title="Export as CSV"><svg class="ic"><use href="#i-download"/></svg> <span data-i18n="btnExportCsv">CSV</span></button>
+      <button class="btn ghost sm" onclick="openCloneModal()" title="Clone options"><svg class="ic"><use href="#i-copy"/></svg> <span data-i18n="btnClone">Clone</span></button>
     </div>
   </div>
 
@@ -131,10 +188,10 @@
   <div id="comparePanel" class="hidden" style="margin-bottom:16px">
     <div class="card">
       <div class="compare-header">
-        <span class="ch-label">⚖️ Compare mode</span>
+        <span class="ch-label"><svg class="ic" style="width:14px;height:14px;vertical-align:-2px"><use href="#i-scale"/></svg> Compare mode</span>
         <div class="tb-input" style="flex:1;min-width:200px"><input id="compareInput" placeholder="owner/repo to compare with…" spellcheck="false" onkeydown="if(event.key==='Enter')loadCompare()"></div>
         <button class="btn sm" onclick="loadCompare()">Load</button>
-        <button class="btn ghost sm" onclick="toggleCompare()">✕ Close</button>
+        <button class="btn ghost sm" onclick="toggleCompare()"><svg class="ic"><use href="#i-x"/></svg> Close</button>
       </div>
       <div id="compareContent"></div>
     </div>
@@ -162,41 +219,41 @@
       <label data-i18n="branchLabel">Branch:</label>
       <select id="branchDropdown" onchange="onBranchChange(this.value)"></select>
       <label data-i18n="tagLabel">Tag:</label>
-      <select id="tagDropdown" onchange="onTagChange(this.value)"><option value="">—</option></select>
-      <button class="btn ghost sm" onclick="toggleDiffPanel()" title="Compare this branch with another"><span data-i18n="btnDiff">🔀 Diff</span></button>
+      <select id="tagDropdown" onchange="onTagChange(this.value)"><option value="">-</option></select>
+      <button class="btn ghost sm" onclick="toggleDiffPanel()" title="Compare this branch with another"><svg class="ic"><use href="#i-branch"/></svg> <span data-i18n="btnDiff">Diff</span></button>
     </div>
     <div id="diffPanel" class="hidden" style="margin-bottom:16px">
       <div class="card">
-        <div class="minititle">🔀 Branch Diff</div>
+        <div class="minititle">Branch Diff</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
           <span style="font-size:12.5px;color:var(--text2)">Compare</span>
           <b id="diffBaseLabel" style="font-family:var(--mono);font-size:12px">current</b>
           <span style="font-size:12.5px;color:var(--text2)">with</span>
           <select id="diffTarget" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;max-width:200px"></select>
           <button class="btn sm" onclick="loadBranchDiff()">Compare</button>
-          <button class="btn ghost sm" onclick="toggleDiffPanel()">✕</button>
+          <button class="btn ghost sm" onclick="toggleDiffPanel()"><svg class="ic"><use href="#i-x"/></svg></button>
         </div>
         <div id="diffContent"></div>
       </div>
     </div>
 
     <div class="tabs" id="tabs">
-      <button class="tab active" data-tab="overview">🩺 Overview</button>
-      <button class="tab" data-tab="languages">📊 Languages</button>
-      <button class="tab" data-tab="files">🗂️ Files</button>
-      <button class="tab" data-tab="map">🗺️ Map</button>
-      <button class="tab" data-tab="crawl">🦎 Crawl</button>
-      <button class="tab" data-tab="digest">🤖 Digest</button>
-      <button class="tab" data-tab="activity">📈 Activity</button>
-      <button class="tab" data-tab="fun">🏆 Fun</button>
-      <button class="tab" data-tab="deps">🔗 Deps</button>
-      <button class="tab" data-tab="deep">🔬 Deep</button>
-      <button class="tab" data-tab="pr">🔀 PR X-Ray</button>
-      <button class="tab" data-tab="onboard">🚀 Onboard</button>
+      <button class="tab active" data-tab="overview"><svg class="ic"><use href="#i-pulse"/></svg> Overview</button>
+      <button class="tab" data-tab="languages"><svg class="ic"><use href="#i-chart"/></svg> Languages</button>
+      <button class="tab" data-tab="files"><svg class="ic"><use href="#i-folder"/></svg> Files</button>
+      <button class="tab" data-tab="map"><svg class="ic"><use href="#i-map"/></svg> Map</button>
+      <button class="tab" data-tab="crawl"><svg class="ic"><use href="#i-rss"/></svg> Crawl</button>
+      <button class="tab" data-tab="digest"><svg class="ic"><use href="#i-robot"/></svg> Digest</button>
+      <button class="tab" data-tab="activity"><svg class="ic"><use href="#i-activity"/></svg> Activity</button>
+      <button class="tab" data-tab="fun"><svg class="ic"><use href="#i-trophy"/></svg> Fun</button>
+      <button class="tab" data-tab="deps"><svg class="ic"><use href="#i-link"/></svg> Deps</button>
+      <button class="tab" data-tab="deep"><svg class="ic"><use href="#i-scan"/></svg> Deep</button>
+      <button class="tab" data-tab="pr"><svg class="ic"><use href="#i-gitpr"/></svg> PR X-Ray</button>
+      <button class="tab" data-tab="onboard"><svg class="ic"><use href="#i-compass"/></svg> Onboard</button>
     </div>
 
     <section class="panel active" id="p-overview">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
           <b>Health Score</b> rates the repository on 10 criteria: description, topics, license, README, .gitignore, CI workflows, tests, docs, contributing guide, and recent activity. A score of <b>80+</b> means excellent project hygiene. Use the <b>Files</b> tab to select code, then <b>Digest</b> to generate an LLM-ready prompt.
         </p>
@@ -204,7 +261,7 @@
       <div class="hgrid">
         <div class="card scorebox">
           <div class="ring" id="scoreRing">
-            <svg width="170" height="170"><circle cx="85" cy="85" r="74" fill="none" stroke="#22224a" stroke-width="13"/><circle id="ringArc" cx="85" cy="85" r="74" fill="none" stroke="url(#gr)" stroke-width="13" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs></svg>
+            <svg width="170" height="170"><circle cx="85" cy="85" r="74" fill="none" stroke="var(--line)" stroke-width="13"/><circle id="ringArc" cx="85" cy="85" r="74" fill="none" stroke="url(#gr)" stroke-width="13" stroke-linecap="round" stroke-dasharray="465" stroke-dashoffset="465"/><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#67E8F9"/></linearGradient></defs></svg>
             <div class="val"><div><b id="scoreVal">0</b><span>Health score</span></div></div>
           </div>
           <div class="tag" id="scoreTag"></div>
@@ -225,7 +282,7 @@
         </div>
       </div>
       <div class="card" style="margin-top:16px" id="badgeCard">
-        <div class="minititle">🏷️ README Badge Generator <span class="help-slot" data-help="badge"></span></div>
+        <div class="minititle">README Badge Generator <span class="help-slot" data-help="badge"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Static SVG badges you can paste into your project's README. Two styles: a self-hosted static badge (score is baked in) and a dynamic shields.io badge that fetches this repo's data on every view.</p>
         <div class="badge-preview-wrap">
           <div class="badge-preview" id="badgePreview"></div>
@@ -237,41 +294,41 @@
         </div>
         <textarea id="badgeCode" readonly rows="4" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:11.5px;resize:vertical"></textarea>
         <div class="digest-actions" style="margin-top:8px">
-          <button class="btn sm" onclick="copyBadgeCode()">📋 Copy markdown</button>
-          <button class="btn ghost sm" onclick="downloadBadgeSVG()">⬇️ Download .svg</button>
+          <button class="btn sm" onclick="copyBadgeCode()"><svg class="ic"><use href="#i-copy"/></svg> Copy markdown</button>
+          <button class="btn ghost sm" onclick="downloadBadgeSVG()"><svg class="ic"><use href="#i-download"/></svg> Download .svg</button>
         </div>
       </div>
       <div class="card" style="margin-top:16px" id="licenseCard">
-        <div class="minititle">📜 License analysis</div>
+        <div class="minititle">License analysis</div>
         <div id="licenseAnalysis"></div>
       </div>
       <div class="card" style="margin-top:16px" id="readmeCard">
-        <div class="minititle">📖 README Preview</div>
+        <div class="minititle">README Preview</div>
         <div id="readmePreview"></div>
       </div>
       <div class="card" style="margin-top:16px" id="securityCard">
-        <div class="minititle">🔒 Security Quick Scan</div>
+        <div class="minititle">Security Quick Scan</div>
         <div id="securityContent"></div>
       </div>
       <div class="card" style="margin-top:16px;display:none" id="smellsCard">
-        <div class="minititle">👃 Code Smells <span class="help-slot" data-help="smells"></span></div>
+        <div class="minititle">Code Smells <span class="help-slot" data-help="smells"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Scans fetched text files for common anti-patterns. Select files and generate a digest to populate this report.</p>
         <div id="smellsContent"></div>
       </div>
       <div class="card" style="margin-top:16px" id="similarCard">
-        <div class="minititle">🔍 Similar Repos</div>
+        <div class="minititle">Similar Repos</div>
         <div id="similarContent"></div>
       </div>
       <div class="grid2" style="margin-top:16px">
         <div class="card complexity-card">
-          <div class="minititle">🧮 Code Complexity</div>
+          <div class="minititle">Code Complexity</div>
           <div id="complexityContent"></div>
         </div>
         <div class="card">
-          <div class="minititle">🤖 AI Insights</div>
+          <div class="minititle">AI Insights</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-            <button class="btn sm" onclick="generateSummary()">🤖 Summarize</button>
-            <button class="btn ghost sm" onclick="explainRepo()">💡 Explain</button>
+            <button class="btn sm" onclick="generateSummary()"><svg class="ic"><use href="#i-robot"/></svg> Summarize</button>
+            <button class="btn ghost sm" onclick="explainRepo()"><svg class="ic"><use href="#i-bulb"/></svg> Explain</button>
           </div>
           <div id="aiSummaryBox"></div>
         </div>
@@ -279,13 +336,13 @@
     </section>
 
     <section class="panel" id="p-languages">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
           <b>Languages</b> shows the byte-accurate composition of the codebase. Below, <b>Detected stack</b> lists manifest files (package.json, requirements.txt, etc.) and their dependencies. The doughnut chart visualizes the language mix.
         </p>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">📊 Language breakdown (bytes) <span class="help-slot" data-help="langs"></span></div>
+        <div class="minititle">Language breakdown (bytes) <span class="help-slot" data-help="langs"></span></div>
         <div class="langbar" id="langBar"></div>
         <div class="grid2">
           <div id="langRows"></div>
@@ -308,66 +365,66 @@
       <div class="filestats" id="fileStats"></div>
       <div class="grid2" style="margin-bottom:16px">
         <div class="card">
-          <div class="minititle">📊 Type distribution</div>
+          <div class="minititle">Type distribution</div>
           <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Shows how many files of each type exist in the repo.</p>
           <div id="extRows"></div>
         </div>
         <div class="card bigfiles">
-          <div class="minititle">📦 Heaviest files</div>
-          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">The largest files by size — good candidates to exclude from digests.</p>
+          <div class="minititle">Heaviest files</div>
+          <p style="font-size:11px;color:var(--text3);margin-bottom:8px">The largest files by size, good candidates to exclude from digests.</p>
           <div id="bigFiles"></div>
         </div>
       </div>
       <div class="card">
-        <div class="minititle">📁 File tree <span class="help-slot" data-help="files"></span></div>
+        <div class="minititle">File tree <span class="help-slot" data-help="files"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:10px">Interactive tree with checkboxes. Select files → go to Digest tab → generate an LLM-ready prompt.</p>
         <div class="tree-tools">
-          <button class="btn ghost sm" onclick="expandAll(true)" data-i18n="expandAll">📂 Expand all</button>
-          <button class="btn ghost sm" onclick="expandAll(false)" data-i18n="collapseAll">📁 Collapse all</button>
-          <button class="btn ghost sm" onclick="selectTextAll()" title="Select all text files for digest" data-i18n="selectText">✓ Select text</button>
-          <button class="btn ghost sm" onclick="clearSel()" title="Clear all selections" data-i18n="clearSel">✕ Clear</button>
-          <button class="btn ghost sm" onclick="copyTreeAsText()" title="Copy tree structure as plain text" data-i18n="copyTree">📋 Copy tree</button>
-          <button class="btn ghost sm" onclick="toggleFilterHidden()" id="filterHiddenBtn" title="Show/hide hidden files (dotfiles)"><span data-i18n="hiddenBtn">👁 Hidden</span></button>
-          <button class="btn ghost sm" onclick="toggleFilterBinary()" id="filterBinaryBtn" title="Show/hide binary files"><span data-i18n="binaryBtn">🧊 Binary</span></button>
-          <input type="text" id="treeSearch" placeholder="🔍 Filter files…" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;width:160px;outline:none" oninput="filterTree(this.value)" aria-label="Filter files in tree">
+          <button class="btn ghost sm" onclick="expandAll(true)" data-i18n="expandAll"><svg class="ic"><use href="#i-folder-open"/></svg> Expand all</button>
+          <button class="btn ghost sm" onclick="expandAll(false)" data-i18n="collapseAll"><svg class="ic"><use href="#i-folder"/></svg> Collapse all</button>
+          <button class="btn ghost sm" onclick="selectTextAll()" title="Select all text files for digest" data-i18n="selectText"><svg class="ic"><use href="#i-check"/></svg> Select text</button>
+          <button class="btn ghost sm" onclick="clearSel()" title="Clear all selections" data-i18n="clearSel"><svg class="ic"><use href="#i-x"/></svg> Clear</button>
+          <button class="btn ghost sm" onclick="copyTreeAsText()" title="Copy tree structure as plain text" data-i18n="copyTree"><svg class="ic"><use href="#i-copy"/></svg> Copy tree</button>
+          <button class="btn ghost sm" onclick="toggleFilterHidden()" id="filterHiddenBtn" title="Show/hide hidden files (dotfiles)"><svg class="ic"><use href="#i-eye"/></svg> <span data-i18n="hiddenBtn">Hidden</span></button>
+          <button class="btn ghost sm" onclick="toggleFilterBinary()" id="filterBinaryBtn" title="Show/hide binary files"><svg class="ic"><use href="#i-box"/></svg> <span data-i18n="binaryBtn">Binary</span></button>
+          <input type="text" id="treeSearch" placeholder="Filter files…" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;width:160px;outline:none" oninput="filterTree(this.value)" aria-label="Filter files in tree">
           <select id="scopeSelect" onchange="filterScope(this.value)" title="Scope to a monorepo subfolder" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;max-width:180px">
-            <option value="">📂 Whole repo</option>
+            <option value="">Whole repo</option>
           </select>
           <span class="info" id="treeInfo"></span>
         </div>
         <div class="tree" id="tree"></div>
       </div>
       <div class="card" style="margin-top:16px">
-        <div class="minititle">🔎 Search inside file contents</div>
-        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Fetches and scans text files under 120KB in your browser — nothing is uploaded. Click a result to toggle it in the digest selection.</p>
+        <div class="minititle">Search inside file contents</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Fetches and scans text files under 120KB in your browser, nothing is uploaded. Click a result to toggle it in the digest selection.</p>
         <div style="display:flex;gap:8px">
           <input type="text" id="ftsInput" placeholder="e.g. TODO, authenticate, useMemo…" spellcheck="false" style="flex:1" onkeydown="if(event.key==='Enter')fullTextSearch()">
-          <button class="btn sm" onclick="fullTextSearch()" data-i18n="ftsBtn">🔎 Search</button>
+          <button class="btn sm" onclick="fullTextSearch()" data-i18n="ftsBtn"><svg class="ic"><use href="#i-search"/></svg> Search</button>
         </div>
         <div id="ftsResults" style="display:none;margin-top:10px"></div>
       </div>
       <div class="card" style="margin-top:16px" id="endpointsCard">
-        <div class="minititle">🔌 API Endpoints <span class="ep-badge" id="epBadge">0</span></div>
+        <div class="minititle">API Endpoints <span class="ep-badge" id="epBadge">0</span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Detected API routes from file paths (Next.js, Express, Flask patterns).</p>
         <div id="endpointsContent"></div>
       </div>
     </section>
 
     <section class="panel" id="p-map">
-      <div class="card" style="margin-bottom:16px;background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
-          <b>Repo Map</b> turns the file tree into an interactive system map — Archify-style. Folders, entry points, manifests and config files become nodes you can <b>pan, zoom and search</b>. Click a node to focus it and trace <b>upstream / downstream</b> reach, press <b>R</b> to probe a route between two nodes, <b>L</b> to compare kinds with a semantic lens, <b>F</b> for presentation mode. Hit <b>Trace imports</b> to fetch source files and add real dependency edges.
+          <b>Repo Map</b> turns the file tree into an interactive system map, Archify-style. Folders, entry points, manifests and config files become nodes you can <b>pan, zoom and search</b>. Click a node to focus it and trace <b>upstream / downstream</b> reach, press <b>R</b> to probe a route between two nodes, <b>L</b> to compare kinds with a semantic lens, <b>F</b> for presentation mode. Hit <b>Trace imports</b> to fetch source files and add real dependency edges.
         </p>
       </div>
       <div class="card">
-        <div class="minititle">🗺️ Repo Map <span class="help-slot" data-help="map"></span>
+        <div class="minititle">Repo Map <span class="help-slot" data-help="map"></span>
           <span class="map-actions">
-            <button class="btn ghost sm" id="mapTraceBtn" onclick="traceMapImports()" title="Fetch source files and trace real import edges">🧬 <span data-i18n="mapTrace">Trace imports</span></button>
-            <button class="btn ghost sm" onclick="cycleMapPreset()" title="Cycle visual style (S)">🎨 Style: <b id="mapPresetName">Neon</b></button>
-            <button class="btn ghost sm" onclick="cycleMapLayout()" title="Cycle layout (G)">📐 Layout: <b id="mapLayoutName">Force</b></button>
-            <button class="btn ghost sm" id="mapMinimapBtn" onclick="toggleMapMinimap()" title="Toggle minimap (M)">🗺 Minimap</button>
-            <button class="btn ghost sm" onclick="mapFit()" title="Fit all nodes (0)">⤢ Fit</button>
-            <button class="btn ghost sm" onclick="exportMapPNG()" title="Export as PNG (E)">⬇️ PNG</button>
+            <button class="btn ghost sm" id="mapTraceBtn" onclick="traceMapImports()" title="Fetch source files and trace real import edges"><svg class="ic"><use href="#i-branch"/></svg> <span data-i18n="mapTrace">Trace imports</span></button>
+            <button class="btn ghost sm" onclick="cycleMapPreset()" title="Cycle visual style (S)"><svg class="ic"><use href="#i-droplet"/></svg> Style: <b id="mapPresetName">Neon</b></button>
+            <button class="btn ghost sm" onclick="cycleMapLayout()" title="Cycle layout (G)"><svg class="ic"><use href="#i-grid"/></svg> Layout: <b id="mapLayoutName">Force</b></button>
+            <button class="btn ghost sm" id="mapMinimapBtn" onclick="toggleMapMinimap()" title="Toggle minimap (M)"><svg class="ic"><use href="#i-map"/></svg> Minimap</button>
+            <button class="btn ghost sm" onclick="mapFit()" title="Fit all nodes (0)"><svg class="ic"><use href="#i-expand"/></svg> Fit</button>
+            <button class="btn ghost sm" onclick="exportMapPNG()" title="Export as PNG (E)"><svg class="ic"><use href="#i-download"/></svg> PNG</button>
           </span>
         </div>
         <div class="map-wrap" id="mapWrap">
@@ -386,17 +443,17 @@
     </section>
 
     <section class="panel" id="p-crawl">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)" data-i18n-html="crawlHint">
-          A browser-side documentation crawler. Give it a docs URL — it fetches pages <b>recursively</b>, strips navbars, sidebars, footers and TOCs, and gives you one clean text bundle for offline reading or your LLM / RAG pipeline. Same-origin only by default.
+          A browser-side documentation crawler. Give it a docs URL, it fetches pages <b>recursively</b>, strips navbars, sidebars, footers and TOCs, and gives you one clean text bundle for offline reading or your LLM / RAG pipeline. Same-origin only by default.
         </p>
       </div>
       <div class="card">
-        <div class="minititle">🦎 Docs Crawler <span class="help-slot" data-help="crawl"></span></div>
+        <div class="minititle">Docs Crawler <span class="help-slot" data-help="crawl"></span></div>
         <div class="crawl-bar">
           <input id="crawlUrl" type="text" data-i18n-ph="crawlUrlPh" placeholder="https://docs.example.com …" spellcheck="false" autocomplete="off" aria-label="Documentation URL to crawl">
-          <button class="btn green" id="crawlBtn" onclick="startCrawl()" data-i18n="crawlBtn">🦎 Crawl docs</button>
-          <button class="btn ghost sm" id="crawlStopBtn" style="display:none" onclick="stopCrawl()" data-i18n="crawlStop">⏹ Stop</button>
+          <button class="btn green" id="crawlBtn" onclick="startCrawl()" data-i18n="crawlBtn"><svg class="ic"><use href="#i-rss"/></svg> Crawl docs</button>
+          <button class="btn ghost sm" id="crawlStopBtn" style="display:none" onclick="stopCrawl()" data-i18n="crawlStop"><svg class="ic"><use href="#i-stop"/></svg> Stop</button>
         </div>
         <div class="crawl-opts">
           <label class="optrow"><span data-i18n="crawlMaxPages">Max pages</span> <input id="crawlMaxPages" type="number" min="1" max="50" value="10" style="width:70px"></label>
@@ -408,21 +465,21 @@
           <div class="crawl-stats" id="crawlStats"></div>
           <div class="crawl-page-list" id="crawlPageList"></div>
         </div>
-        <p class="crawl-proxy-note" id="crawlProxyNote" style="display:none" data-i18n="crawlProxyNote">Direct fetch failed for some pages — retried through a public CORS proxy.</p>
+        <p class="crawl-proxy-note" id="crawlProxyNote" style="display:none" data-i18n="crawlProxyNote">Direct fetch failed for some pages, retried through a public CORS proxy.</p>
         <textarea class="crawl-out" id="crawlOut" readonly placeholder="Crawled documentation text appears here…"></textarea>
         <div class="digest-actions" id="crawlActions" style="display:none">
-          <button class="btn sm" onclick="crawlCopy()" data-i18n="crawlCopy">📋 Copy text</button>
-          <button class="btn ghost sm" onclick="crawlDownload()" data-i18n="crawlDownload">⬇️ Download .txt</button>
-          <button class="btn ghost sm" onclick="crawlAddToDigest()" data-i18n="crawlAddDigest">+ Add to digest</button>
+          <button class="btn sm" onclick="crawlCopy()" data-i18n="crawlCopy"><svg class="ic"><use href="#i-copy"/></svg> Copy text</button>
+          <button class="btn ghost sm" onclick="crawlDownload()" data-i18n="crawlDownload"><svg class="ic"><use href="#i-download"/></svg> Download .txt</button>
+          <button class="btn ghost sm" onclick="crawlAddToDigest()" data-i18n="crawlAddDigest"><svg class="ic"><use href="#i-plus"/></svg> Add to digest</button>
         </div>
-        <p id="crawlDigestHint" style="display:none;font-size:11.5px;color:var(--text3);margin-top:10px">✓ Crawled docs bundle attached — it will be appended to the next generated digest.</p>
+        <p id="crawlDigestHint" style="display:none;font-size:11.5px;color:var(--text3);margin-top:10px"><svg class="ic" style="width:12px;height:12px;vertical-align:-2px;color:var(--accent)"><use href="#i-check"/></svg> Crawled docs bundle attached, it will be appended to the next generated digest.</p>
       </div>
     </section>
 
     <section class="panel" id="p-digest">
       <div class="digest-layout">
         <div>
-          <div class="card" style="margin-bottom:16px;background:rgba(168,85,247,.06);border-color:rgba(168,85,247,.2)">
+          <div class="card hint-card" style="margin-bottom:16px">
             <p style="font-size:13px;line-height:1.7;color:var(--text2)">
               <b>LLM Digest</b> packs selected files into a single prompt you can paste into ChatGPT, Claude, or Gemini. Go to <b>Files</b> tab → tick checkboxes → come back here → click <b>Generate</b>. The prompt includes repo metadata, README, file tree, and full file contents. Binary files and lockfiles are skipped automatically.
             </p>
@@ -434,14 +491,14 @@
             <label class="optrow"><input type="checkbox" id="optMeta" checked> Repo metadata header</label>
           </div>
           <div class="card" style="margin-bottom:16px">
-            <div class="minititle">🎯 Digest Preset</div>
+            <div class="minititle">Digest Preset</div>
             <div class="rec-btns">
-              <button class="rec-btn preset-sel" data-preset="general" onclick="selectDigestPreset('general')">🧩 General</button>
-              <button class="rec-btn" data-preset="review" onclick="selectDigestPreset('review')">🔍 Code review</button>
-              <button class="rec-btn" data-preset="learn" onclick="selectDigestPreset('learn')">🎓 Learn codebase</button>
-              <button class="rec-btn" data-preset="migrate" onclick="selectDigestPreset('migrate')">🚚 Migration</button>
-              <button class="rec-btn" data-preset="docs" onclick="selectDigestPreset('docs')">📝 Docs writing</button>
-              <button class="rec-btn" data-preset="custom" onclick="selectDigestPreset('custom')">✏️ Custom</button>
+              <button class="rec-btn preset-sel" data-preset="general" onclick="selectDigestPreset('general')"><svg class="ic"><use href="#i-blocks"/></svg> General</button>
+              <button class="rec-btn" data-preset="review" onclick="selectDigestPreset('review')"><svg class="ic"><use href="#i-search"/></svg> Code review</button>
+              <button class="rec-btn" data-preset="learn" onclick="selectDigestPreset('learn')"><svg class="ic"><use href="#i-book"/></svg> Learn codebase</button>
+              <button class="rec-btn" data-preset="migrate" onclick="selectDigestPreset('migrate')"><svg class="ic"><use href="#i-swap"/></svg> Migration</button>
+              <button class="rec-btn" data-preset="docs" onclick="selectDigestPreset('docs')"><svg class="ic"><use href="#i-pencil"/></svg> Docs writing</button>
+              <button class="rec-btn" data-preset="custom" onclick="selectDigestPreset('custom')"><svg class="ic"><use href="#i-sliders"/></svg> Custom</button>
             </div>
             <div class="rec-btns">
               <button class="rec-btn" data-format="md" onclick="selectDigestFormat('md')">Markdown</button>
@@ -449,8 +506,8 @@
               <button class="rec-btn" data-format="json" onclick="selectDigestFormat('json')">JSON</button>
               <button class="rec-btn" data-format="llmstxt" onclick="selectDigestFormat('llmstxt')" title="Standard llms.txt format for LLM agents">llms.txt</button>
               <button class="rec-btn" data-format="repomix" onclick="selectDigestFormat('repomix')" title="Repomix XML-wrapped schema">Repomix</button>
-              <button class="rec-btn sig-btn" onclick="toggleSigOnly()" id="sigBtn" title="Strip function bodies — keep only signatures, types & comments">🗜️ Signatures only</button>
-              <button class="rec-btn shrink-btn" onclick="toggleTokenShrink()" id="shrinkBtn" title="Strip comments and redundant whitespace to save up to 40% tokens">✂️ Shrink tokens</button>
+              <button class="rec-btn sig-btn" onclick="toggleSigOnly()" id="sigBtn" title="Strip function bodies, keep only signatures, types & comments"><svg class="ic"><use href="#i-minimize"/></svg> Signatures only</button>
+              <button class="rec-btn shrink-btn" onclick="toggleTokenShrink()" id="shrinkBtn" title="Strip comments and redundant whitespace to save up to 40% tokens"><svg class="ic"><use href="#i-scissors"/></svg> Shrink tokens</button>
             </div>
           </div>
           <div class="card" style="margin-top:16px">
@@ -466,22 +523,22 @@
             </div>
           </div>
           <div class="card">
-            <div class="minititle">⚡ Smart Recommendations</div>
+            <div class="minititle">Smart Recommendations</div>
             <div class="rec-btns">
-              <button class="rec-btn" onclick="selectRecCategory('core')">📁 Core files <span class="rcnt" id="recCoreCnt"></span></button>
-              <button class="rec-btn" onclick="selectRecCategory('config')">⚙️ Config files <span class="rcnt" id="recConfigCnt"></span></button>
-              <button class="rec-btn" onclick="selectRecCategory('docs')">📝 Docs <span class="rcnt" id="recDocsCnt"></span></button>
-              <button class="rec-btn" onclick="selectRecGoal('bug')" title="Select entry points, tests and main sources">🐞 Bug Hunter</button>
-              <button class="rec-btn" onclick="selectRecGoal('arch')" title="Select types, interfaces, routes and entry points">🏗️ Architecture</button>
-              <button class="rec-btn" onclick="selectRecGoal('security')" title="Select auth, env, configs and workflows">🛡️ Security Audit</button>
+              <button class="rec-btn" onclick="selectRecCategory('core')"><svg class="ic"><use href="#i-folder"/></svg> Core files <span class="rcnt" id="recCoreCnt"></span></button>
+              <button class="rec-btn" onclick="selectRecCategory('config')"><svg class="ic"><use href="#i-sliders"/></svg> Config files <span class="rcnt" id="recConfigCnt"></span></button>
+              <button class="rec-btn" onclick="selectRecCategory('docs')"><svg class="ic"><use href="#i-pencil"/></svg> Docs <span class="rcnt" id="recDocsCnt"></span></button>
+              <button class="rec-btn" onclick="selectRecGoal('bug')" title="Select entry points, tests and main sources"><svg class="ic"><use href="#i-bug"/></svg> Bug Hunter</button>
+              <button class="rec-btn" onclick="selectRecGoal('arch')" title="Select types, interfaces, routes and entry points"><svg class="ic"><use href="#i-layers"/></svg> Architecture</button>
+              <button class="rec-btn" onclick="selectRecGoal('security')" title="Select auth, env, configs and workflows"><svg class="ic"><use href="#i-shield"/></svg> Security Audit</button>
             </div>
           </div>
           <div class="card" style="margin-top:16px">
-            <div class="minititle">❓ Ask-a-question auto-select</div>
-            <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Type what you want to ask the LLM — relevant files get selected automatically by matching your keywords against paths and file contents.</p>
+            <div class="minititle">Ask-a-question auto-select</div>
+            <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Type what you want to ask the LLM, relevant files get selected automatically by matching your keywords against paths and file contents.</p>
             <div style="display:flex;gap:8px">
               <input type="text" id="askInput" placeholder="e.g. how does authentication work?" spellcheck="false" style="flex:1" onkeydown="if(event.key==='Enter')smartSelectForQuestion()">
-              <button class="btn sm" onclick="smartSelectForQuestion()">🎯 Select</button>
+              <button class="btn sm" onclick="smartSelectForQuestion()"><svg class="ic"><use href="#i-target"/></svg> Select</button>
             </div>
             <p style="font-size:11px;color:var(--text3);margin-top:8px" id="askStatus"></p>
           </div>
@@ -489,92 +546,92 @@
             <div class="minititle">Selection</div>
             <div class="digest-meta" id="selMeta"></div>
             <div class="digest-actions">
-              <button class="btn sm" onclick="selectTextAll()" data-i18n="allTextBtn">✓ All text files</button>
+              <button class="btn sm" onclick="selectTextAll()" data-i18n="allTextBtn"><svg class="ic"><use href="#i-check"/></svg> All text files</button>
               <button class="btn ghost sm" onclick="clearSel()">Clear</button>
-              <button class="btn green" id="genBtn" onclick="generateDigest()" data-i18n="genBtn">🤖 Generate digest</button>
+              <button class="btn green" id="genBtn" onclick="generateDigest()" data-i18n="genBtn"><svg class="ic"><use href="#i-robot"/></svg> Generate digest</button>
             </div>
-            <p style="color:var(--text3);font-size:11.5px;line-height:1.6">Tip: tick files in the <b>Files</b> tab tree, then come back here. Binary files and lockfiles are skipped automatically. Content is fetched fresh from raw.githubusercontent.com — it never leaves your browser.</p>
+            <p style="color:var(--text3);font-size:11.5px;line-height:1.6">Tip: tick files in the <b>Files</b> tab tree, then come back here. Binary files and lockfiles are skipped automatically. Content is fetched fresh from raw.githubusercontent.com, it never leaves your browser.</p>
           </div>
         </div>
           <div class="card">
             <div class="minititle">Generated prompt</div>
-            <textarea class="digest-out" id="digestOut" readonly placeholder="Pick some files and hit Generate — the LLM-ready prompt will appear here."></textarea>
+            <textarea class="digest-out" id="digestOut" readonly placeholder="Pick some files and hit Generate, the LLM-ready prompt will appear here."></textarea>
             <div class="digest-actions" id="partNav" style="display:none"></div>
             <div class="digest-actions">
-              <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled><span data-i18n="copyBtn">📋 Copy</span></button>
-              <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled><span data-i18n="dlBtn">⬇️ Download .md</span></button>
-              <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)"><span data-i18n="gistBtn">🌐 Gist share</span></button>
-              <button class="btn ghost sm" onclick="toggleTokTable()" id="tokBtn" disabled><span data-i18n="tokBtn">🧮 Token breakdown</span></button>
+              <button class="btn sm" onclick="copyDigest()" id="copyBtn" disabled><svg class="ic"><use href="#i-copy"/></svg> <span data-i18n="copyBtn">Copy</span></button>
+              <button class="btn ghost sm" onclick="downloadDigest()" id="dlBtn" disabled><svg class="ic"><use href="#i-download"/></svg> <span data-i18n="dlBtn">Download .md</span></button>
+              <button class="btn ghost sm" onclick="shareDigestGist()" id="gistBtn" disabled title="Upload the digest to a secret GitHub Gist (requires a token)"><svg class="ic"><use href="#i-globe"/></svg> <span data-i18n="gistBtn">Gist share</span></button>
+              <button class="btn ghost sm" onclick="toggleTokTable()" id="tokBtn" disabled><svg class="ic"><use href="#i-chip"/></svg> <span data-i18n="tokBtn">Token breakdown</span></button>
             </div>
             <div id="tokTable" style="display:none"></div>
           <div class="llm-buttons" id="llmButtons" style="display:none">
-            <a class="llm-btn" id="chatgptBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🤖</span> Open in ChatGPT</a>
-            <a class="llm-btn" id="claudeBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon">🧠</span> Open in Claude</a>
+            <a class="llm-btn" id="chatgptBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon"><svg class="ic"><use href="#i-robot"/></svg></span> Open in ChatGPT</a>
+            <a class="llm-btn" id="claudeBtn" href="#" target="_blank" rel="noopener"><span class="llm-icon"><svg class="ic"><use href="#i-chip"/></svg></span> Open in Claude</a>
           </div>
         </div>
       </div>
     </section>
 
     <section class="panel" id="p-pr">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
-          <b>PR X-Ray</b> turns any pull request into a human-readable review brief: what changed, which sensitive areas it touches, how big and risky it is — plus an <b>LLM-ready review digest</b> with the full diffs packed into one prompt. Paste a PR URL (github.com/owner/repo/pull/123), an <span style="font-family:var(--mono)">owner/repo#123</span> ref, or just a number from this repo.
+          <b>PR X-Ray</b> turns any pull request into a human-readable review brief: what changed, which sensitive areas it touches, how big and risky it is, plus an <b>LLM-ready review digest</b> with the full diffs packed into one prompt. Paste a PR URL (github.com/owner/repo/pull/123), an <span style="font-family:var(--mono)">owner/repo#123</span> ref, or just a number from this repo.
         </p>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">🔀 Analyze a pull request</div>
+        <div class="minititle">Analyze a pull request</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <input id="prInput" type="text" placeholder="https://github.com/owner/repo/pull/123 · owner/repo#123 · or just 42" spellcheck="false" autocomplete="off" style="flex:1;min-width:220px" onkeydown="if(event.key==='Enter')prSubmitInput()" aria-label="Pull request URL or number">
-          <button class="btn sm" onclick="prSubmitInput()">⚡ X-Ray it</button>
-          <button class="btn ghost sm" onclick="loadPRList()" title="Reload the open-PR list of this repo">🔄 Refresh list</button>
+          <button class="btn sm" onclick="prSubmitInput()"><svg class="ic"><use href="#i-scan"/></svg> X-Ray it</button>
+          <button class="btn ghost sm" onclick="loadPRList()" title="Reload the open-PR list of this repo"><svg class="ic"><use href="#i-refresh"/></svg> Refresh list</button>
         </div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">📂 Open pull requests <span class="ep-badge" id="prListBadge">—</span></div>
-        <div id="prList"><p style="color:var(--text3);font-size:12px">Open PRs of the current repo appear here — click one to analyze it.</p></div>
+        <div class="minititle">Open pull requests <span class="ep-badge" id="prListBadge">…</span></div>
+        <div id="prList"><p style="color:var(--text3);font-size:12px">Open PRs of the current repo appear here, click one to analyze it.</p></div>
       </div>
       <div id="prAnalysis"></div>
       <div class="card" style="margin-top:16px">
-        <div class="minititle">🤖 LLM review digest</div>
-        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Analyze a PR, then generate a single prompt containing the PR metadata, the risk report and the full diffs — ready to paste into ChatGPT, Claude or Gemini as a code-review task.</p>
+        <div class="minititle">LLM review digest</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Analyze a PR, then generate a single prompt containing the PR metadata, the risk report and the full diffs, ready to paste into ChatGPT, Claude or Gemini as a code-review task.</p>
         <div class="digest-actions" style="margin-bottom:8px">
-          <button class="btn green sm" onclick="generatePRDigest()" id="prGenBtn" disabled>🤖 Generate review digest</button>
-          <button class="btn sm" onclick="copyPRDigest()" id="prCopyBtn" disabled>📋 Copy</button>
-          <button class="btn ghost sm" onclick="downloadPRDigest()" id="prDlBtn" disabled>⬇️ Download .md</button>
+          <button class="btn green sm" onclick="generatePRDigest()" id="prGenBtn" disabled><svg class="ic"><use href="#i-robot"/></svg> Generate review digest</button>
+          <button class="btn sm" onclick="copyPRDigest()" id="prCopyBtn" disabled><svg class="ic"><use href="#i-copy"/></svg> Copy</button>
+          <button class="btn ghost sm" onclick="downloadPRDigest()" id="prDlBtn" disabled><svg class="ic"><use href="#i-download"/></svg> Download .md</button>
         </div>
         <textarea class="digest-out" id="prDigestOut" readonly placeholder="The review-ready prompt will appear here after you generate it."></textarea>
       </div>
     </section>
 
     <section class="panel" id="p-onboard">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
-          <b>Onboarding Guide</b> generates a step-by-step "your first contribution" path for this repo: setup commands, architecture reading order, good-first-issues, CI checklist and key contacts — all derived from the data already loaded in your browser.
+          <b>Onboarding Guide</b> generates a step-by-step "your first contribution" path for this repo: setup commands, architecture reading order, good-first-issues, CI checklist and key contacts, all derived from the data already loaded in your browser.
         </p>
       </div>
       <div class="card">
-        <div class="minititle">🚀 Generate onboarding guide</div>
+        <div class="minititle">Generate onboarding guide</div>
         <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button class="btn green" onclick="generateOnboarding()" id="onboardBtn">🧭 Build guide</button>
-          <button class="btn ghost sm" onclick="downloadOnboarding()" id="onboardDlBtn" disabled>⬇️ Download .md</button>
-          <button class="btn ghost sm" onclick="copyOnboarding()" id="onboardCopyBtn" disabled>📋 Copy</button>
+          <button class="btn green" onclick="generateOnboarding()" id="onboardBtn"><svg class="ic"><use href="#i-compass"/></svg> Build guide</button>
+          <button class="btn ghost sm" onclick="downloadOnboarding()" id="onboardDlBtn" disabled><svg class="ic"><use href="#i-download"/></svg> Download .md</button>
+          <button class="btn ghost sm" onclick="copyOnboarding()" id="onboardCopyBtn" disabled><svg class="ic"><use href="#i-copy"/></svg> Copy</button>
         </div>
         <div id="onboardContent"><p style="color:var(--text3);font-size:12px">Load a repository and click "Build guide".</p></div>
       </div>
     </section>
 
     <section class="panel" id="p-activity">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
           <b>Activity</b> shows the project's pulse: commit frequency over 52 weeks, top contributors by commit count, recent commits, star history, bus factor (how many people could walk away before the project stalls), and release timeline.
         </p>
       </div>
       <div class="card actchart" style="margin-bottom:16px">
-        <div class="minititle">📊 Commit activity — last 52 weeks</div>
+        <div class="minititle">Commit activity, last 52 weeks</div>
         <canvas id="actChart" height="90"></canvas>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">⭐ Star history</div>
+        <div class="minititle">Star history</div>
         <div class="star-history-embed" id="starHistoryEmbed"></div>
         <p style="color:var(--text3);font-size:11px;margin-top:8px">Powered by <a href="https://star-history.com" target="_blank" rel="noopener">star-history.com</a></p>
       </div>
@@ -590,18 +647,18 @@
       </div>
       <div class="grid2" style="margin-top:16px">
         <div class="card bus-factor-card">
-          <div class="minititle">🚌 Bus Factor & Contributor Dominance</div>
+          <div class="minititle">Bus Factor & Contributor Dominance</div>
           <div id="busFactorContent"></div>
         </div>
         <div class="card">
-          <div class="minititle">📦 Release Timeline</div>
+          <div class="minititle">Release Timeline</div>
           <div id="releaseTimeline"></div>
         </div>
       </div>
     </section>
 
     <section class="panel" id="p-fun">
-      <div class="card" style="margin-bottom:16px;background:rgba(236,72,153,.06);border-color:rgba(236,72,153,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
           <b>Fun Mode</b> gives your repo a personality based on its dominant language, a data-driven roast of its quirks, and unlockable trophies for things like having tests, CI, a license, or 1,000+ stars. Share your card on social media!
         </p>
@@ -614,12 +671,12 @@
         </div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">🔥 Roast mode</div>
+        <div class="minititle">Roast mode</div>
         <div class="roast" id="roastBox"></div>
-        <div style="text-align:right;margin-top:12px"><button class="btn ghost sm" onclick="rerollRoast()">🎲 Another one</button></div>
+        <div style="text-align:right;margin-top:12px"><button class="btn ghost sm" onclick="rerollRoast()"><svg class="ic"><use href="#i-dice"/></svg> Another one</button></div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">📅 Repo Wrapped <span style="font-size:10px;color:var(--text3)">last 12 months</span> <span class="help-slot" data-help="wrapped"></span></div>
+        <div class="minititle">Repo Wrapped <span style="font-size:10px;color:var(--text3)">last 12 months</span> <span class="help-slot" data-help="wrapped"></span></div>
         <div id="wrappedCard"></div>
       </div>
       <div class="card">
@@ -629,13 +686,13 @@
     </section>
 
     <section class="panel" id="p-deps">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
           <b>Deps</b> shows an interactive force-directed graph of dependencies parsed from manifest files (package.json, requirements.txt, Cargo.toml, go.mod, etc.). Hover over nodes to see package names. Each color represents a different ecosystem.
         </p>
       </div>
       <div class="card">
-        <div class="minititle">🔗 Dependency Graph <span class="help-slot" data-help="deps"></span></div>
+        <div class="minititle">Dependency Graph <span class="help-slot" data-help="deps"></span></div>
         <div class="dep-graph-wrap" id="depGraphWrap">
           <canvas id="depGraphCanvas"></canvas>
           <div class="dep-graph-tooltip" id="depGraphTooltip"></div>
@@ -645,36 +702,36 @@
     </section>
 
     <section class="panel" id="p-deep">
-      <div class="card" style="margin-bottom:16px;background:rgba(34,211,238,.06);border-color:rgba(34,211,238,.2)">
+      <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
-          <b>Deep Analysis</b> goes beyond the surface: PR throughput (merge rate, open/closed, avg time-to-merge), fix-vs-feature commit ratio (bug pressure), code churn hotspots (files that change most often — bug magnets), and a dependency vulnerability scan powered by the open <a href="https://osv.dev" target="_blank" rel="noopener">OSV API</a>.
+          <b>Deep Analysis</b> goes beyond the surface: PR throughput (merge rate, open/closed, avg time-to-merge), fix-vs-feature commit ratio (bug pressure), code churn hotspots (files that change most often, bug magnets), and a dependency vulnerability scan powered by the open <a href="https://osv.dev" target="_blank" rel="noopener">OSV API</a>.
         </p>
       </div>
       <div class="grid2" style="margin-bottom:16px">
         <div class="card">
-          <div class="minititle">🔀 Pull Request Analytics <span class="help-slot" data-help="deep"></span></div>
+          <div class="minititle">Pull Request Analytics <span class="help-slot" data-help="deep"></span></div>
           <div id="prAnalyticsContent"><p style="color:var(--text3);font-size:12px">Click "Run deep scan" to fetch PR data.</p></div>
         </div>
         <div class="card">
-          <div class="minititle">🐛 Commit Fix Rate</div>
+          <div class="minititle">Commit Fix Rate</div>
           <div id="fixRateContent"><p style="color:var(--text3);font-size:12px">Click "Run deep scan" to analyze commits.</p></div>
         </div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">🔥 Code Churn Hotspots</div>
-        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Files changed most frequently across recent commits — high churn often correlates with bugs and design debt.</p>
+        <div class="minititle">Code Churn Hotspots</div>
+        <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Files changed most frequently across recent commits, high churn often correlates with bugs and design debt.</p>
         <div id="churnContent"></div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">✍️ Commit Style Fingerprint</div>
+        <div class="minititle">Commit Style Fingerprint</div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Linguistic profile of the last 100 commit messages: convention adherence, verbosity, emoji culture, sentiment and co-authorship network.</p>
         <div id="commitStyleContent"><p style="color:var(--text3);font-size:12px">Runs automatically after a deep scan.</p></div>
       </div>
       <div class="card" style="margin-bottom:16px">
-        <div class="minititle">📋 Issue Triage <span class="help-slot" data-help="triage"></span></div>
+        <div class="minititle">Issue Triage <span class="help-slot" data-help="triage"></span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Auto-classifies open issues by type, staleness and priority. Click "Run deep scan" or the button below.</p>
         <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-          <button class="btn sm" onclick="loadIssueTriage()" id="triageBtn">📋 Scan issues</button>
+          <button class="btn sm" onclick="loadIssueTriage()" id="triageBtn"><svg class="ic"><use href="#i-clipboard"/></svg> Scan issues</button>
           <select id="triageFilter" onchange="renderIssueTriage()" style="padding:6px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;outline:none">
             <option value="all">All</option>
             <option value="bug">Bugs</option>
@@ -686,9 +743,9 @@
         <div id="triageContent"><p style="color:var(--text3);font-size:12px">Not scanned yet.</p></div>
       </div>
       <div class="card">
-        <div class="minititle">🛡️ Dependency Vulnerability Scan <span class="ep-badge" id="osvBadge">—</span></div>
+        <div class="minititle">Dependency Vulnerability Scan <span class="ep-badge" id="osvBadge">…</span></div>
         <p style="font-size:11px;color:var(--text3);margin-bottom:8px">Checks parsed dependencies against the OSV.dev database. No API key needed.</p>
-        <div style="margin-bottom:10px"><button class="btn sm" onclick="runOsvScan()" id="osvScanBtn">🛡️ Scan dependencies</button></div>
+        <div style="margin-bottom:10px"><button class="btn sm" onclick="runOsvScan()" id="osvScanBtn"><svg class="ic"><use href="#i-shield"/></svg> Scan dependencies</button></div>
         <div id="osvContent"><p style="color:var(--text3);font-size:12px">Not scanned yet.</p></div>
       </div>
     </section>
@@ -702,16 +759,16 @@
 
 <div class="modal-bg hidden" id="modalBg">
   <div class="modal">
-    <h3>🔑 GitHub Token (optional) <span class="help-slot" data-help="tokenModal"></span></h3>
-    <p>Without a token you get 60 API calls/hour — fine for a few lookups. A free personal access token raises that to 5,000/hour. It's stored only in your browser's localStorage and sent only to api.github.com.</p>
-    <a class="hint" href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">→ Create a fine-grained token (no permissions needed for public repos)</a>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-key"/></svg> GitHub Token (optional) <span class="help-slot" data-help="tokenModal"></span></h3>
+    <p>Without a token you get 60 API calls/hour, fine for a few lookups. A free personal access token raises that to 5,000/hour. It's stored only in your browser's localStorage and sent only to api.github.com.</p>
+    <a class="hint" href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">Create a fine-grained token (no permissions needed for public repos)</a>
     <input id="patInput" type="password" placeholder="github_pat_… or ghp_…">
     <div style="margin-top:14px">
-      <p style="font-size:12.5px;color:var(--text2);margin-bottom:6px"><b>🏢 GitHub Enterprise / self-hosted</b> — paste a full repo URL from your instance once (e.g. <code style="font-family:var(--mono);font-size:11px">https://ghe.corp.com/team/repo</code>) and it will be remembered. Or set a host manually:</p>
+      <p style="font-size:12.5px;color:var(--text2);margin-bottom:6px"><b>GitHub Enterprise / self-hosted</b>, paste a full repo URL from your instance once (e.g. <code style="font-family:var(--mono);font-size:11px">https://ghe.corp.com/team/repo</code>) and it will be remembered. Or set a host manually:</p>
       <div style="display:flex;gap:8px">
         <input id="gheInput" type="text" placeholder="ghe.corp.com (empty = github.com)" style="flex:1">
         <button class="btn ghost sm" onclick="saveGheHost()">Save</button>
-        <button class="btn ghost sm" onclick="clearGheHost()" title="Revert to github.com">✕</button>
+        <button class="btn ghost sm" onclick="clearGheHost()" title="Revert to github.com"><svg class="ic"><use href="#i-x"/></svg></button>
       </div>
       <p style="font-size:11px;color:var(--text3);margin-top:6px" id="gheStatus"></p>
     </div>
@@ -728,20 +785,20 @@
 <!-- Battle Modal -->
 <div class="modal-bg hidden battle-modal" id="battleModalBg">
   <div class="modal">
-    <h3>⚔️ Repo Battle</h3>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-vs"/></svg> Repo Battle</h3>
     <p>Enter another repo to compare side-by-side. We'll highlight the winner for each metric.</p>
     <input id="battleInput" type="text" placeholder="owner/repo" spellcheck="false" onkeydown="if(event.key==='Enter')runBattle()">
     <div id="battleResult"></div>
     <div class="mrow">
       <button class="btn ghost sm" onclick="closeBattleModal()" data-i18n="close">Close</button>
-      <button class="btn sm" onclick="runBattle()" data-i18n="battleBtn">⚔️ Battle!</button>
+      <button class="btn sm" onclick="runBattle()" data-i18n="battleBtn">Battle!</button>
     </div>
     <hr style="border:none;border-top:1px solid var(--line);margin:18px 0">
-    <h3>🏆 Battle Royale</h3>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-trophy"/></svg> Battle Royale</h3>
     <p>Up to 7 more repos, single-elimination bracket. One per line.</p>
     <textarea id="royaleInput" rows="4" spellcheck="false" placeholder="owner/repo&#10;another/repo&#10;third/repo" style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical"></textarea>
     <div class="mrow" style="margin-top:10px">
-      <button class="btn sm" onclick="runRoyale()" data-i18n="royaleBtn">🏆 Start tournament</button>
+      <button class="btn sm" onclick="runRoyale()" data-i18n="royaleBtn">Start tournament</button>
     </div>
     <div id="royaleResult" style="margin-top:12px"></div>
   </div>
@@ -750,7 +807,7 @@
 <!-- Explain Modal -->
 <div class="modal-bg hidden" id="explainModalBg">
   <div class="modal" style="width:min(560px,94vw)">
-    <h3>💡 Explain this repo</h3>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-bulb"/></svg> Explain this repo</h3>
     <div class="explain-content" id="explainContent"></div>
     <div class="mrow" style="margin-top:14px">
       <button class="btn ghost sm" onclick="closeExplainModal()">Close</button>
@@ -761,21 +818,21 @@
 <!-- Share Card Template Modal -->
 <div class="modal-bg hidden" id="shareTplModalBg">
   <div class="modal">
-    <h3>📸 Choose Share Card Template</h3>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-card"/></svg> Choose Share Card Template</h3>
     <p>Select a template for your shareable card.</p>
     <div class="share-templates">
       <div class="share-tpl selected" data-tpl="minimal" onclick="selectShareTpl(this)">
-        <div class="tpl-icon">✨</div>
+        <div class="tpl-icon"><svg class="ic" style="width:26px;height:26px"><use href="#i-minimize"/></svg></div>
         <div class="tpl-name">Minimal</div>
         <div class="tpl-desc">Name, score & stars only</div>
       </div>
       <div class="share-tpl" data-tpl="detailed" onclick="selectShareTpl(this)">
-        <div class="tpl-icon">📊</div>
+        <div class="tpl-icon"><svg class="ic" style="width:26px;height:26px"><use href="#i-chart"/></svg></div>
         <div class="tpl-name">Detailed</div>
         <div class="tpl-desc">All stats + languages</div>
       </div>
       <div class="share-tpl" data-tpl="fun" onclick="selectShareTpl(this)">
-        <div class="tpl-icon">🏆</div>
+        <div class="tpl-icon"><svg class="ic" style="width:26px;height:26px"><use href="#i-trophy"/></svg></div>
         <div class="tpl-name">Fun</div>
         <div class="tpl-desc">Persona + trophy count</div>
       </div>
@@ -790,7 +847,7 @@
 <!-- Clone Modal -->
 <div class="modal-bg hidden" id="cloneModalBg">
   <div class="modal" style="width:min(560px,94vw)">
-    <h3>📋 Clone Repository</h3>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-copy"/></svg> Clone Repository</h3>
     <p>Choose a clone method. Click to copy the command.</p>
     <div class="clone-options" id="cloneOptions"></div>
     <div class="qr-wrap" id="qrWrap"></div>
@@ -803,7 +860,7 @@
 <!-- Shortcuts Modal -->
 <div class="modal-bg hidden" id="shortcutsModalBg">
   <div class="modal" style="width:min(560px,94vw)">
-    <h3>⌨️ Keyboard Shortcuts</h3>
+    <h3><svg class="ic" style="width:16px;height:16px;vertical-align:-2px"><use href="#i-keyboard"/></svg> Keyboard Shortcuts</h3>
     <div class="shortcuts-grid">
       <div class="shortcut-item"><span class="sc-desc">Command palette</span><kbd>Ctrl+K</kbd></div>
       <div class="shortcut-item"><span class="sc-desc">Show shortcuts</span><kbd>/</kbd></div>

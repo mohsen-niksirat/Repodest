@@ -1,154 +1,11 @@
 'use strict';
 /* ============================================================
-   Repodest — UX layer
-   3D particles, deep analysis, digest upgrades, command palette,
+   Repodest, UX layer
+   Deep analysis, digest upgrades, command palette,
    help chips, favorites, branch diff, full-text search, worker,
    i18n, language menu, accessibility, quick wins.
    Loaded after app.features.js.
    ============================================================ */
-/* ============================================================
-   Particles animation — enhanced with connecting lines
-   ============================================================ */
-/* ============================================================
-   Deep 3D particle world — depth layers, glow, mouse links,
-   parallax. Enhanced port of the profile.html mesh background.
-   ============================================================ */
-(function particles(){
-  const c=$('#particles');
-  if(!c)return;
-  const ctx=c.getContext('2d');
-  let W=0,H=0,dots=[],mouse={x:-1e4,y:-1e4},mx=0,my=0;
-  const PALETTE=[
-    [168,85,247],  /* purple  */
-    [34,211,238],  /* cyan    */
-    [236,72,153],  /* pink    */
-    [139,92,246],  /* violet  */
-    [124,58,237]   /* deep violet */
-  ];
-  const LINK_DIST=150;
-  const reduced=matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function resize(){
-    W=c.width=innerWidth;
-    H=c.height=innerHeight;
-  }
-  function makeDot(){
-    /* z in [0,1]: 0 = far (small, dim, slow), 1 = near (big, bright, fast) */
-    const z=Math.random();
-    const glow=z>0.86;
-    return{
-      x:Math.random()*W,
-      y:Math.random()*H,
-      z,
-      r:z*2.6+.4,
-      vx:(Math.random()-.5)*(.18+z*.4),
-      vy:(Math.random()-.5)*(.18+z*.4),
-      col:PALETTE[Math.floor(Math.random()*PALETTE.length)],
-      o:z*.5+.12,
-      ph:Math.random()*Math.PI*2,
-      ps:Math.random()*.012+.004,
-      glow
-    };
-  }
-  function init(){
-    const count=Math.min(180,Math.max(85,Math.round(W*H/9500)));
-    dots=Array.from({length:count},makeDot);
-  }
-  function lightFactor(){
-    return document.body.classList.contains('light')?0.55:1;
-  }
-  function rgba(col,a){
-    return 'rgba('+col[0]+','+col[1]+','+col[2]+','+Math.max(0,a*lightFactor()).toFixed(3)+')';
-  }
-  function tick(){
-    requestAnimationFrame(tick);
-    if(document.hidden)return;
-    ctx.clearRect(0,0,W,H);
-    /* parallax easing */
-    mx+=(mouse.x===-1e4?0:(mouse.x/W-0.5)*2-mx)*0.04;
-    my+=(mouse.y===-1e4?0:(mouse.y/H-0.5)*2-my)*0.04;
-    /* connection lines */
-    for(let i=0;i<dots.length;i++){
-      const a=dots[i];
-      for(let j=i+1;j<dots.length;j++){
-        const b=dots[j];
-        const dx=a.x-b.x,dy=a.y-b.y;
-        const d2=dx*dx+dy*dy;
-        if(d2<LINK_DIST*LINK_DIST){
-          const d=Math.sqrt(d2);
-          const depth=(a.z+b.z)/2;
-          const alpha=(1-d/LINK_DIST)*(0.06+depth*0.14);
-          ctx.beginPath();
-          ctx.moveTo(a.x-mx*depth*22,a.y-my*depth*22);
-          ctx.lineTo(b.x-mx*depth*22,b.y-my*depth*22);
-          ctx.strokeStyle=rgba(a.col,alpha);
-          ctx.lineWidth=0.4+depth*0.7;
-          ctx.stroke();
-        }
-      }
-    }
-    /* particles */
-    for(const d of dots){
-      d.x+=d.vx;d.y+=d.vy;d.ph+=d.ps;
-      if(d.x<-40)d.x=W+40;if(d.x>W+40)d.x=-40;
-      if(d.y<-40)d.y=H+40;if(d.y>H+40)d.y=-40;
-      /* depth parallax: near dots shift more against the mouse */
-      const px=d.x-mx*d.z*30;
-      const py=d.y-my*d.z*30;
-      const tw=d.o+Math.sin(d.ph)*0.1;
-      if(d.glow){
-        /* soft halo for the closest layer */
-        const g=ctx.createRadialGradient(px,py,0,px,py,d.r*6);
-        g.addColorStop(0,rgba(d.col,tw*0.25));
-        g.addColorStop(1,rgba(d.col,0));
-        ctx.beginPath();
-        ctx.fillStyle=g;
-        ctx.arc(px,py,d.r*6,0,Math.PI*2);
-        ctx.fill();
-      }
-      ctx.beginPath();
-      ctx.arc(px,py,d.r,0,Math.PI*2);
-      ctx.fillStyle=rgba(d.col,tw);
-      ctx.fill();
-      /* interactive link to the cursor */
-      const mdx=px-mouse.x,mdy=py-mouse.y;
-      const md=Math.sqrt(mdx*mdx+mdy*mdy);
-      if(md<200){
-        ctx.beginPath();
-        ctx.moveTo(px,py);
-        ctx.lineTo(mouse.x,mouse.y);
-        ctx.strokeStyle=rgba(d.col,(0.12+d.z*0.18)*(1-md/200));
-        ctx.lineWidth=0.5+d.z*0.6;
-        ctx.stroke();
-      }
-    }
-  }
-  addEventListener('resize',()=>{resize();init()});
-  addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
-  addEventListener('mouseleave',()=>{mouse.x=-1e4;mouse.y=-1e4});
-  resize();init();
-  if(reduced){
-    /* draw a single static frame, no animation */
-    document.body.classList.add('reduced-motion');
-  }
-  tick();
-  /* Parallax for the floating 3D shapes + floor grid.
-     Uses margins (not transform) so CSS spin animations stay intact. */
-  const shapes=()=>document.querySelectorAll('.geo-shape');
-  const floor=()=>document.querySelector('.floor-grid');
-  let sx=0,sy=0;
-  (function parallax(){
-    requestAnimationFrame(parallax);
-    if(document.hidden)return;
-    sx+=(mx-sx)*0.06;sy+=(my-sy)*0.06;
-    shapes().forEach(el=>{
-      const speed=parseFloat(el.dataset.depth||'1')*14;
-      el.style.marginLeft=(sx*speed)+'px';
-      el.style.marginTop=(sy*speed)+'px';
-    });
-    const f=floor();
-    if(f)f.style.backgroundPositionX=(sx*10)+'px';
-  })();
-})();
 
 /* ============================================================
    Feature: Code Complexity Score
@@ -191,7 +48,7 @@ function renderComplexity(){
 /* ============================================================
    Feature: AI Repo Summary
    ============================================================ */
-/* generateSummary duplicate removed — keeping version with aiSummaryBox */
+/* generateSummary duplicate removed, keeping version with aiSummaryBox */
 
 /* ============================================================
    Feature: Explain This Repo
@@ -209,8 +66,8 @@ function explainRepo(){
   explanation+='<p><b>Size:</b> '+fmt(files)+' files. '+(files>1000?'This is a large project.':files>100?'Medium-sized project.':'Small project.')+'</p>';
   explanation+='<p><b>Popularity:</b> '+fmt(stars)+' stars. '+(stars>10000?'Very popular!':stars>1000?'Well-known.':stars>100?'Gaining traction.':'New or niche.')+'</p>';
   const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
-  if(readme)explanation+='<p><b>Has README:</b> Yes — check the Overview tab for details.</p>';
-  showModal('💡 Explain: '+esc(m.name),explanation);
+  if(readme)explanation+='<p><b>Has README:</b> Yes, check the Overview tab for details.</p>';
+  showModal('Explain: '+esc(m.name),explanation);
 }
 
 /* ============================================================
@@ -306,7 +163,7 @@ async function smartSelectForQuestion(){
   }
   const ranked=Object.entries(scores).filter(([p,s])=>s>0).sort((a,b)=>b[1]-a[1]);
   if(!ranked.length){
-    status.textContent='No files matched "'+q+'" — try different keywords.';
+    status.textContent='No files matched "'+q+'", try different keywords.';
     toast('No matching files found','err');
     return;
   }
@@ -315,7 +172,7 @@ async function smartSelectForQuestion(){
   $$('#tree .fcb').forEach(cb=>cb.checked=S.sel.has(cb.dataset.path));
   updateSelMeta();
   status.textContent='Selected '+top.length+' files for: '+q;
-  toast(top.length+' relevant files selected — generate the digest','ok');
+  toast(top.length+' relevant files selected, generate the digest','ok');
   switchTab('digest');
 }
 
@@ -374,7 +231,7 @@ function detectEndpoints(){
   });
   return endpoints;
 }
-/* renderEndpoints duplicate removed — keeping the correct version at line 2750 */
+/* renderEndpoints duplicate removed, keeping the correct version at line 2750 */
 
 /* ============================================================
    Feature: Similar Repos
@@ -395,7 +252,7 @@ async function findSimilarRepos(){
       '<div class="ucard" style="margin-bottom:8px" onclick="loadRepo(\''+esc(r.owner.login)+'\',\''+esc(r.name)+'\')">'+
         '<h4>'+esc(r.name)+'<b>★ '+fmt(r.stargazers_count)+'</b></h4>'+
         '<div class="d">'+esc(r.description||'No description')+'</div>'+
-        '<div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span></div>'+
+        '<div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):',')+'</span></div>'+
       '</div>'
     ).join('');
   }catch(e){el.innerHTML='<p style="color:var(--text3);font-size:13px">Could not fetch similar repos.</p>'}
@@ -470,7 +327,7 @@ async function loadBattle(){
           metrics.map(m=>'<div class="battle-row"><span class="bl">'+esc(m.l)+'</span><span class="bv '+(m.lower?(m.v2<=m.v1?'win':'lose'):(m.v2>=m.v1?'win':'lose'))+'">'+fmt(m.v2)+'</span></div>').join('')+
         '</div>'+
       '</div>'+
-      '<div class="battle-summary">'+esc(m1.name)+' vs '+esc(m2.name)+' — compared by Repodest 🧪</div>';
+      '<div class="battle-summary">'+esc(m1.name)+' vs '+esc(m2.name)+', compared by Repodest</div>';
   }catch(e){result.innerHTML='<p style="color:var(--red)">Could not load '+esc(v)+'</p>'}
 }
 
@@ -482,8 +339,8 @@ function showCloneModal(){
 }
 function copyText(btn,text){
   (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(()=>{
-    btn.textContent='✅';
-    setTimeout(()=>btn.textContent='📋',1500);
+    btn.textContent='Copied';
+    setTimeout(()=>btn.textContent='Copy',1500);
   }).catch(()=>toast('Copy failed','err'));
 }
 
@@ -492,7 +349,7 @@ function copyText(btn,text){
    ============================================================ */
 let shareTemplate='detailed';
 function showShareTemplateModal(){
-  showModal('📸 Share Card Template',
+  showModal('Share Card Template',
     '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">'+
       [['minimal','Minimal'],['detailed','Detailed'],['fun','Fun']].map(([k,l])=>
         '<button class="btn '+(shareTemplate===k?'':'ghost')+' sm" onclick="shareTemplate=\''+k+'\';closeModal();shareCard()">'+esc(l)+'</button>'
@@ -508,7 +365,7 @@ function showShortcuts(){
   const shortcuts=[
     ['Ctrl+K /','Focus search'],['1–9','Switch tabs'],['Esc','Close modal'],['?','Show shortcuts'],['Ctrl+Enter','Submit']
   ];
-  showModal('⌨️ Keyboard Shortcuts',
+  showModal('Keyboard Shortcuts',
     shortcuts.map(([k,d])=>'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line)"><span style="font-family:var(--mono);color:var(--accent2);font-size:12px">'+esc(k)+'</span><span style="color:var(--text2);font-size:13px">'+esc(d)+'</span></div>').join('')
   );
 }
@@ -516,7 +373,7 @@ document.addEventListener('keydown',e=>{
   const tag=document.activeElement.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
   if(e.key==='?'||e.key==='/'){e.preventDefault();showShortcuts();return}
-  /* Tab switching by digit — bound by the actual tab count so new tabs
+  /* Tab switching by digit, bound by the actual tab count so new tabs
      are reachable and there is no out-of-range key */
   if(e.key>='1'&&e.key<='9'){
     const tabs=$$('#tabs .tab');
@@ -528,7 +385,7 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();openCommandPalette()}
 });
 
-/* Feature: i18n — second block removed (was duplicate of earlier I18N/currentLang/t/toggleLang) */
+/* Feature: i18n, second block removed (was duplicate of earlier I18N/currentLang/t/toggleLang) */
 
 /* ============================================================
    Feature 1: Dependency Graph Visualization
@@ -759,7 +616,7 @@ function renderBusFactor(){
     if(topPct>50)busFactor=1;
     else busFactor=sorted.filter(c=>(c.contributions||0)/total*100>10).length;
     const bfClass=busFactor<=1?'bad':busFactor<=2?'warn':'good';
-    const bfLabel=busFactor<=1?'🚨 Risky':busFactor<=2?'⚠️ Moderate':'✅ Healthy';
+    const bfLabel=busFactor<=1?'Risky':busFactor<=2?'Moderate':'Healthy';
     const top5=sorted.slice(0,5);
     const othersPct=100-top5.reduce((a,c)=>a+(c.contributions||0)/total*100,0);
     const barColors=['#a855f7','#22d3ee','#f1e05a','#22c55e','#ec4899','#64748b'];
@@ -769,7 +626,7 @@ function renderBusFactor(){
         '<span style="color:var(--text2);font-size:12.5px">Bus Factor: <b>'+busFactor+'</b></span>'+
       '</div>'+
       '<div style="font-size:12px;color:var(--text3);margin-bottom:6px">'+
-        (topPct>50?'Top contributor has '+topPct.toFixed(1)+'% of commits — single point of failure.':'Top contributor has '+topPct.toFixed(1)+'% — contributions are reasonably distributed.')+
+        (topPct>50?'Top contributor has '+topPct.toFixed(1)+'% of commits, single point of failure.':'Top contributor has '+topPct.toFixed(1)+'%, contributions are reasonably distributed.')+
       '</div>'+
       '<div class="dominance-bar">'+
         top5.map((c,i)=>'<i style="width:'+((c.contributions||0)/total*100).toFixed(1)+'%;background:'+barColors[i]+'"></i>').join('')+
@@ -858,7 +715,7 @@ function updateRecCounts(){
   }
 }
 
-/* Duplicate functions removed — originals at their earlier locations */
+/* Duplicate functions removed, originals at their earlier locations */
 
 /* ============================================================
    Store parsed deps globally for dependency graph
@@ -895,7 +752,7 @@ renderDeps=async function(stacks){
 };
 
 /* ============================================================
-   Fix: openBattle() was overwritten by duplicates above — restore correct implementation
+   Fix: openBattle() was overwritten by duplicates above, restore correct implementation
    ============================================================ */
 function openBattle(){
   $('#battleInput').value='';
@@ -904,13 +761,13 @@ function openBattle(){
   setTimeout(()=>$('#battleInput').focus(),60);
 }
 
-/* Fix: closeExplainModal was overwritten — restore correct implementation */
+/* Fix: closeExplainModal was overwritten, restore correct implementation */
 function closeExplainModal(){$('#explainModalBg').classList.add('hidden')}
 
 /* Fix: closeBattleModal was never defined */
 function closeBattleModal(){$('#battleModalBg').classList.add('hidden')}
 
-/* Fix: runBattle was overwritten to call loadBattle() which doesn't exist — restore */
+/* Fix: runBattle was overwritten to call loadBattle() which doesn't exist, restore */
 async function runBattle(){
   const v=$('#battleInput').value.trim();
   if(!v){toast('Enter a repo to battle','err');return}
@@ -956,19 +813,19 @@ async function runBattle(){
       '</div>';
     }).join('');
     const winnerLabel=aWins>bWins?esc(a.full_name):bWins>aWins?esc(b.full_name):'Tie';
-    const shareText='⚔️ Repo Battle: '+a.full_name+' vs '+b.full_name+' → '+winnerLabel+' wins! ('+aWins+'-'+bWins+')';
+    const shareText='Repo Battle: '+a.full_name+' vs '+b.full_name+' → '+winnerLabel+' wins! ('+aWins+'-'+bWins+')';
     result.innerHTML=
       '<div class="battle-grid">'+
         '<div class="battle-side"><h4>'+esc(a.full_name||'')+'</h4>'+rows+'</div>'+
         '<div class="battle-side"><h4>'+esc(b.full_name||'')+'</h4>'+rows.replace(/class="bv (win|lose)"/g,(match)=>match.replace('lose',''))+'</div>'+
       '</div>'+
       '<div style="text-align:center;margin:12px 0;font-size:16px;font-weight:700">'+
-        (aWins>bWins?'🏆 '+esc(a.full_name)+' wins!':bWins>aWins?'🏆 '+esc(b.full_name)+' wins!':'🤝 Tie!')+
+        (aWins>bWins?esc(a.full_name)+' wins!':bWins>aWins?esc(b.full_name)+' wins!':'Tie!')+
         ' <span style="color:var(--text3);font-size:13px">('+aWins+'-'+bWins+')</span>'+
       '</div>'+
       '<div class="battle-summary">'+esc(shareText)+'</div>';
   }catch(e){
-    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e">💥</div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
+    result.innerHTML='<div class="errbox" style="padding:30px"><div class="e"><svg class="ic" style="width:44px;height:44px"><use href="#i-alert"/></svg></div><p>'+esc(e.message||'Failed to load challenger')+'</p></div>';
   }
 }
 
@@ -1018,7 +875,7 @@ async function runRoyale(){
     }
     const champion=bracket[0];
     res.innerHTML=
-      '<div style="text-align:center;font-size:17px;font-weight:800;margin:10px 0">🏆 Champion: '+esc(champion.name)+'</div>'+
+      '<div style="text-align:center;font-size:17px;font-weight:800;margin:10px 0">Champion: '+esc(champion.name)+'</div>'+
       '<div style="max-height:220px;overflow:auto">'+log+'</div>';
   }catch(e){
     res.innerHTML='<p style="color:var(--red);font-size:12px">'+esc(e.message||'Tournament failed')+'</p>';
@@ -1164,7 +1021,7 @@ function populateScopeSelect(){
     if(parts.length>1)topDirs.add(parts[0]+'/');
   });
   const current=scopePrefix;
-  sel.innerHTML='<option value="">📂 Whole repo</option>'+
+  sel.innerHTML='<option value="">Whole repo</option>'+
     Array.from(topDirs).sort().map(d=>'<option value="'+esc(d)+'">'+esc(d)+'</option>').join('');
   if(current&&topDirs.has(current))sel.value=current;
   sel.style.display=topDirs.size>=2?'':'none';
@@ -1173,7 +1030,7 @@ function filterScope(val){
   scopePrefix=(val||'').replace(/\/?$/,'/');
   if(scopePrefix==='/')scopePrefix='';
   renderFiles();
-  if(scopePrefix)toast('Scoped to '+scopePrefix+' — new selections limited to it','ok');
+  if(scopePrefix)toast('Scoped to '+scopePrefix+', new selections limited to it','ok');
   updateSelMeta();
 }
 
@@ -1204,7 +1061,7 @@ renderFiles=function(){
 }
 
 /* ============================================================
-   Deep Analysis tab — PR analytics, fix rate, churn, OSV scan
+   Deep Analysis tab, PR analytics, fix rate, churn, OSV scan
    ============================================================ */
 S.deep={pr:null,fix:null,churn:null,osv:null,loaded:false};
 
@@ -1220,7 +1077,7 @@ function renderDeepPanel(){
 }
 
 function fmtHours(h){
-  if(h==null)return'—';
+  if(h==null)return',';
   if(h<1)return Math.round(h*60)+' min';
   if(h<48)return h.toFixed(1)+' h';
   if(h<24*60)return Math.round(h/24)+' days';
@@ -1310,8 +1167,8 @@ async function loadFixRate(){
 function renderFixRate(d){
   const el=$('#fixRateContent');if(!el)return;
   const total=d.total||1;
-  const verdict=d.fixes/total>0.4?'🔴 High bug pressure':d.fixes/total>0.2?'🟡 Moderate bug pressure':'🟢 Low bug pressure';
-  const convLabel=d.convScore>=70?'✅ Disciplined':d.convScore>=40?'🟡 Partially structured':'⚠️ Unstructured';
+  const verdict=d.fixes/total>0.4?'High bug pressure':d.fixes/total>0.2?'Moderate bug pressure':'Low bug pressure';
+  const convLabel=d.convScore>=70?'Disciplined':d.convScore>=40?'Partially structured':'Unstructured';
   el.innerHTML=
     pctBar('Fixes / reverts',d.fixes,total,'#ef4444')+
     pctBar('Features',d.feats,total,'#a855f7')+
@@ -1357,7 +1214,7 @@ function renderChurn(d){
   if(!d.hot.length){el.innerHTML='<p style="color:var(--text3);font-size:12px">No file changes found in recent commits.</p>';return}
   const max=d.hot[0].changes||1;
   el.innerHTML=
-    '<p style="color:var(--text3);font-size:11px;margin-bottom:8px">Based on '+d.examined+'/'+d.commits+' recent commits (each file listing costs one API call — a token raises the depth).</p>'+
+    '<p style="color:var(--text3);font-size:11px;margin-bottom:8px">Based on '+d.examined+'/'+d.commits+' recent commits (each file listing costs one API call, a token raises the depth).</p>'+
     d.hot.map(h=>{
       const pct=Math.round(h.changes/max*100);
       const short=h.path.length>44?'…'+h.path.slice(-43):h.path;
@@ -1424,11 +1281,11 @@ function renderCommitStyle(){
     (d.topTypes.length?'<div class="minititle" style="font-size:12px;color:var(--text2)">Top types</div>'+d.topTypes.map(t=>bar(t[0]+'()',t[1],maxType,'#22d3ee')).join(''):'')+
     (d.topAuthors.length?'<div class="minititle" style="font-size:12px;color:var(--text2);margin-top:10px">Most active authors</div>'+d.topAuthors.map(a=>bar(a[0],a[1],maxAuth,'#7c3aed')).join(''):'')+
     '<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--text2)">'+
-      '<span>😊 Emoji: <b>'+d.emojiRate+'%</b></span>'+
-      '<span>📄 Multi-line: <b>'+d.multiLineRate+'%</b></span>'+
-      '<span>↩️ Reverts: <b>'+d.reverts+'</b></span>'+
-      '<span>❤️ Pos/Neg words: <b>'+d.sentiment.pos+'/'+d.sentiment.neg+'</b></span>'+
-      '<span>🚌 Bus factor: <b>'+d.busFactor+'</b></span>'+
+      '<span>Emoji: <b>'+d.emojiRate+'%</b></span>'+
+      '<span>Multi-line: <b>'+d.multiLineRate+'%</b></span>'+
+      '<span>Reverts: <b>'+d.reverts+'</b></span>'+
+      '<span>Pos/Neg words: <b>'+d.sentiment.pos+'/'+d.sentiment.neg+'</b></span>'+
+      '<span>Bus factor: <b>'+d.busFactor+'</b></span>'+
     '</div>'+
     (d.coAuthors.length?'<div class="minititle" style="font-size:12px;color:var(--text2);margin-top:10px">Co-authorship network</div>'+d.coAuthors.map(c=>'<div style="font-size:11.5px;padding:2px 0">↳ '+esc(c[0])+' · '+c[1]+'×</div>').join(''):'');
 }
@@ -1566,7 +1423,7 @@ async function runOsvScan(){
     if(!entries.length){
       el.innerHTML='<p style="color:var(--text3);font-size:12px">No supported manifest files (package.json, requirements.txt, pyproject.toml, Cargo.toml, go.mod) found in the tree.</p>';
       if(badge)badge.textContent='0';
-      if(btn){btn.disabled=false;btn.textContent='🛡️ Scan dependencies'}
+      if(btn){btn.disabled=false;btn.textContent='Scan dependencies'}
       return;
     }
     const results=entries.map(()=>[]);
@@ -1595,7 +1452,7 @@ async function runOsvScan(){
     el.innerHTML='<p style="color:var(--red);font-size:12px">Scan failed: '+esc(e.message||'error')+'</p>';
     if(badge)badge.textContent='!';
   }finally{
-    if(btn){btn.disabled=false;btn.textContent='🛡️ Scan dependencies'}
+    if(btn){btn.disabled=false;btn.textContent='Scan dependencies'}
   }
 }
 function renderOsv(d){
@@ -1607,12 +1464,12 @@ function renderOsv(d){
     '<div class="kv"><span>Packages with known advisories</span><b style="color:'+color+'">'+d.vulnerable+'</b></div>'+
     (d.vulnList.length?'<div style="margin-top:10px;font-size:11px;color:var(--text3)">Flagged packages</div>'+
       d.vulnList.map(v=>'<div class="kv"><span>'+esc(v.name)+' <span style="color:var(--text3)">('+esc(v.eco)+')</span></span><b style="color:var(--red)">'+v.count+' advisory'+(v.count>1?'ies':'')+'</b></div>').join(''):'')+
-    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Advisory counts include all severities. Verify details on <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> before acting — version pinning info is not sent in this batch scan.</p>';
+    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Advisory counts include all severities. Verify details on <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> before acting, version pinning info is not sent in this batch scan.</p>';
   if(d.vulnerable)toast(d.vulnerable+' packages have known advisories','err');
 }
 
 /* ============================================================
-   Digest upgrades — presets, output formats, model context,
+   Digest upgrades, presets, output formats, model context,
    signatures-only mode
    ============================================================ */
 const DIGEST_PRESETS={
@@ -1670,14 +1527,14 @@ function initDigestControls(){
 }
 
 /* ============================================================
-   Contextual help chips — a "?" next to key UI sections that
+   Contextual help chips, a "?" next to key UI sections that
    reveals an explanation popover on click.
    ============================================================ */
 const HELP_TEXTS={
-  health:'Health Score rates the repository on 10 weighted criteria — license, README, tests, CI, docs, freshness and more. 80+ means excellent project hygiene.',
+  health:'Health Score rates the repository on 10 weighted criteria, license, README, tests, CI, docs, freshness and more. 80+ means excellent project hygiene.',
   files:'Browse the repository tree and tick the checkboxes of the files you want in your LLM prompt. Use the toolbar to select all text files at once, filter by name, or scope to a subfolder.',
   digest:'The LLM Digest packs your selected files into one prompt you can paste into ChatGPT, Claude or Gemini. Pick a preset to get task-specific instructions, then hit Generate. Everything stays in your browser.',
-  token:'Token estimates are per-model approximations. Switch models to see how the digest fits their context window — if it overflows, the digest is automatically split into parts.',
+  token:'Token estimates are per-model approximations. Switch models to see how the digest fits their context window, if it overflows, the digest is automatically split into parts.',
   deep:'Deep Analysis goes beyond the health score: PR analytics, fix-vs-feature commit ratio, code churn hotspots and a dependency vulnerability scan via OSV.dev. Click each card to run it.',
   battle:'Battle compares two repos metric by metric and highlights the winner. Battle Royale runs a single-elimination tournament for up to 8 repos.',
   tokenModal:'Without a token you get 60 GitHub API calls per hour. A free personal access token raises that to 5,000/hour and is stored only in your browser.',
@@ -1887,47 +1744,47 @@ document.addEventListener('DOMContentLoaded',()=>{initDigestControls();updateSel
 (function(){const old=toggleHelpPopover;toggleHelpPopover=function(btn){const el=document.createElement('div');el.className='help-popover';el.textContent=window.__helpTopic?window.__helpTopic(btn.dataset.help):HELP_TEXTS[btn.dataset.help]||'No help available.';const ex=document.querySelector('.help-popover');if(ex){const same=ex._chip===btn;ex.remove();if(same)return}el._chip=btn;document.body.appendChild(el);const r=btn.getBoundingClientRect();const pw=Math.min(320,innerWidth-24);el.style.width=pw+'px';let left=Math.min(Math.max(8,r.left+r.width/2-pw/2),innerWidth-pw-8);let top=r.bottom+8;el.style.left=left+'px';el.style.top=top+'px';const pr=el.getBoundingClientRect();if(pr.bottom>innerHeight-8)top=Math.max(8,r.top-pr.height-8);el.style.top=top+'px'}})();
 
 /* ============================================================
-   UX upgrades — Command Palette, Chart PNG export,
+   UX upgrades, Command Palette, Chart PNG export,
    PWA install prompt, offline banner
    ============================================================ */
 
 /* ---------- Command Palette (Ctrl+K) ---------- */
 function cmdActions(){
   const actions=[
-    {icon:'🩺',label:'Go to Overview',kw:'tab overview home',run:()=>switchTab('overview')},
-    {icon:'📊',label:'Go to Languages',kw:'tab languages chart',run:()=>switchTab('languages')},
-    {icon:'🗂️',label:'Go to Files',kw:'tab files tree',run:()=>switchTab('files')},
-    {icon:'🗺️',label:'Go to Repo Map',kw:'tab map architecture graph interactive',run:()=>switchTab('map')},
-    {icon:'🦎',label:'Go to Docs Crawler',kw:'tab crawl docs scraper website documentation',run:()=>switchTab('crawl')},
-    {icon:'🤖',label:'Go to Digest',kw:'tab digest prompt llm',run:()=>switchTab('digest')},
-    {icon:'📈',label:'Go to Activity',kw:'tab activity commits',run:()=>switchTab('activity')},
-    {icon:'🏆',label:'Go to Fun',kw:'tab fun trophies roast',run:()=>switchTab('fun')},
-    {icon:'🔗',label:'Go to Deps',kw:'tab deps dependencies',run:()=>switchTab('deps')},
-    {icon:'🔬',label:'Go to Deep Analysis',kw:'tab deep pr osv churn',run:()=>switchTab('deep')},
-    {icon:'🔀',label:'Go to PR X-Ray',kw:'tab pull request review diff risk digest xray',run:()=>switchTab('pr')},
-    {icon:'🚀',label:'Go to Onboarding Guide',kw:'tab onboard guide contribute first setup',run:()=>switchTab('onboard')},
-    {icon:'📋',label:'Go to Issue Triage',kw:'tab deep issue triage bugs priority',run:()=>switchTab('deep')},
-    {icon:'🌙',label:'Toggle theme',kw:'dark light theme',run:()=>toggleTheme()},
-    {icon:'🌐',label:'Switch language',kw:'language i18n fa en es zh fr ar de',run:()=>toggleLangMenu()},
-    {icon:'🔑',label:'Set GitHub token',kw:'token pat api',run:()=>openModal()},
-    {icon:'⚔️',label:'Repo Battle',kw:'battle compare versus',run:()=>openBattle()},
-    {icon:'📸',label:'Share card',kw:'share card png image',run:()=>shareCard()},
-    {icon:'📄',label:'Print report',kw:'print report pdf',run:()=>printReport()},
-    {icon:'🔗',label:'Copy deep link',kw:'link copy url share',run:()=>copyLink()},
-    {icon:'📦',label:'Export JSON',kw:'export json data',run:()=>exportJSON()},
-    {icon:'📊',label:'Export CSV',kw:'export csv data',run:()=>exportCSV()},
-    {icon:'🧊',label:'Export language chart (PNG)',kw:'export chart png image',run:()=>exportChartPNG('langChart','languages')},
-    {icon:'📈',label:'Export activity chart (PNG)',kw:'export chart png image',run:()=>exportChartPNG('actChart','activity')},
-    {icon:'🏠',label:'Go home',kw:'home landing reset',run:()=>goHome()},
-    {icon:'❓',label:'Keyboard shortcuts',kw:'shortcuts help keys',run:()=>showShortcuts()},
-    {icon:'🔖',label:'Bookmarklet (open any GitHub repo here)',kw:'bookmarklet bookmark drag github',run:()=>showBookmarklet()}
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-pulse"/></svg>',label:'Go to Overview',kw:'tab overview home',run:()=>switchTab('overview')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-chart"/></svg>',label:'Go to Languages',kw:'tab languages chart',run:()=>switchTab('languages')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-folder"/></svg>',label:'Go to Files',kw:'tab files tree',run:()=>switchTab('files')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-map"/></svg>',label:'Go to Repo Map',kw:'tab map architecture graph interactive',run:()=>switchTab('map')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-rss"/></svg>',label:'Go to Docs Crawler',kw:'tab crawl docs scraper website documentation',run:()=>switchTab('crawl')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-robot"/></svg>',label:'Go to Digest',kw:'tab digest prompt llm',run:()=>switchTab('digest')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-activity"/></svg>',label:'Go to Activity',kw:'tab activity commits',run:()=>switchTab('activity')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-trophy"/></svg>',label:'Go to Fun',kw:'tab fun trophies roast',run:()=>switchTab('fun')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-link"/></svg>',label:'Go to Deps',kw:'tab deps dependencies',run:()=>switchTab('deps')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-scan"/></svg>',label:'Go to Deep Analysis',kw:'tab deep pr osv churn',run:()=>switchTab('deep')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-gitpr"/></svg>',label:'Go to PR X-Ray',kw:'tab pull request review diff risk digest xray',run:()=>switchTab('pr')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-compass"/></svg>',label:'Go to Onboarding Guide',kw:'tab onboard guide contribute first setup',run:()=>switchTab('onboard')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-clipboard"/></svg>',label:'Go to Issue Triage',kw:'tab deep issue triage bugs priority',run:()=>switchTab('deep')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-moon"/></svg>',label:'Toggle theme',kw:'dark light theme',run:()=>toggleTheme()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-globe"/></svg>',label:'Switch language',kw:'language i18n fa en es zh fr ar de',run:()=>toggleLangMenu()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-key"/></svg>',label:'Set GitHub token',kw:'token pat api',run:()=>openModal()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-vs"/></svg>',label:'Repo Battle',kw:'battle compare versus',run:()=>openBattle()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-card"/></svg>',label:'Share card',kw:'share card png image',run:()=>shareCard()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-file"/></svg>',label:'Print report',kw:'print report pdf',run:()=>printReport()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-link"/></svg>',label:'Copy deep link',kw:'link copy url share',run:()=>copyLink()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-download"/></svg>',label:'Export JSON',kw:'export json data',run:()=>exportJSON()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-chart"/></svg>',label:'Export CSV',kw:'export csv data',run:()=>exportCSV()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-chart"/></svg>',label:'Export language chart (PNG)',kw:'export chart png image',run:()=>exportChartPNG('langChart','languages')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-activity"/></svg>',label:'Export activity chart (PNG)',kw:'export chart png image',run:()=>exportChartPNG('actChart','activity')},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-home"/></svg>',label:'Go home',kw:'home landing reset',run:()=>goHome()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-help"/></svg>',label:'Keyboard shortcuts',kw:'shortcuts help keys',run:()=>showShortcuts()},
+    {icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-ext"/></svg>',label:'Bookmarklet (open any GitHub repo here)',kw:'bookmarklet bookmark drag github',run:()=>showBookmarklet()}
   ];
   const hist=LS.get('repodest_history',[]);
   (Array.isArray(hist)?hist:[]).slice(0,6).forEach(h=>{
-    if(h&&h.full_name)actions.push({icon:'🕘',label:'Open '+h.full_name,kw:'recent history '+h.full_name,run:()=>loadRepoFromHistory(h.full_name,h.platform||'github')});
+    if(h&&h.full_name)actions.push({icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-clock"/></svg>',label:'Open '+h.full_name,kw:'recent history '+h.full_name,run:()=>loadRepoFromHistory(h.full_name,h.platform||'github')});
   });
   getFavorites().slice(0,8).forEach(f=>{
-    actions.push({icon:'⭐',label:'Open '+f.full_name+' (favorite)',kw:'favorite starred '+f.full_name,run:()=>openFavorite(f.full_name,f.platform||'github')});
+    actions.push({icon:'<svg class="pic" style="width:15px;height:15px"><use href="#i-star"/></svg>',label:'Open '+f.full_name+' (favorite)',kw:'favorite starred '+f.full_name,run:()=>openFavorite(f.full_name,f.platform||'github')});
   });
   return actions;
 }
@@ -1991,7 +1848,7 @@ function renderCmdList(resetScroll=true){
 /* ---------- Chart PNG export ---------- */
 function exportChartPNG(canvasId,label){
   const src=$(canvasId?'#'+canvasId:null)||document.getElementById(canvasId);
-  if(!src){toast('Chart not found — open its tab first','err');return}
+  if(!src){toast('Chart not found, open its tab first','err');return}
   const out=document.createElement('canvas');
   out.width=src.width||src.offsetWidth||600;
   out.height=src.height||src.offsetHeight||300;
@@ -2022,12 +1879,12 @@ function showInstallChip(){
   btn.className='chip-lite';
   btn.id='pwaInstallBtn';
   btn.title='Install Repodest as an app';
-  btn.innerHTML='⬇️ <span>Install</span>';
+  btn.innerHTML='<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-download"/></svg> <span>Install</span>';
   btn.onclick=async()=>{
     if(!deferredInstall)return;
     deferredInstall.prompt();
     const choice=await deferredInstall.userChoice;
-    if(choice&&choice.outcome==='accepted')toast('Repodest installed 🎉','ok');
+    if(choice&&choice.outcome==='accepted')toast('Repodest installed','ok');
     deferredInstall=null;btn.remove();
   };
   header.insertBefore(btn,header.querySelector('.theme-toggle'));
@@ -2035,7 +1892,7 @@ function showInstallChip(){
 window.addEventListener('appinstalled',()=>{
   deferredInstall=null;
   const b=$('#pwaInstallBtn');if(b)b.remove();
-  toast('Repodest installed 🎉','ok');
+  toast('Repodest installed','ok');
 });
 function updateOfflineBanner(){
   let banner=$('#offlineBanner');
@@ -2044,7 +1901,7 @@ function updateOfflineBanner(){
       banner=document.createElement('div');
       banner.id='offlineBanner';
       banner.style.cssText='position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:200;background:#7c2d12;border:1px solid #ea580c;color:#fed7aa;padding:8px 16px;border-radius:99px;font-size:12.5px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.4)';
-      banner.textContent='⚠️ Offline — cached pages still work, API calls need connection';
+      banner.textContent='Offline: cached pages still work, API calls need a connection';
       document.body.appendChild(banner);
     }
   }else if(banner)banner.remove();
@@ -2054,7 +1911,7 @@ addEventListener('offline',updateOfflineBanner);
 updateOfflineBanner();
 
 /* ============================================================
-   Favorites — starred repos with quick access
+   Favorites, starred repos with quick access
    ============================================================ */
 const FAV_KEY='repodest_favorites';
 function getFavorites(){
@@ -2074,7 +1931,7 @@ function toggleFavorite(){
   }else{
     favs.unshift({full_name:m.full_name,name:m.name||m.full_name,avatar:(m.owner&&m.owner.avatar_url)||'',platform:m._platform||S.platform||'github',ts:Date.now()});
     favs=favs.slice(0,12);
-    toast('Added to favorites ⭐','ok');
+    toast('Added to favorites','ok');
   }
   LS.set(FAV_KEY,favs);
   updateFavBtn();
@@ -2112,7 +1969,7 @@ function renderFavorites(){
     '<div class="hcard" onclick="openFavorite(\''+esc(f.full_name)+'\',\''+esc(f.platform||'github')+'\')">'+
       '<img src="'+esc(f.avatar)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'+
       '<div class="hc-name">'+esc(f.name||f.full_name)+'</div>'+
-      '<div class="hc-score">⭐</div>'+
+      '<div class="hc-score"><svg class="ic" style="width:14px;height:14px"><use href="#i-star"/></svg></div>'+
     '</div>'
   ).join('');
 }
@@ -2135,7 +1992,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 /* ============================================================
-   Branch Diff — compare current ref with another branch/tag
+   Branch Diff, compare current ref with another branch/tag
    ============================================================ */
 function toggleDiffPanel(){
   const panel=$('#diffPanel');
@@ -2149,7 +2006,7 @@ function toggleDiffPanel(){
   const options=[];
   S.branches.forEach(b=>{if(b.name&&b.name!==current)options.push(b.name)});
   S.tags.forEach(t=>{if(t.name)options.push(t.name)});
-  sel.innerHTML='<option value="">— choose —</option>'+options.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('');
+  sel.innerHTML='<option value="">, choose ,</option>'+options.map(o=>'<option value="'+esc(o)+'">'+esc(o)+'</option>').join('');
   $('#diffBaseLabel').textContent=current;
   $('#diffContent').innerHTML='';
 }
@@ -2280,7 +2137,7 @@ function renderFtsResults(){
     return;
   }
   host.innerHTML=
-    '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'+results.length+' matching files — click a result to select it for the digest</div>'+
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'+results.length+' matching files, click a result to select it for the digest</div>'+
     results.slice(0,25).map(r=>{
       const short=r.path.length>44?'…'+r.path.slice(-43):r.path;
       return '<div class="fts-row" data-path="'+esc(r.path)+'" onclick="ftsSelect(this.dataset.path)" style="cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:6px">'+
@@ -2309,9 +2166,9 @@ function resetFts(){
 }
 
 /* ============================================================
-   Web Worker pool — off-main-thread content scanning.
+   Web Worker pool, off-main-thread content scanning.
    Zero build step: worker code lives in a Blob.
-   Used by: full-text search (FTS) — the heaviest per-file work.
+   Used by: full-text search (FTS), the heaviest per-file work.
    ============================================================ */
 const FTS_WORKER_SRC=`
 self.onmessage=async e=>{
@@ -2374,61 +2231,61 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
 }
 
 /* ============================================================
-   i18n expansion — keys for the static chrome (data-i18n),
+   i18n expansion, keys for the static chrome (data-i18n),
    Arabic + German languages, and localized help texts.
    Missing keys gracefully fall back to English via t().
    ============================================================ */
 (function(){
   const X={
     en:{
-      feat1Desc:'License, README, tests, CI, docs, freshness — 10 weighted checks distilled into one honest number.',
+      feat1Desc:'License, README, tests, CI, docs, freshness, 10 weighted checks distilled into one honest number.',
       feat2Desc:'The Gitingest trick, client-side. Select files, get a clean prompt with a token estimate.',
       feat3Desc:'Full tree visualizer with sizes, type distribution and the heaviest files in the repo.',
       feat4Desc:'Language bytes, dependency scan across 8 ecosystems, commit activity and top contributors.',
-      feat5Desc:'Every repo gets a personality, a roast, and trophies — Wrapped-style, shareable as a card.',
+      feat5Desc:'Every repo gets a personality, a roast, and trophies, Wrapped-style, shareable as a card.',
       feat6Desc:'Deep links, PNG cards and a printable A4 report. Everything stays in your browser.',
-      favorites:'⭐ Favorites',clearFavs:'Clear favorites',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
-      battleBtn:'⚔️ Battle!',royaleBtn:'🏆 Start tournament',close:'Close',
-      copyBtn:'📋 Copy',dlBtn:'⬇️ Download .md',gistBtn:'🌐 Gist share',tokBtn:'🧮 Token breakdown',
-      genBtn:'🤖 Generate digest',allTextBtn:'✓ All text files',
-      expandAll:'📂 Expand all',collapseAll:'📁 Collapse all',selectText:'✓ Select text',
-      clearSel:'✕ Clear',copyTree:'📋 Copy tree',hiddenBtn:'👁 Hidden',binaryBtn:'🧊 Binary',ftsBtn:'🔎 Search',
+      favorites:'Favorites',clearFavs:'Clear favorites',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'Diff',btnFav:'Fav',
+      battleBtn:'Battle!',royaleBtn:'Start tournament',close:'Close',
+      copyBtn:'Copy',dlBtn:'Download .md',gistBtn:'Gist share',tokBtn:'Token breakdown',
+      genBtn:'Generate digest',allTextBtn:'All text files',
+      expandAll:'Expand all',collapseAll:'Collapse all',selectText:'Select text',
+      clearSel:'Clear',copyTree:'Copy tree',hiddenBtn:'Hidden',binaryBtn:'Binary',ftsBtn:'Search',
       branchLabel:'Branch:',tagLabel:'Tag:',
-      help_health:'Health Score rates the repository on 10 weighted criteria — license, README, tests, CI, docs, freshness and more. 80+ means excellent project hygiene.',
+      help_health:'Health Score rates the repository on 10 weighted criteria, license, README, tests, CI, docs, freshness and more. 80+ means excellent project hygiene.',
       help_files:'Browse the repository tree and tick the checkboxes of the files you want in your LLM prompt. Use the toolbar to select all text files at once, filter by name, or scope to a subfolder.',
       help_digest:'The LLM Digest packs your selected files into one prompt you can paste into ChatGPT, Claude or Gemini. Pick a preset to get task-specific instructions, then hit Generate. Everything stays in your browser.',
-      help_token:'Token estimates are per-model approximations. Switch models to see how the digest fits their context window — if it overflows, the digest is automatically split into parts.',
+      help_token:'Token estimates are per-model approximations. Switch models to see how the digest fits their context window, if it overflows, the digest is automatically split into parts.',
       help_deep:'Deep Analysis goes beyond the health score: PR analytics, fix-vs-feature commit ratio, code churn hotspots and a dependency vulnerability scan via OSV.dev.',
       help_deps:'An interactive force-directed graph of dependencies parsed from manifest files (package.json, requirements.txt, Cargo.toml, go.mod…).',
       help_tokenModal:'Without a token you get 60 GitHub API calls per hour. A free personal access token raises that to 5,000/hour and is stored only in your browser.',
       help_langs:'Byte-accurate language breakdown computed from the platform languages API. The doughnut chart shows the top 10 languages.',
       help_badge:'Generate a health-score badge for your project README: a static SVG with the baked score, or a dynamic shields.io badge.',
       help_map:'The Repo Map is an interactive system map of the repository. Folders, entry points, manifests and config files become nodes. Click a node to focus it, press R to probe a route between two nodes, L to compare kinds, / to search, and F for presentation mode.',
-      help_crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle — for offline reading, RAG, or appending to your LLM digest.',
+      help_crawl:'The Docs Crawler fetches a documentation site page by page, strips navbars, sidebars, footers and tables of contents, and gives you one clean text bundle, for offline reading, RAG, or appending to your LLM digest.',
       help_wrapped:'A fun 12-month story of this repository: commit rhythm, peak week, top contributor and star grade.',
       help_onboard:'The Onboarding Guide generates a step-by-step first-contribution path: setup commands, architecture reading order, test directories, CI workflows, good-first-issue links, and key contacts.',
       help_triage:'Issue Triage fetches up to 100 open issues and auto-classifies them as bugs or features using keyword heuristics on titles, bodies and labels. Each issue gets a priority score based on staleness, comment count, critical keywords and type. Filter by category or run it from the Deep tab.'
     },
     fa:{
-      feat1Desc:'مجوز، README، تست‌ها، CI، مستندات و تازگی — ۱۰ بررسی وزن‌دار در یک عدد صادقانه.',
+      feat1Desc:'مجوز، README، تست‌ها، CI، مستندات و تازگی, ۱۰ بررسی وزن‌دار در یک عدد صادقانه.',
       feat2Desc:'ترفند Gitingest در مرورگر شما. فایل‌ها را انتخاب کنید و یک پرامپت تمیز با تخمین توکن بگیرید.',
       feat3Desc:'نمایش کامل درخت فایل با اندازه‌ها، توزیع نوع و سنگین‌ترین فایل‌های رپو.',
       feat4Desc:'بایت زبان‌ها، اسکن وابستگی در ۸ اکوسیستم، فعالیت کامیت‌ها و مشارکت‌کنندگان برتر.',
-      feat5Desc:'هر رپو شخصیت، یک roast و جوایز می‌گیرد — به سبک Wrapped و قابل اشتراک.',
+      feat5Desc:'هر رپو شخصیت، یک roast و جوایز می‌گیرد, به سبک Wrapped و قابل اشتراک.',
       feat6Desc:'لینک عمیق، کارت PNG و گزارش A4 قابل چاپ. همه‌چیز در مرورگر شما می‌ماند.',
-      favorites:'⭐ علاقه‌مندی‌ها',clearFavs:'پاک کردن علاقه‌مندی‌ها',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 مقایسه',btnFav:'علاقه',
-      battleBtn:'⚔️ نبرد!',royaleBtn:'🏆 شروع تورنمنت',close:'بستن',
-      copyBtn:'📋 کپی',dlBtn:'⬇️ دانلود .md',gistBtn:'🌐 اشتراک Gist',tokBtn:'🧮 تفکیک توکن',
-      genBtn:'🤖 تولید خلاصه',allTextBtn:'✓ همه فایل‌های متنی',
-      expandAll:'📂 باز کردن همه',collapseAll:'📁 بستن همه',selectText:'✓ انتخاب متن‌ها',
-      clearSel:'✕ پاک کردن',copyTree:'📋 کپی درخت',hiddenBtn:'👁 مخفی',binaryBtn:'🧊 باینری',ftsBtn:'🔎 جستجو',
+      favorites:'علاقه‌مندی‌ها',clearFavs:'پاک کردن علاقه‌مندی‌ها',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'مقایسه',btnFav:'علاقه',
+      battleBtn:'نبرد!',royaleBtn:'شروع تورنمنت',close:'بستن',
+      copyBtn:'کپی',dlBtn:'دانلود .md',gistBtn:'اشتراک Gist',tokBtn:'تفکیک توکن',
+      genBtn:'تولید خلاصه',allTextBtn:'همه فایل‌های متنی',
+      expandAll:'باز کردن همه',collapseAll:'بستن همه',selectText:'انتخاب متن‌ها',
+      clearSel:'پاک کردن',copyTree:'کپی درخت',hiddenBtn:'مخفی',binaryBtn:'باینری',ftsBtn:'جستجو',
       branchLabel:'شاخه:',tagLabel:'تگ:',
-      help_health:'امتیاز سلامت رپو را روی ۱۰ معیار وزن‌دار می‌سنجد — مجوز، README، تست، CI، مستندات و تازگی. بالای ۸۰ یعنی بهداشت پروژه عالی.',
+      help_health:'امتیاز سلامت رپو را روی ۱۰ معیار وزن‌دار می‌سنجد, مجوز، README، تست، CI، مستندات و تازگی. بالای ۸۰ یعنی بهداشت پروژه عالی.',
       help_files:'درخت رپو را بگردید و تیک فایل‌هایی که می‌خواهید در پرامپت LLM باشند را بزنید. با نوار ابزار می‌توانید همه فایل‌های متنی را یکجا انتخاب یا بر اساس نام فیلتر کنید.',
       help_digest:'دایجست LLM فایل‌های انتخابی شما را در یک پرامپت برای ChatGPT، Claude یا Gemini بسته‌بندی می‌کند. یک preset انتخاب کنید و Generate را بزنید. همه‌چیز در مرورگر شما می‌ماند.',
-      help_token:'تخمین توکن برای هر مدل جداگانه است. مدل را عوض کنید تا ببینید دایجست در context window جا می‌شود یا نه — در صورت سرریز، دایجست خودکار به چند بخش تقسیم می‌شود.',
+      help_token:'تخمین توکن برای هر مدل جداگانه است. مدل را عوض کنید تا ببینید دایجست در context window جا می‌شود یا نه, در صورت سرریز، دایجست خودکار به چند بخش تقسیم می‌شود.',
       help_deep:'تحلیل عمیق فراتر از امتیاز سلامت است: تحلیل PRها، نسبت کامیت‌های fix، نقاط داغ churn و اسکن آسیب‌پذیری وابستگی‌ها با OSV.dev.',
       help_deps:'نمودار تعاملی وابستگی‌ها که از فایل‌های manifest (package.json، requirements.txt، Cargo.toml، go.mod و…) استخراج می‌شود.',
       help_tokenModal:'بدون توکن ۶۰ درخواست GitHub در ساعت دارید. توکن رایگان personal access این را به ۵۰۰۰ در ساعت می‌رساند و فقط در مرورگر شما ذخیره می‌شود.',
@@ -2440,24 +2297,24 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_triage:'تریاز issueها تا ۱۰۰ مورد باز را از API گیت‌هاب می‌خواند و با هیوریستیک کلمات کلیدی به باگ یا فیچر دسته‌بندی می‌کند. هر issue امتیاز اولویت بر اساس قدمت، تعداد کامنت و کلمات بحرانی می‌گیرد.'
     },
     es:{
-      feat1Desc:'Licencia, README, tests, CI, docs, frescura — 10 verificaciones ponderadas en un número honesto.',
+      feat1Desc:'Licencia, README, tests, CI, docs, frescura, 10 verificaciones ponderadas en un número honesto.',
       feat2Desc:'El truco de Gitingest, en tu navegador. Selecciona archivos y obtén un prompt limpio con estimación de tokens.',
       feat3Desc:'Visualizador completo del árbol con tamaños, distribución de tipos y los archivos más pesados.',
       feat4Desc:'Bytes por idioma, escaneo de dependencias en 8 ecosistemas, actividad de commits y contribuidores.',
-      feat5Desc:'Cada repo recibe personalidad, roast y trofeos — estilo Wrapped, compartible como tarjeta.',
+      feat5Desc:'Cada repo recibe personalidad, roast y trofeos, estilo Wrapped, compartible como tarjeta.',
       feat6Desc:'Enlaces profundos, tarjetas PNG y un informe A4 imprimible. Todo queda en tu navegador.',
-      favorites:'⭐ Favoritos',clearFavs:'Borrar favoritos',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
-      battleBtn:'⚔️ ¡Batalla!',royaleBtn:'🏆 Iniciar torneo',close:'Cerrar',
-      copyBtn:'📋 Copiar',dlBtn:'⬇️ Descargar .md',gistBtn:'🌐 Compartir Gist',tokBtn:'🧮 Desglose de tokens',
-      genBtn:'🤖 Generar resumen',allTextBtn:'✓ Todos los archivos de texto',
-      expandAll:'📂 Expandir todo',collapseAll:'📁 Colapsar todo',selectText:'✓ Seleccionar texto',
-      clearSel:'✕ Limpiar',copyTree:'📋 Copiar árbol',hiddenBtn:'👁 Ocultos',binaryBtn:'🧊 Binarios',ftsBtn:'🔎 Buscar',
+      favorites:'Favoritos',clearFavs:'Borrar favoritos',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'Diff',btnFav:'Fav',
+      battleBtn:'¡Batalla!',royaleBtn:'Iniciar torneo',close:'Cerrar',
+      copyBtn:'Copiar',dlBtn:'Descargar .md',gistBtn:'Compartir Gist',tokBtn:'Desglose de tokens',
+      genBtn:'Generar resumen',allTextBtn:'Todos los archivos de texto',
+      expandAll:'Expandir todo',collapseAll:'Colapsar todo',selectText:'Seleccionar texto',
+      clearSel:'Limpiar',copyTree:'Copiar árbol',hiddenBtn:'Ocultos',binaryBtn:'Binarios',ftsBtn:'Buscar',
       branchLabel:'Rama:',tagLabel:'Tag:',
-      help_health:'La Puntuación de Salud evalúa el repo en 10 criterios ponderados — licencia, README, tests, CI, docs, frescura y más. 80+ significa higiene excelente.',
+      help_health:'La Puntuación de Salud evalúa el repo en 10 criterios ponderados, licencia, README, tests, CI, docs, frescura y más. 80+ significa higiene excelente.',
       help_files:'Explora el árbol del repositorio y marca las casillas de los archivos para tu prompt LLM. Usa la barra de herramientas para seleccionar todos los archivos de texto o filtrar por nombre.',
       help_digest:'El Resumen LLM empaqueta tus archivos seleccionados en un prompt para ChatGPT, Claude o Gemini. Elige un preset y pulsa Generar. Todo queda en tu navegador.',
-      help_token:'Las estimaciones de tokens son aproximaciones por modelo. Cambia de modelo para ver si el resumen cabe en su ventana de contexto — si se desborda, se divide en partes.',
+      help_token:'Las estimaciones de tokens son aproximaciones por modelo. Cambia de modelo para ver si el resumen cabe en su ventana de contexto, si se desborda, se divide en partes.',
       help_deep:'El Análisis Profundo va más allá del score: analítica de PRs, ratio de commits de fix, hotspots de churn y escaneo de vulnerabilidades vía OSV.dev.',
       help_deps:'Grafo interactivo de dependencias extraídas de los archivos manifest (package.json, requirements.txt, Cargo.toml, go.mod…).',
       help_tokenModal:'Sin token tienes 60 llamadas GitHub por hora. Un token personal gratuito lo sube a 5.000/hora y solo se guarda en tu navegador.',
@@ -2466,24 +2323,24 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_wrapped:'La historia divertida de 12 meses de este repo: ritmo de commits, semana pico, contribuidor top y grado de estrellas.'
     },
     zh:{
-      feat1Desc:'许可证、README、测试、CI、文档、活跃度——10 项加权检查浓缩为一个诚实的数字。',
+      feat1Desc:'许可证、README、测试、CI、文档、活跃度,,10 项加权检查浓缩为一个诚实的数字。',
       feat2Desc:'浏览器里的 Gitingest 技巧。选择文件，获得带 token 估算的干净提示词。',
       feat3Desc:'完整文件树可视化，含大小、类型分布和仓库中最大的文件。',
       feat4Desc:'语言字节数、8 大生态依赖扫描、提交活动和主要贡献者。',
-      feat5Desc:'每个仓库都有个性、吐槽和奖杯——Wrapped 风格，可生成分享卡片。',
+      feat5Desc:'每个仓库都有个性、吐槽和奖杯,,Wrapped 风格，可生成分享卡片。',
       feat6Desc:'深链接、PNG 卡片和可打印的 A4 报告。一切都在你的浏览器中。',
-      favorites:'⭐ 收藏',clearFavs:'清除收藏',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 对比',btnFav:'收藏',
-      battleBtn:'⚔️ 对战！',royaleBtn:'🏆 开始锦标赛',close:'关闭',
-      copyBtn:'📋 复制',dlBtn:'⬇️ 下载 .md',gistBtn:'🌐 Gist 分享',tokBtn:'🧮 Token 明细',
-      genBtn:'🤖 生成摘要',allTextBtn:'✓ 所有文本文件',
-      expandAll:'📂 全部展开',collapseAll:'📁 全部折叠',selectText:'✓ 选择文本',
-      clearSel:'✕ 清除',copyTree:'📋 复制树',hiddenBtn:'👁 隐藏文件',binaryBtn:'🧊 二进制',ftsBtn:'🔎 搜索',
+      favorites:'收藏',clearFavs:'清除收藏',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'对比',btnFav:'收藏',
+      battleBtn:'对战！',royaleBtn:'开始锦标赛',close:'关闭',
+      copyBtn:'复制',dlBtn:'下载 .md',gistBtn:'Gist 分享',tokBtn:'Token 明细',
+      genBtn:'生成摘要',allTextBtn:'所有文本文件',
+      expandAll:'全部展开',collapseAll:'全部折叠',selectText:'选择文本',
+      clearSel:'清除',copyTree:'复制树',hiddenBtn:'隐藏文件',binaryBtn:'二进制',ftsBtn:'搜索',
       branchLabel:'分支：',tagLabel:'标签：',
-      help_health:'健康评分按 10 项加权标准评估仓库——许可证、README、测试、CI、文档、活跃度等。80+ 表示项目卫生极佳。',
+      help_health:'健康评分按 10 项加权标准评估仓库,,许可证、README、测试、CI、文档、活跃度等。80+ 表示项目卫生极佳。',
       help_files:'浏览仓库文件树，勾选要放入 LLM 提示词的文件。使用工具栏一键选择所有文本文件、按名称过滤或限定子文件夹。',
       help_digest:'LLM 摘要将选中的文件打包成可粘贴到 ChatGPT、Claude 或 Gemini 的提示词。选择预设获得任务指令，然后点击生成。一切都在浏览器中。',
-      help_token:'Token 估算因模型而异。切换模型查看摘要是否适合其上下文窗口——超出时会自动分割成多个部分。',
+      help_token:'Token 估算因模型而异。切换模型查看摘要是否适合其上下文窗口,,超出时会自动分割成多个部分。',
       help_deep:'深度分析超越健康评分：PR 分析、修复型提交比率、代码 churn 热点和基于 OSV.dev 的依赖漏洞扫描。',
       help_deps:'从 manifest 文件（package.json、requirements.txt、Cargo.toml、go.mod 等）解析的交互式依赖关系图。',
       help_tokenModal:'没有令牌每小时有 60 次 GitHub API 调用。免费个人访问令牌可提升到 5,000 次/小时，且仅存储在你的浏览器中。',
@@ -2492,24 +2349,24 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_wrapped:'这个仓库 12 个月的趣味故事：提交节奏、高峰周、主要贡献者和星级评价。'
     },
     fr:{
-      feat1Desc:'Licence, README, tests, CI, docs, fraîcheur — 10 vérifications pondérées en un nombre honnête.',
+      feat1Desc:'Licence, README, tests, CI, docs, fraîcheur, 10 vérifications pondérées en un nombre honnête.',
       feat2Desc:'L\'astuce Gitingest, côté navigateur. Sélectionnez des fichiers, obtenez un prompt propre avec estimation de tokens.',
       feat3Desc:'Visualisation complète de l\'arborescence avec tailles, distribution des types et fichiers les plus lourds.',
       feat4Desc:'Octets par langage, scan des dépendances sur 8 écosystèmes, activité des commits et contributeurs.',
-      feat5Desc:'Chaque dépôt reçoit une personnalité, un roast et des trophées — style Wrapped, partageable en carte.',
+      feat5Desc:'Chaque dépôt reçoit une personnalité, un roast et des trophées, style Wrapped, partageable en carte.',
       feat6Desc:'Liens profonds, cartes PNG et rapport A4 imprimable. Tout reste dans votre navigateur.',
-      favorites:'⭐ Favoris',clearFavs:'Effacer les favoris',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
-      battleBtn:'⚔️ Battle !',royaleBtn:'🏆 Lancer le tournoi',close:'Fermer',
-      copyBtn:'📋 Copier',dlBtn:'⬇️ Télécharger .md',gistBtn:'🌐 Partager en Gist',tokBtn:'🧮 Détail des tokens',
-      genBtn:'🤖 Générer le résumé',allTextBtn:'✓ Tous les fichiers texte',
-      expandAll:'📂 Tout déplier',collapseAll:'📁 Tout replier',selectText:'✓ Sélectionner le texte',
-      clearSel:'✕ Effacer',copyTree:'📋 Copier l\'arbre',hiddenBtn:'👁 Cachés',binaryBtn:'🧊 Binaires',ftsBtn:'🔎 Rechercher',
+      favorites:'Favoris',clearFavs:'Effacer les favoris',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'Diff',btnFav:'Fav',
+      battleBtn:'Battle !',royaleBtn:'Lancer le tournoi',close:'Fermer',
+      copyBtn:'Copier',dlBtn:'Télécharger .md',gistBtn:'Partager en Gist',tokBtn:'Détail des tokens',
+      genBtn:'Générer le résumé',allTextBtn:'Tous les fichiers texte',
+      expandAll:'Tout déplier',collapseAll:'Tout replier',selectText:'Sélectionner le texte',
+      clearSel:'Effacer',copyTree:'Copier l\'arbre',hiddenBtn:'Cachés',binaryBtn:'Binaires',ftsBtn:'Rechercher',
       branchLabel:'Branche :',tagLabel:'Tag :',
-      help_health:'Le Score de Santé évalue le dépôt sur 10 critères pondérés — licence, README, tests, CI, docs, fraîcheur… 80+ signifie une hygiène excellente.',
+      help_health:'Le Score de Santé évalue le dépôt sur 10 critères pondérés, licence, README, tests, CI, docs, fraîcheur… 80+ signifie une hygiène excellente.',
       help_files:'Parcourez l\'arborescence et cochez les fichiers à inclure dans votre prompt LLM. Utilisez la barre d\'outils pour tout sélectionner, filtrer par nom ou limiter à un sous-dossier.',
       help_digest:'Le Résumé LLM emballe vos fichiers sélectionnés en un prompt pour ChatGPT, Claude ou Gemini. Choisissez un preset puis Générez. Tout reste dans votre navigateur.',
-      help_token:'Les estimations de tokens varient selon le modèle. Changez de modèle pour voir si le résumé tient dans sa fenêtre de contexte — sinon il est découpé en parties.',
+      help_token:'Les estimations de tokens varient selon le modèle. Changez de modèle pour voir si le résumé tient dans sa fenêtre de contexte, sinon il est découpé en parties.',
       help_deep:'L\'Analyse Approfondie va plus loin que le score : analytics des PRs, ratio de commits de fix, hotspots de churn et scan de vulnérabilités via OSV.dev.',
       help_deps:'Graphe interactif des dépendances extraites des fichiers manifest (package.json, requirements.txt, Cargo.toml, go.mod…).',
       help_tokenModal:'Sans token, 60 appels GitHub par heure. Un token personnel gratuit porte cela à 5 000/heure, stocké uniquement dans votre navigateur.',
@@ -2518,80 +2375,80 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
       help_wrapped:'L\'histoire amusante des 12 derniers mois de ce dépôt : rythme des commits, semaine record, contributeur n°1 et grade d\'étoiles.'
     },
     ar:{
-      tabOverview:'🩺 نظرة عامة',tabLanguages:'📊 اللغات',tabFiles:'🗂️ الملفات',
-      tabDigest:'🤖 الملخص',tabActivity:'📈 النشاط',tabFun:'🏆 الترفيه',tabDeps:'🔗 التبعيات',tabDeep:'🔬 تحليل عميق',tabMap:'🗺️ الخريطة',tabCrawl:'🦎 الزحف',tabOnboard:'🚀 البدء',
-      btnHome:'← الرئيسية',btnCard:'📸 بطاقة',btnReport:'📄 تقرير',btnLink:'🔗 رابط',
-      btnCompare:'⚖️ مقارنة',btnBattle:'⚔️ معركة',btnClone:'📋 استنساخ',
-      btnToken:'🔑 رمز',btnShortcuts:'❓ اختصارات',
+      tabOverview:'نظرة عامة',tabLanguages:'اللغات',tabFiles:'الملفات',
+      tabDigest:'الملخص',tabActivity:'النشاط',tabFun:'الترفيه',tabDeps:'التبعيات',tabDeep:'تحليل عميق',tabMap:'الخريطة',tabCrawl:'الزحف',tabOnboard:'البدء',
+      btnHome:'← الرئيسية',btnCard:'بطاقة',btnReport:'تقرير',btnLink:'رابط',
+      btnCompare:'مقارنة',btnBattle:'معركة',btnClone:'استنساخ',
+      btnToken:'رمز',btnShortcuts:'اختصارات',
       searchPlaceholder:'المالك/المستودع، رابط GitHub، أو اسم مستخدم…',
       jumpPlaceholder:'تحليل مستودع آخر…',
       heroTitle:'تعرّف على مستودع GitHub',
       heroSub:'في ثوانٍ، لا ساعات.',
-      heroDesc:'الصق أي مستودع أو ملف شخصي. يمنحك Repodest درجة صحة وتفصيل لغات ومستعرض ملفات ورؤى الالتزامات وجوائز ممتعة — ثم يغلّف كل ذلك في <b>ملخص جاهز لـ LLM</b> يمكنك تغذيته بـ ChatGPT أو Claude أو Gemini.',
+      heroDesc:'الصق أي مستودع أو ملف شخصي. يمنحك Repodest درجة صحة وتفصيل لغات ومستعرض ملفات ورؤى الالتزامات وجوائز ممتعة, ثم يغلّف كل ذلك في <b>ملخص جاهز لـ LLM</b> يمكنك تغذيته بـ ChatGPT أو Claude أو Gemini.',
       scopeBtn:'حلّل',
-      recentRepos:'🕘 المستودعات الأخيرة',recentReposTitle:'🕘 المستودعات الأخيرة',
+      recentRepos:'المستودعات الأخيرة',recentReposTitle:'المستودعات الأخيرة',
       clearHistory:'مسح السجل',
       step1:'الصق',step2:'استكشف',step3:'أطعم ذكاءك الاصطناعي',
       step1Desc:'أي رابط مستودع، مالك/مستودع، أو اسم مستخدم.',
-      step2Desc:'درجة الصحة، اللغات، الملفات، النشاط — كل شيء في لوحة واحدة.',
+      step2Desc:'درجة الصحة، اللغات، الملفات، النشاط, كل شيء في لوحة واحدة.',
       step3Desc:'اختر الملفات، أنشئ الملخص، وانسخه في أي محادثة LLM.',
       feat1:'درجة الصحة',feat2:'ملخص LLM',feat3:'مستعرض الملفات',
       feat4:'إحصاءات عميقة',feat5:'الوضع الترفيهي',feat6:'قابل للمشاركة',
-      feat1Desc:'الترخيص، README، الاختبارات، CI، الوثائق، الحداثة — 10 فحوصات موزونة في رقم صادق واحد.',
+      feat1Desc:'الترخيص، README، الاختبارات، CI، الوثائق، الحداثة, 10 فحوصات موزونة في رقم صادق واحد.',
       feat2Desc:'حيلة Gitingest داخل متصفحك. اختر الملفات واحصل على موجه نظيف مع تقدير الرموز.',
       feat3Desc:'عارض شجرة كامل بالأحجام وتوزيع الأنواع وأثقل ملفات المستودع.',
       feat4Desc:'بايتات اللغات، مسح التبعيات عبر 8 أنظمة، نشاط الالتزامات وكبار المساهمين.',
-      feat5Desc:'كل مستودع يحصل على شخصية وسخرية وجوائز — بأسلوب Wrapped وقابل للمشاركة.',
+      feat5Desc:'كل مستودع يحصل على شخصية وسخرية وجوائز, بأسلوب Wrapped وقابل للمشاركة.',
       feat6Desc:'روابط عميقة وبطاقات PNG وتقرير A4 قابل للطباعة. كل شيء يبقى في متصفحك.',
       footer:'من إعداد',
-      favorites:'⭐ المفضلة',clearFavs:'مسح المفضلة',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 فرق',btnFav:'مفضل',
-      battleBtn:'⚔️ معركة!',royaleBtn:'🏆 ابدأ البطولة',close:'إغلاق',
-      copyBtn:'📋 نسخ',dlBtn:'⬇️ تنزيل .md',gistBtn:'🌐 مشاركة Gist',tokBtn:'🧮 تفصيل الرموز',
-      genBtn:'🤖 إنشاء الملخص',allTextBtn:'✓ كل الملفات النصية',
-      expandAll:'📂 فتح الكل',collapseAll:'📁 طي الكل',selectText:'✓ اختيار النصوص',
-      clearSel:'✕ مسح',copyTree:'📋 نسخ الشجرة',hiddenBtn:'👁 مخفي',binaryBtn:'🧊 ثنائي',ftsBtn:'🔎 بحث',
+      favorites:'المفضلة',clearFavs:'مسح المفضلة',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'فرق',btnFav:'مفضل',
+      battleBtn:'معركة!',royaleBtn:'ابدأ البطولة',close:'إغلاق',
+      copyBtn:'نسخ',dlBtn:'تنزيل .md',gistBtn:'مشاركة Gist',tokBtn:'تفصيل الرموز',
+      genBtn:'إنشاء الملخص',allTextBtn:'كل الملفات النصية',
+      expandAll:'فتح الكل',collapseAll:'طي الكل',selectText:'اختيار النصوص',
+      clearSel:'مسح',copyTree:'نسخ الشجرة',hiddenBtn:'مخفي',binaryBtn:'ثنائي',ftsBtn:'بحث',
       branchLabel:'الفرع:',tagLabel:'الوسم:',
-      excellentShape:'حالة ممتازة 🟢',decentShape:'حالة جيدة 🟡',
-      needsLove:'يحتاج اهتماماً 🟠',needsCare:'يحتاج عناية جدية 🔴'
+      excellentShape:'حالة ممتازة',decentShape:'حالة جيدة',
+      needsLove:'يحتاج اهتماماً',needsCare:'يحتاج عناية جدية'
     },
     de:{
-      tabOverview:'🩺 Überblick',tabLanguages:'📊 Sprachen',tabFiles:'🗂️ Dateien',
-      tabDigest:'🤖 Zusammenfassung',tabActivity:'📈 Aktivität',tabFun:'🏆 Spaß',tabDeps:'🔗 Deps',tabDeep:'🔬 Tiefanalyse',tabMap:'🗺️ Karte',tabCrawl:'🦎 Crawlen',tabOnboard:'🚀 Einstieg',
-      btnHome:'← Start',btnCard:'📸 Karte',btnReport:'📄 Bericht',btnLink:'🔗 Link',
-      btnCompare:'⚖️ Vergleichen',btnBattle:'⚔️ Battle',btnClone:'📋 Klonen',
-      btnToken:'🔑 Token',btnShortcuts:'❓ Shortcuts',
+      tabOverview:'Überblick',tabLanguages:'Sprachen',tabFiles:'Dateien',
+      tabDigest:'Zusammenfassung',tabActivity:'Aktivität',tabFun:'Spaß',tabDeps:'Deps',tabDeep:'Tiefanalyse',tabMap:'Karte',tabCrawl:'Crawlen',tabOnboard:'Einstieg',
+      btnHome:'← Start',btnCard:'Karte',btnReport:'Bericht',btnLink:'Link',
+      btnCompare:'Vergleichen',btnBattle:'Battle',btnClone:'Klonen',
+      btnToken:'Token',btnShortcuts:'Shortcuts',
       searchPlaceholder:'besitzer/repo, eine GitHub-URL, oder ein Benutzername…',
       jumpPlaceholder:'weiteres Repo analysieren…',
       heroTitle:'Kenne ein GitHub-Repo',
       heroSub:'in Sekunden, nicht Stunden.',
-      heroDesc:'Füge ein beliebiges Repository oder Profil ein. Repodest liefert dir einen Gesundheitsscore, Sprachverteilung, Datei-Explorer, Commit-Insights und Spaß-Trophäen — und packt alles in einen <b>LLM-fähigen Digest</b> für ChatGPT, Claude oder Gemini.',
+      heroDesc:'Füge ein beliebiges Repository oder Profil ein. Repodest liefert dir einen Gesundheitsscore, Sprachverteilung, Datei-Explorer, Commit-Insights und Spaß-Trophäen, und packt alles in einen <b>LLM-fähigen Digest</b> für ChatGPT, Claude oder Gemini.',
       scopeBtn:'Analysieren',
-      recentRepos:'🕘 Letzte Repos',recentReposTitle:'🕘 Letzte Repos',
+      recentRepos:'Letzte Repos',recentReposTitle:'Letzte Repos',
       clearHistory:'Verlauf löschen',
       step1:'Einfügen',step2:'Erkunden',step3:'Füttere deine KI',
       step1Desc:'Jede Repo-URL, besitzer/repo oder Benutzername.',
-      step2Desc:'Gesundheitscore, Sprachen, Dateien, Aktivität — alles in einem Dashboard.',
+      step2Desc:'Gesundheitscore, Sprachen, Dateien, Aktivität, alles in einem Dashboard.',
       step3Desc:'Dateien wählen, generieren, den Digest in einen LLM-Chat kopieren.',
       feat1:'Gesundheitscore',feat2:'LLM-Digest',feat3:'Datei-Explorer',
       feat4:'Tiefen-Statistiken',feat5:'Spaß-Modus',feat6:'Teilbar',
-      feat1Desc:'Lizenz, README, Tests, CI, Docs, Aktualität — 10 gewichtete Prüfungen in einer ehrlichen Zahl.',
+      feat1Desc:'Lizenz, README, Tests, CI, Docs, Aktualität, 10 gewichtete Prüfungen in einer ehrlichen Zahl.',
       feat2Desc:'Der Gitingest-Trick, clientseitig. Dateien wählen, sauberen Prompt mit Token-Schätzung erhalten.',
       feat3Desc:'Vollständiger Baum-Viewer mit Größen, Typverteilung und den schwersten Dateien des Repos.',
       feat4Desc:'Sprach-Bytes, Abhängigkeits-Scan über 8 Ökosysteme, Commit-Aktivität und Top-Contributors.',
-      feat5Desc:'Jedes Repo bekommt Persönlichkeit, Roast und Trophäen — im Wrapped-Stil, teilbar als Karte.',
+      feat5Desc:'Jedes Repo bekommt Persönlichkeit, Roast und Trophäen, im Wrapped-Stil, teilbar als Karte.',
       feat6Desc:'Deep-Links, PNG-Karten und ein druckbarer A4-Bericht. Alles bleibt im Browser.',
       footer:'Erstellt von',
-      favorites:'⭐ Favoriten',clearFavs:'Favoriten löschen',
-      btnExportJson:'⬇️ JSON',btnExportCsv:'⬇️ CSV',btnDiff:'🔀 Diff',btnFav:'Fav',
-      battleBtn:'⚔️ Battle!',royaleBtn:'🏆 Turnier starten',close:'Schließen',
-      copyBtn:'📋 Kopieren',dlBtn:'⬇️ .md herunterladen',gistBtn:'🌐 Gist teilen',tokBtn:'🧮 Token-Aufschlüsselung',
-      genBtn:'🤖 Digest erstellen',allTextBtn:'✓ Alle Textdateien',
-      expandAll:'📂 Alle aufklappen',collapseAll:'📁 Alle zuklappen',selectText:'✓ Text wählen',
-      clearSel:'✕ Leeren',copyTree:'📋 Baum kopieren',hiddenBtn:'👁 Versteckt',binaryBtn:'🧊 Binär',ftsBtn:'🔎 Suchen',
+      favorites:'Favoriten',clearFavs:'Favoriten löschen',
+      btnExportJson:'JSON',btnExportCsv:'CSV',btnDiff:'Diff',btnFav:'Fav',
+      battleBtn:'Battle!',royaleBtn:'Turnier starten',close:'Schließen',
+      copyBtn:'Kopieren',dlBtn:'.md herunterladen',gistBtn:'Gist teilen',tokBtn:'Token-Aufschlüsselung',
+      genBtn:'Digest erstellen',allTextBtn:'Alle Textdateien',
+      expandAll:'Alle aufklappen',collapseAll:'Alle zuklappen',selectText:'Text wählen',
+      clearSel:'Leeren',copyTree:'Baum kopieren',hiddenBtn:'Versteckt',binaryBtn:'Binär',ftsBtn:'Suchen',
       branchLabel:'Branch:',tagLabel:'Tag:',
-      excellentShape:'Ausgezeichnete Form 🟢',decentShape:'Gute Form 🟡',
-      needsLove:'Braucht Liebe 🟠',needsCare:'Braucht dringend Pflege 🔴'
+      excellentShape:'Ausgezeichnete Form',decentShape:'Gute Form',
+      needsLove:'Braucht Liebe',needsCare:'Braucht dringend Pflege'
     }
   };
   Object.keys(X).forEach(lang=>{
@@ -2608,17 +2465,17 @@ async function ftsScanWithWorker(paths,rawBaseNoSlash,needle,onProgress){
 /* Localized status label for the digest model gauge */
 
 /* ============================================================
-   Language picker menu — click the 🌐 chip to open a dropdown
+   Language picker menu, click the globe chip to open a dropdown
    of all supported languages instead of blind cycling.
    ============================================================ */
 const LANG_NAMES={
-  en:{flag:'🇬🇧',name:'English'},
-  fa:{flag:'🇮🇷',name:'فارسی'},
-  es:{flag:'🇪🇸',name:'Español'},
-  zh:{flag:'🇨🇳',name:'中文'},
-  fr:{flag:'🇫🇷',name:'Français'},
-  ar:{flag:'🇸🇦',name:'العربية'},
-  de:{flag:'🇩🇪',name:'Deutsch'}
+  en:{flag:'EN',name:'English'},
+  fa:{flag:'FA',name:'فارسی'},
+  es:{flag:'ES',name:'Español'},
+  zh:{flag:'ZH',name:'中文'},
+  fr:{flag:'FR',name:'Français'},
+  ar:{flag:'AR',name:'العربية'},
+  de:{flag:'DE',name:'Deutsch'}
 };
 let langMenuEl=null;
 function toggleLangMenu(ev){
@@ -2628,7 +2485,7 @@ function toggleLangMenu(ev){
   langMenuEl.className='lang-menu';
   langMenuEl.setAttribute('role','menu');
   langMenuEl.innerHTML=LANG_ORDER.map(code=>{
-    const info=LANG_NAMES[code]||{flag:'🌐',name:code};
+    const info=LANG_NAMES[code]||{flag:code.toUpperCase(),name:code};
     const active=currentLang===code;
     return '<button class="lang-item'+(active?' active':'')+'" role="menuitemradio" aria-checked="'+active+'" data-lang="'+code+'">'+
       '<span class="li-flag">'+info.flag+'</span>'+
@@ -2678,7 +2535,7 @@ function closeLangMenu(){
 }
 
 /* ============================================================
-   "Since your last visit" — stores a lightweight snapshot per
+   "Since your last visit", stores a lightweight snapshot per
    repo in localStorage and diffs it on the next visit.
    ============================================================ */
 const LASTVISIT_KEY='repodest_lastvisit';
@@ -2722,13 +2579,13 @@ function renderSinceLastVisit(m){
   if(!diffs.length&&!pushedChanged){host.style.display='none';return}
   const parts=[];
   if(diffs.length)parts.push('<b>'+diffs.join(' · ')+'</b> since your visit '+when);
-  if(pushedChanged)parts.push('🔔 new push since '+when);
+  if(pushedChanged)parts.push('new push since '+when);
   host.style.display='';
-  host.innerHTML='<span class="slv-chip">'+parts.join(' — ')+'</span>';
+  host.innerHTML='<span class="slv-chip">'+parts.join(', ')+'</span>';
 }
 
 /* ============================================================
-   URL automation — deep links for power users:
+   URL automation, deep links for power users:
      ?repo=owner/repo&preset=review&format=json&digest=auto
    digest=auto selects all text files and generates on load
    (respecting API limits; requires a fresh or cached load).
@@ -2757,15 +2614,15 @@ async function maybeRunAutoDigest(){
   generateDigest();
 }
 
-/* Bookmarklet — drag to bookmarks bar; click on any GitHub repo page */
+/* Bookmarklet, drag to bookmarks bar; click on any GitHub repo page */
 function showBookmarklet(){
   const code="location.href='https://mohsen-niksirat.github.io/Repodest/?repo='+encodeURIComponent(location.pathname.replace(/^\\/([^\\/]+)\\/([^\\/]+).*$/,'$1/$2'))";
-  showModal('🔖 Repodest Bookmarklet',
+  showModal('Repodest Bookmarklet',
     '<p style="font-size:13px;color:var(--text2)">Drag this link to your bookmarks bar. While browsing any GitHub repo, click it to open the repo here instantly.</p>'+
     '<p style="margin:12px 0"><a class="btn sm" style="display:inline-block;text-decoration:none" href="javascript:void 0" onclick="return false" ondragstart="event.dataTransfer.setData(\'text/plain\',this.href);return true" data-bm="1">🧪 Analyze with Repodest</a></p>'+
     '<p style="font-size:11.5px;color:var(--text3);margin-top:8px">Or copy this URL scheme into a new bookmark:</p>'+
     '<textarea readonly rows="3" style="width:100%;margin-top:6px;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:11px" id="bmCode">javascript:(function(){var m=location.pathname.match(/^\\/([^\\/]+)\\/([^\\/]+)/);if(m)open("https://mohsen-niksirat.github.io/Repodest/?repo="+encodeURIComponent(m[1]+"/"+m[2]))})();</textarea>'+
-    '<div class="mrow" style="margin-top:10px"><button class="btn sm" onclick="copyBmCode()">📋 Copy</button></div>');
+    '<div class="mrow" style="margin-top:10px"><button class="btn sm" onclick="copyBmCode()">Copy</button></div>');
 }
 function copyBmCode(){
   const ta=$('#bmCode');

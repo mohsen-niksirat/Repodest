@@ -1,9 +1,9 @@
 'use strict';
 /* ============================================================
-   Repodest core — shared pure functions & data tables
+   Repodest core, shared pure functions & data tables
    Loaded by: app.js (browser, exposes globals) and
               tests.test.js (Node, via module.exports)
-   No DOM, no fetch — safe to run anywhere.
+   No DOM, no fetch, safe to run anywhere.
    ============================================================ */
 const RepodestCore={};
 
@@ -306,11 +306,11 @@ RepodestCore.buildPRDigest=function(pr,files,an,opts){
   lines.push('- Change type: **'+(an&&an.changeType||'other')+'** · Size: **'+(an&&an.sizeClass||'?')+'** ('+(an&&an.totalLines||0)+' lines)');
   lines.push('- Risk level: **'+(an&&an.verdict||'low')+' ('+(an&&an.riskScore||0)+'/10)**');
   if(an&&an.risks&&an.risks.length){
-    lines.push('- ⚠️ Touched risk areas: '+an.risks.map(r=>r.label+' ('+r.files.length+' file'+(r.files.length>1?'s':'')+')').join('; '));
+    lines.push('- Touched risk areas: '+an.risks.map(r=>r.label+' ('+r.files.length+' file'+(r.files.length>1?'s':'')+')').join('; '));
   }else{
     lines.push('- No high-risk areas touched');
   }
-  if(an&&an.truncated)lines.push('- Note: the file list is truncated at 100 files — request the rest via pagination before deep review');
+  if(an&&an.truncated)lines.push('- Note: the file list is truncated at 100 files, request the rest via pagination before deep review');
   if(m.body){
     lines.push('');
     lines.push('## PR description');
@@ -326,7 +326,7 @@ RepodestCore.buildPRDigest=function(pr,files,an,opts){
     if(opts.includePatches!==false&&f.patch){
       const patch=String(f.patch);
       lines.push('```diff');
-      lines.push(patch.length>4000?patch.slice(0,4000)+'\n… (truncated — view the full diff on GitHub)':patch);
+      lines.push(patch.length>4000?patch.slice(0,4000)+'\n… (truncated, view the full diff on GitHub)':patch);
       lines.push('```');
     }
     lines.push('');
@@ -337,7 +337,7 @@ RepodestCore.buildPRDigest=function(pr,files,an,opts){
   lines.push('1. A plain-language summary of what this PR does and why');
   lines.push('2. The risky spots a reviewer should check first (auth, data loss, concurrency, security)');
   lines.push('3. Missing tests or edge cases');
-  lines.push('4. A merge verdict: approve / request changes / needs discussion — with reasons');
+  lines.push('4. A merge verdict: approve / request changes / needs discussion, with reasons');
   return lines.join('\n');
 };
 

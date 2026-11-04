@@ -1,6 +1,6 @@
 'use strict';
 /* ============================================================
-   Repodest — Boot
+   Repodest, Boot
    Theme init, URL bootstrap, service worker registration.
    MUST be the last script: boot() reads consts from app.ux.js,
    so defining it last avoids TDZ issues.

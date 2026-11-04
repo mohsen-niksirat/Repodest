@@ -1,6 +1,6 @@
 'use strict';
 /* ============================================================
-   Repodest — Docs Crawler (Lizard-style)
+   Repodest, Docs Crawler (Lizard-style)
    Recursively crawls a documentation site from the browser:
    fetches pages, strips boilerplate (nav/sidebar/footer/toc),
    and produces one clean text bundle you can feed to an LLM
@@ -11,38 +11,38 @@
 
 /* ---------- i18n ---------- */
 Object.assign(I18N.en,{
-  tabCrawl:'🦎 Crawl',
-  crawlHint:'A browser-side documentation crawler. Give it a docs URL — it fetches pages <b>recursively</b>, strips navbars, sidebars, footers and TOCs, and gives you one clean text bundle for offline reading or your LLM / RAG pipeline. Same-origin only by default.',
-  crawlBtn:'🦎 Crawl docs',crawlStop:'⏹ Stop',crawlAddDigest:'+ Add to digest',
+  tabCrawl:'Crawl',
+  crawlHint:'A browser-side documentation crawler. Give it a docs URL, it fetches pages <b>recursively</b>, strips navbars, sidebars, footers and TOCs, and gives you one clean text bundle for offline reading or your LLM / RAG pipeline. Same-origin only by default.',
+  crawlBtn:'Crawl docs',crawlStop:'⏹ Stop',crawlAddDigest:'+ Add to digest',
   crawlUrlPh:'https://docs.example.com …',
   crawlMaxPages:'Max pages',crawlRestrict:'Restrict to the starting subpath',
-  crawlCopy:'📋 Copy text',crawlDownload:'⬇️ Download .txt',
+  crawlCopy:'Copy text',crawlDownload:'Download .txt',
   crawlNoUrl:'Enter a documentation URL first.',
-  crawlBadUrl:'That URL doesn’t look right — it needs a host, e.g. https://docs.example.com',
-  crawlDone:'Crawl finished — {p} pages, {w} words.',
-  crawlStopped:'Crawl stopped — {p} pages, {w} words.',
-  crawlNoPages:'No usable pages found. The site may block browser fetches — try a different docs domain.',
+  crawlBadUrl:'That URL doesn’t look right, it needs a host, e.g. https://docs.example.com',
+  crawlDone:'Crawl finished, {p} pages, {w} words.',
+  crawlStopped:'Crawl stopped, {p} pages, {w} words.',
+  crawlNoPages:'No usable pages found. The site may block browser fetches, try a different docs domain.',
   crawlRunning:'Crawling…',crawlQueued:'queued',crawlFailed:'failed',
   crawlStatsPages:'pages',crawlStatsWords:'words',crawlStatsTokens:'est. tokens',
   crawlPrefill:'Suggested start points from this repo',
-  crawlProxyNote:'Direct fetch failed for some pages — retried through a public CORS proxy.'
+  crawlProxyNote:'Direct fetch failed for some pages, retried through a public CORS proxy.'
 });
 Object.assign(I18N.fa,{
-  tabCrawl:'🦎 خزش',
-  crawlHint:'یک خزنده‌ی مستندات در مرورگر شما. یک آدرس داکیومنت بدهید — صفحات را <b>بازگشتی</b> واکشی می‌کند، منوها، سایدبارها، فوترها و فهرست‌ها را حذف می‌کند و یک متن تمیز برای مطالعه آفلاین یا تغذیه LLM / RAG تحویل می‌دهد. به‌طور پیش‌فرض فقط هم‌دامنه.',
-  crawlBtn:'🦎 خزش مستندات',crawlStop:'⏹ توقف',crawlAddDigest:'+ افزودن به دایجست',
+  tabCrawl:'خزش',
+  crawlHint:'یک خزنده‌ی مستندات در مرورگر شما. یک آدرس داکیومنت بدهید, صفحات را <b>بازگشتی</b> واکشی می‌کند، منوها، سایدبارها، فوترها و فهرست‌ها را حذف می‌کند و یک متن تمیز برای مطالعه آفلاین یا تغذیه LLM / RAG تحویل می‌دهد. به‌طور پیش‌فرض فقط هم‌دامنه.',
+  crawlBtn:'خزش مستندات',crawlStop:'⏹ توقف',crawlAddDigest:'+ افزودن به دایجست',
   crawlUrlPh:'https://docs.example.com …',
   crawlMaxPages:'حداکثر صفحات',crawlRestrict:'محدود کردن به زیرمسیر شروع',
-  crawlCopy:'📋 کپی متن',crawlDownload:'⬇️ دانلود .txt',
+  crawlCopy:'کپی متن',crawlDownload:'دانلود .txt',
   crawlNoUrl:'اول یک آدرس مستندات وارد کنید.',
-  crawlBadUrl:'این آدرس درست به نظر نمی‌رسد — باید host داشته باشد، مثلاً https://docs.example.com',
-  crawlDone:'خزش تمام شد — {p} صفحه، {w} کلمه.',
-  crawlStopped:'خزش متوقف شد — {p} صفحه، {w} کلمه.',
-  crawlNoPages:'صفحه‌ی مفیدی پیدا نشد. ممکن است سایت واکشی مرورگر را مسدود کند — یک دامنه‌ی دیگر را امتحان کنید.',
+  crawlBadUrl:'این آدرس درست به نظر نمی‌رسد, باید host داشته باشد، مثلاً https://docs.example.com',
+  crawlDone:'خزش تمام شد, {p} صفحه، {w} کلمه.',
+  crawlStopped:'خزش متوقف شد, {p} صفحه، {w} کلمه.',
+  crawlNoPages:'صفحه‌ی مفیدی پیدا نشد. ممکن است سایت واکشی مرورگر را مسدود کند, یک دامنه‌ی دیگر را امتحان کنید.',
   crawlRunning:'در حال خزش…',crawlQueued:'در صف',crawlFailed:'ناموفق',
   crawlStatsPages:'صفحه',crawlStatsWords:'کلمه',crawlStatsTokens:'تقریباً توکن',
   crawlPrefill:'نقاط شروع پیشنهادی از این رپو',
-  crawlProxyNote:'واکشی مستقیم برای بعضی صفحات ناموفق بود — از طریق یک CORS proxy عمومی دوباره تلاش شد.'
+  crawlProxyNote:'واکشی مستقیم برای بعضی صفحات ناموفق بود, از طریق یک CORS proxy عمومی دوباره تلاش شد.'
 });
 
 /* ---------- State ---------- */
@@ -104,7 +104,7 @@ async function crawlGet(url,signal){
   try{
     const r=await crawlFetchUrl(url,signal);
     if(r.ok){const t=await r.text();if(t)return{t,direct:true}}
-  }catch(e){/* CORS or network — fall through to proxy */}
+  }catch(e){/* CORS or network, fall through to proxy */}
   for(const mk of CRAWL_PROXIES){
     try{
       const r=await fetch(mk(url),{signal,redirect:'follow'});
@@ -311,7 +311,7 @@ function crawlAddToDigest(){
   const out=$('#crawlOut');
   if(!out||!out.value){toast(crawlT('crawlNoPages'),'err');return}
   S.docsBundle=out.value;
-  toast(t('crawlAddDigest')+' — '+CRAWL.pages.length+' '+crawlT('crawlStatsPages'),'ok');
+  toast(t('crawlAddDigest')+', '+CRAWL.pages.length+' '+crawlT('crawlStatsPages'),'ok');
   switchTab('digest');
   const hint=$('#crawlDigestHint');
   if(hint)hint.style.display='';

@@ -7,7 +7,7 @@ const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.par
 const S={repo:null,langs:null,tree:null,contribs:null,commits:null,activity:null,sel:new Set(),digestText:'',charts:{},user:null,userRepos:null,platform:'github',branches:[],tags:[],currentBranch:null,compareData:null};
 const FILEMAP=new Map(),DIRMAP=new Map(),NODEMAP=new Map();
 /* esc/fmt/fmtSize/timeAgo, TEXT_EXT/BINARY_EXT, LANG_COLORS/PALETTE,
-   detectPlatform/parseRepoInput, asciiTree, SPDX_MAP — shared via core.js */
+   detectPlatform/parseRepoInput, asciiTree, SPDX_MAP, shared via core.js */
 const MANIFESTS=[{f:'package.json',t:'json',label:'npm'},{f:'requirements.txt',t:'lines',label:'pip'},{f:'pyproject.toml',t:'toml',label:'pyproject'},{f:'Cargo.toml',t:'toml',label:'Cargo'},{f:'go.mod',t:'gomod',label:'Go modules'},{f:'composer.json',t:'json',label:'Composer'},{f:'Gemfile',t:'gemfile',label:'Bundler'},{f:'pom.xml',t:'pom',label:'Maven'}];
 let ROASTS=[];
 
@@ -138,9 +138,9 @@ function renderLicenseAnalysis(){
       '<div class="kv"><span>License</span><b>'+esc(info.name)+'</b></div>'+
       '<div class="kv"><span>SPDX ID</span><b>'+esc(spdx)+'</b></div>'+
       '<div class="license-grid">'+
-        '<div class="license-col perm"><h4>✅ Permissions</h4><ul>'+info.perms.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul></div>'+
-        '<div class="license-col cond"><h4>⚠️ Conditions</h4><ul>'+(info.conds.length?info.conds.map(c=>'<li>'+esc(c)+'</li>').join(''):'<li style="color:var(--text3)">None</li>')+'</ul></div>'+
-        '<div class="license-col lim"><h4>🚫 Limitations</h4><ul>'+info.lims.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul></div>'+
+        '<div class="license-col perm"><h4>Permissions</h4><ul>'+info.perms.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ul></div>'+
+        '<div class="license-col cond"><h4>Conditions</h4><ul>'+(info.conds.length?info.conds.map(c=>'<li>'+esc(c)+'</li>').join(''):'<li style="color:var(--text3)">None</li>')+'</ul></div>'+
+        '<div class="license-col lim"><h4>Limitations</h4><ul>'+info.lims.map(l=>'<li>'+esc(l)+'</li>').join('')+'</ul></div>'+
       '</div>';
   }catch(e){console.warn('License analysis error:',e)}
 }
@@ -308,13 +308,13 @@ async function fetchRepoData(owner,repo,platform){
    ============================================================ */
 function updateSEO(meta){
   try{
-    const title=(meta.full_name||'Unknown')+' — Repodest';
+    const title=(meta.full_name||'Unknown')+', Repodest';
     const desc=(meta.description||'A repository on '+(meta._platform||'GitHub'))+'. Health score, languages, file explorer, and LLM-ready digest.';
     document.title=title;
     const ogTitle=document.querySelector('meta[property="og:title"]');
     const ogDesc=document.querySelector('meta[property="og:description"]');
     const ogImg=document.querySelector('meta[property="og:image"]');
-    if(ogTitle)ogTitle.setAttribute('content',(meta.full_name||'')+' — X-ray for '+(meta._platform||'GitHub')+' repos');
+    if(ogTitle)ogTitle.setAttribute('content',(meta.full_name||'')+', X-ray for '+(meta._platform||'GitHub')+' repos');
     if(ogDesc)ogDesc.setAttribute('content',desc);
     if(ogImg&&meta.owner&&meta.owner.avatar_url)ogImg.setAttribute('content',meta.owner.avatar_url);
   }catch(e){}
@@ -396,7 +396,7 @@ function renderBranchTagUI(){
   const bd=$('#branchDropdown');
   bd.innerHTML=S.branches.map(b=>'<option value="'+esc(b.name||'')+'"'+(b.name===S.currentBranch?' selected':'')+'>'+esc(b.name||'')+'</option>').join('');
   const td=$('#tagDropdown');
-  td.innerHTML='<option value="">—</option>'+S.tags.map(t=>'<option value="'+esc(t.name||'')+'">'+esc(t.name||'')+'</option>').join('');
+  td.innerHTML='<option value="">,</option>'+S.tags.map(t=>'<option value="'+esc(t.name||'')+'">'+esc(t.name||'')+'</option>').join('');
 }
 
 async function onBranchChange(branch){
@@ -470,7 +470,7 @@ async function loadCompare(){
     history.replaceState(null,'',url);
     renderCompare(data);
   }catch(e){
-    content.innerHTML='<div class="errbox"><div class="e">💥</div><h3>Could not load comparison</h3><p>'+esc(e.message||'Unknown error')+'</p></div>';
+    content.innerHTML='<div class="errbox"><div class="e"><svg class="ic" style="width:44px;height:44px"><use href="#i-alert"/></svg></div><h3>Could not load comparison</h3><p>'+esc(e.message||'Unknown error')+'</p></div>';
   }
 }
 
@@ -635,14 +635,14 @@ function generateDynamicRoasts(){
     const age=(Date.now()-new Date(m.created_at))/864e5;
     const freshness=(Date.now()-new Date(m.pushed_at))/864e5;
 
-    if(hasTests&&!hasTests.ok&&hasCI&&!hasCI.ok)lines.push("This repo deploys on hopes and dreams — no tests, no CI, just vibes.");
+    if(hasTests&&!hasTests.ok&&hasCI&&!hasCI.ok)lines.push("This repo deploys on hopes and dreams, no tests, no CI, just vibes.");
     if(starCount===0&&forkCount===0)lines.push("This repo is so lonely, even the CI bot left.");
-    if(sizeMB>500)lines.push("This repo weighs more than my life choices — "+fmtSize(m.size*1024)+" of pure commitment.");
-    if(contribCount<=1)lines.push("Solo dev energy — the commit history reads like a diary.");
-    if(issueCount>100)lines.push("The issue tracker is basically a suggestion box at this point — "+fmt(issueCount)+" open issues.");
-    if(!hasLicense)lines.push("No LICENSE file — legally speaking, this repo is a gray area wrapped in a mystery.");
+    if(sizeMB>500)lines.push("This repo weighs more than my life choices, "+fmtSize(m.size*1024)+" of pure commitment.");
+    if(contribCount<=1)lines.push("Solo dev energy, the commit history reads like a diary.");
+    if(issueCount>100)lines.push("The issue tracker is basically a suggestion box at this point, "+fmt(issueCount)+" open issues.");
+    if(!hasLicense)lines.push("No LICENSE file, legally speaking, this repo is a gray area wrapped in a mystery.");
     if(!m.description)lines.push("No description. This repo is so mysterious, even the README is confused.");
-    if(hasReadme&&!hasReadme.ok)lines.push("No README. The code speaks for itself — unfortunately, it mumbles.");
+    if(hasReadme&&!hasReadme.ok)lines.push("No README. The code speaks for itself, unfortunately, it mumbles.");
     if(m.archived)lines.push("Archived. The code has entered its retirement phase. It's not dead, it's 'legacy'.");
     if(m.fork)lines.push("It's a fork. Somewhere, a parent repo is pretending this doesn't exist.");
     if(freshness>365)lines.push("Last pushed "+Math.floor(freshness/365)+" year(s) ago. This repo has entered archaeological territory.");
@@ -654,7 +654,7 @@ function generateDynamicRoasts(){
     if(!m.topics||!m.topics.length)lines.push("Zero topics. This repo is hiding from GitHub search like it owes it money.");
     if(hasContributing&&!hasContributing.ok)lines.push("No CONTRIBUTING.md. First-time contributors are greeted with pure chaos.");
     if(age<30)lines.push("Less than a month old. Fresh out of the `git init` oven.");
-    if(forkCount>starCount&&starCount>0)lines.push("More forks than stars — people want to fix it themselves.");
+    if(forkCount>starCount&&starCount>0)lines.push("More forks than stars, people want to fix it themselves.");
     if(!m.homepage)lines.push("No homepage. This repo lives in the shadows of the terminal.");
     if(!lines.length)lines.push("Honestly? Clean repo, good hygiene, tests, CI… I got nothing. This is suspiciously responsible.");
     return lines;
@@ -675,9 +675,9 @@ function renderStarHistory(){
 }
 
 /* ============================================================
-   Core helpers (original, preserved) — BUG FIX #5: null safety
+   Core helpers (original, preserved), BUG FIX #5: null safety
    ============================================================ */
-/* esc/fmt/fmtSize/timeAgo/toast/langColor/extOf/isText/isLock —
+/* esc/fmt/fmtSize/timeAgo/toast/langColor/extOf/isText/isLock ,
    pure ones live in core.js (exposed as globals); toast stays local */
 function toast(msg,cls){const t=document.createElement('div');t.className='tst '+(cls||'');t.textContent=msg;$('#toast').appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transition='.4s';setTimeout(()=>t.remove(),450)},3400)}
 
@@ -711,7 +711,7 @@ function normalizeGheRepo(v){
   if(m&&!/github\.com$/i.test(m[1]))return{host:m[1],owner:m[2],repo:m[3].replace(/\.git+$/,'')};
   return null;
 }
-/* GitHub API base — GHE if set, else public */
+/* GitHub API base, GHE if set, else public */
 function apiBase(){
   return gheBase()||'https://api.github.com';
 }
@@ -829,16 +829,16 @@ function showError(icon,title,msg,extra){
 }
 function handleErr(err,name){
   if(err&&err.message==='RATE_LIMIT'){
-    showError('🚦','Rate limit reached','GitHub allows 60 unauthenticated calls per hour. A free personal access token raises it to 5,000 — click the button below and hit Scope again.');
-    const b=document.createElement('button');b.className='btn';b.style.marginTop='18px';b.textContent='🔑 Add a token';b.onclick=openModal;$('#errorView').appendChild(b);
+    showError('<svg class="ic" style="width:44px;height:44px"><use href="#i-alert"/></svg>','Rate limit reached','GitHub allows 60 unauthenticated calls per hour. A free personal access token raises it to 5,000, click the button below and hit Scope again.');
+    const b=document.createElement('button');b.className='btn';b.style.marginTop='18px';b.textContent='Add a token';b.onclick=openModal;$('#errorView').appendChild(b);
   }else if(err&&err.message==='NOT_FOUND'){
-    showError('👻','Not found',esc(name)+' doesn\'t exist, is private, or the name is misspelled.');
+    showError('<svg class="ic" style="width:44px;height:44px"><use href="#i-search"/></svg>','Not found',esc(name)+' doesn\'t exist, is private, or the name is misspelled.');
   }else{
-    showError('💥','Something broke',(err&&err.message?err.message:'Network error')+' — check your connection and try again.');
+    showError('<svg class="ic" style="width:44px;height:44px"><use href="#i-alert"/></svg>','Something broke',(err&&err.message?err.message:'Network error')+', check your connection and try again.');
   }
 }
 
-/* BUG FIX #1 & #4: Null-safe parseTree — ensure every file has a `name` */
+/* BUG FIX #1 & #4: Null-safe parseTree, ensure every file has a `name` */
 function parseTree(apiTree){
   FILEMAP.clear();DIRMAP.clear();NODEMAP.clear();
   scopePrefix='';
@@ -869,7 +869,7 @@ function parseTree(apiTree){
 }
 
 /* ============================================================
-   Main loadRepo — now supports multi-platform
+   Main loadRepo, now supports multi-platform
    ============================================================ */
 async function loadRepo(owner,repo,platform){
   platform=platform||'github';
@@ -899,7 +899,7 @@ async function loadRepo(owner,repo,platform){
 
     /* GitHub flow (public github.com or GitHub Enterprise via apiBase())
        Metadata first (needed for the default branch), then everything
-       else in parallel — cuts first-load latency to roughly the slowest
+       else in parallel, cuts first-load latency to roughly the slowest
        single call instead of the sum of all calls. */
     setLoad('Repository metadata…');
     const meta=await api('/repos/'+key);
@@ -939,7 +939,7 @@ function applyRepo(key,data,fromCache){
     show($('#loadingView'),false);show($('#errorView'),false);show($('#dash'),true);
     try{renderSinceLastVisit(data.meta)}catch(e){}
     try{maybeRunAutoDigest()}catch(e){}
-    if(data.tree&&data.tree.truncated)toast('Huge repo — file tree was truncated by GitHub','err');
+    if(data.tree&&data.tree.truncated)toast('Huge repo, file tree was truncated by GitHub','err');
     if(fromCache)toast('Loaded from cache (≤6h old)');
     if(!fromCache)refreshRate();
     if(!S.activity&&(S.platform==='github'||S.platform==='ghe'))loadActivity(key);
@@ -990,7 +990,7 @@ function loadUser(u){
       if(!list.length){grid.innerHTML='<div class="card">No public repositories.</div>'}
       list.forEach(r=>{
         const c=document.createElement('div');c.className='ucard';
-        c.innerHTML='<h4>'+esc(r.name||'')+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):'—')+'</span><span>★ '+fmt(r.stargazers_count)+'</span><span>⑂ '+fmt(r.forks_count)+'</span></div>';
+        c.innerHTML='<h4>'+esc(r.name||'')+(r.fork?' <span style="font-size:10px;color:var(--text3)">fork</span>':'')+'<b>★ '+fmt(r.stargazers_count)+'</b></h4><div class="d">'+esc(r.description||'No description')+'</div><div class="meta"><span>'+(r.language?'<span class="ld" style="background:'+langColor(r.language)+'"></span>'+esc(r.language):',')+'</span><span>★ '+fmt(r.stargazers_count)+'</span><span>⑂ '+fmt(r.forks_count)+'</span></div>';
         c.onclick=()=>loadRepo(r.owner.login,r.name,'github');
         grid.appendChild(c);
       });
@@ -1008,7 +1008,7 @@ function loadUser(u){
         summary.className='card';
         summary.style.marginTop='18px';
         summary.innerHTML=
-          '<div class="minititle">📊 Profile Summary</div>'+
+          '<div class="minititle">Profile Summary</div>'+
           '<div class="statrow" style="flex-wrap:wrap;gap:10px">'+
             '<div class="st"><b>'+fmt(totalStars)+'</b><span>total stars</span></div>'+
             '<div class="st"><b>'+fmt(totalForks)+'</b><span>total forks</span></div>'+
@@ -1016,7 +1016,7 @@ function loadUser(u){
             '<div class="st"><b>'+activeRecent+'</b><span>active (90d)</span></div>'+
           '</div>'+
           (topLangs.length?'<div style="margin-top:12px;font-size:11px;color:var(--text3)">Top languages</div><div class="topicrow" style="margin-top:6px">'+topLangs.map(l=>'<span class="topic"><span class="ld" style="display:inline-block;width:9px;height:9px;border-radius:3px;background:'+langColor(l[0])+';margin-right:5px"></span>'+esc(l[0])+' ×'+l[1]+'</span>').join('')+'</div>':'')+
-          (mostStarred?'<div class="kv" style="margin-top:10px"><span>⭐ Most starred</span><b><a href="#" data-owner="'+esc(mostStarred.owner.login)+'" data-repo="'+esc(mostStarred.name)+'">'+esc(mostStarred.full_name||mostStarred.name)+' ('+fmt(mostStarred.stargazers_count)+')</a></b></div>':'');
+          (mostStarred?'<div class="kv" style="margin-top:10px"><span>Most starred</span><b><a href="#" data-owner="'+esc(mostStarred.owner.login)+'" data-repo="'+esc(mostStarred.name)+'">'+esc(mostStarred.full_name||mostStarred.name)+' ('+fmt(mostStarred.stargazers_count)+')</a></b></div>':'');
         const link=summary.querySelector('a[data-owner]');
         if(link)link.addEventListener('click',ev=>{
           ev.preventDefault();
@@ -1125,23 +1125,23 @@ function personaFor(){
   const main=((S.repo&&S.repo.language)||langs[0]||'').toLowerCase();
   const total=FILEMAP.size;
   const map={
-    'javascript':{i:'🧙',n:'The Web Wizard',d:'Mostly JavaScript — this repo summons browser magic and node spells. Probably has 400 dependencies for what 40 could do.'},
+    'javascript':{i:'🧙',n:'The Web Wizard',d:'Mostly JavaScript, this repo summons browser magic and node spells. Probably has 400 dependencies for what 40 could do.'},
     'typescript':{i:'🔮',n:'The Type Enchanter',d:'TypeScript-dominant. Interfaces for everything, `any` hidden somewhere, and a build step longer than the runtime.'},
     'python':{i:'🧪',n:'The Data Alchemist',d:'Python rules here: notebooks, scripts, and one dependency that silently pins everything to Python 3.8.'},
-    'html':{i:'🎨',n:'The Interface Artist',d:'HTML-heavy — a hand-crafted web experience. View source is the real documentation.'},
+    'html':{i:'🎨',n:'The Interface Artist',d:'HTML-heavy, a hand-crafted web experience. View source is the real documentation.'},
     'css':{i:'💅',n:'The Style Sorcerer',d:'CSS is the star. Somewhere in here is a one-liner that took three days.'},
     'rust':{i:'🦀',n:'The Memory Guardian',d:'Rust. The compiler is the true maintainer; humans just resolve its complaints.'},
-    'go':{i:'🐹',n:'The Speed Daemon',d:'Go — compiled, concurrent, and allergic to dependencies. `go.mod` is basically poetry.'},
+    'go':{i:'🐹',n:'The Speed Daemon',d:'Go, compiled, concurrent, and allergic to dependencies. `go.mod` is basically poetry.'},
     'c':{i:'⚙️',n:'The Metal Bender',d:'C. Pointers everywhere and segfaults are a lifestyle. memory ownership is documented… sometimes.'},
-    'c++':{i:'🗡️',n:'The Template Ninja',d:'C++ — ten levels of templates deep. Error messages longer than the actual code.'},
-    'c#':{i:'🏛️',n:'The Enterprise Architect',d:'C# — interfaces, factories, and a folder structure worthy of a Fortune 500.'},
+    'c++':{i:'🗡️',n:'The Template Ninja',d:'C++, ten levels of templates deep. Error messages longer than the actual code.'},
+    'c#':{i:'🏛️',n:'The Enterprise Architect',d:'C#, interfaces, factories, and a folder structure worthy of a Fortune 500.'},
     'java':{i:'☕',n:'The Abstract Factory',d:'Java. AbstractSingletonProxyFactoryBean is somewhere in here. It compiles. Ship it.'},
-    'kotlin':{i:'🤖',n:'The Pragmatic Droid',d:'Kotlin — Java\'s cooler cousin. Null safety everywhere except that one `!!`.'},
+    'kotlin':{i:'🤖',n:'The Pragmatic Droid',d:'Kotlin, Java\'s cooler cousin. Null safety everywhere except that one `!!`.'},
     'php':{i:'🐘',n:'The Phoenix',d:'PHP. Everyone jokes about it; this repo quietly powers half the internet.'},
     'ruby':{i:'💎',n:'The Gem Collector',d:'Ruby on probably. Developer happiness as a measurable metric.'},
-    'swift':{i:'🍎',n:'The Apple Polisher',d:'Swift — pixel-perfect and Apple-gated. There is a SwiftUI view in here younger than the docs.'},
+    'swift':{i:'🍎',n:'The Apple Polisher',d:'Swift, pixel-perfect and Apple-gated. There is a SwiftUI view in here younger than the docs.'},
     'shell':{i:'👻',n:'The Automation Ghost',d:'Shell scripts holding the whole project together. One `rm -rf` away from a very bad day.'},
-    'dart':{i:'🎯',n:'The Flutter Flyer',d:'Dart — widgets all the way down, hot reload all day long.'},
+    'dart':{i:'🎯',n:'The Flutter Flyer',d:'Dart, widgets all the way down, hot reload all day long.'},
     'vue':{i:'💚',n:'The Progressive One',d:'Vue components, gently progressive, suspiciously elegant.'}
   };
   if(main&&map[main])return map[main];
@@ -1192,7 +1192,7 @@ function renderOverview(){
     ring.classList.remove('done');
     setTimeout(()=>ring.classList.add('done'),1200);
 
-    $('#scoreTag').innerHTML=hc.score>=80?'<span style="color:var(--green2)">Excellent shape 🟢</span>':hc.score>=60?'<span style="color:#fde047">Decent shape 🟡</span>':hc.score>=40?'<span style="color:var(--orange)">Needs love 🟠</span>':'<span style="color:#f87171">Needs serious care 🔴</span>';
+    $('#scoreTag').innerHTML=hc.score>=80?'<span style="color:var(--green2)">Excellent shape</span>':hc.score>=60?'<span style="color:#fde047">Decent shape</span>':hc.score>=40?'<span style="color:var(--orange)">Needs love</span>':'<span style="color:#f87171">Needs serious care</span>';
     $('#checks').innerHTML=hc.items.map(c=>'<div class="chk '+(c.ok?'ok':'bad')+'"><span class="ic">'+(c.ok?'✓':'✕')+'</span><span><b>'+esc(c.n)+'</b> · '+esc(c.ok?'present':'missing')+'</span></div>').join('');
     $('#facts').innerHTML=
       '<div class="kv"><span>Created</span><b>'+esc(new Date(m.created_at).toLocaleDateString())+'</b></div>'+
@@ -1202,9 +1202,9 @@ function renderOverview(){
       '<div class="kv"><span>Languages</span><b>'+Object.keys(S.langs).length+'</b></div>'+
       '<div class="kv"><span>Contributors (top)</span><b>'+S.contribs.length+'</b></div>'+
       '<div class="kv"><span>Platform</span><b><span class="platform-chip '+(S.platform||'github')+'">'+esc(S.platform||'github')+'</span></b></div>'+
-      '<div class="kv"><span>Homepage</span><b>'+(m.homepage?'<a href="'+esc(m.homepage)+'" target="_blank" rel="noopener">link ↗</a>':'—')+'</b></div>';
+      '<div class="kv"><span>Homepage</span><b>'+(m.homepage?'<a href="'+esc(m.homepage)+'" target="_blank" rel="noopener">link ↗</a>':',')+'</b></div>';
     const ach=getAch();
-    $('#achPreview').innerHTML=ach.filter(a=>a.on).slice(0,6).map(a=>achHTML(a)).join('')||'<span style="color:var(--text3);font-size:12.5px">No trophies yet — this repo keeps a low profile.</span>';
+    $('#achPreview').innerHTML=ach.filter(a=>a.on).slice(0,6).map(a=>achHTML(a)).join('')||'<span style="color:var(--text3);font-size:12.5px">No trophies yet, this repo keeps a low profile.</span>';
   }catch(e){console.warn('renderOverview error:',e)}
 }
 function achHTML(a){return'<div class="ach '+(a.on?'on':'')+'"><span class="ai">'+a.i+'</span><span><span class="an">'+esc(a.n)+'</span><div class="ad">'+esc(a.d)+'</div></span></div>'}
@@ -1217,7 +1217,7 @@ function renderLanguages(){
     $('#langRows').innerHTML=entries.slice(0,10).map(e=>{
       const pct=(e[1]/total*100).toFixed(1);
       return'<div class="langrow"><span class="ld" style="background:'+langColor(e[0])+'"></span><span class="ln">'+esc(e[0])+'</span><span class="lb"><i style="width:'+pct+'%;background:'+langColor(e[0])+'"></i></span><span class="lp">'+pct+'%</span></div>';
-    }).join('')||'<p style="color:var(--text3);font-size:13px">No language data — probably a docs-only or empty repo.</p>';
+    }).join('')||'<p style="color:var(--text3);font-size:13px">No language data, probably a docs-only or empty repo.</p>';
 
     const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
     const stacks=[];
@@ -1310,7 +1310,7 @@ function renderFiles(){
 }
 
 /* BUG FIX #1: Null-safe sorting in renderNode */
-/* Per-node render cap — huge folders render a slice + "show all" to keep the DOM light */
+/* Per-node render cap, huge folders render a slice + "show all" to keep the DOM light */
 const NODE_RENDER_CAP=250;
 function renderNode(container,node){
   if(!node||!container)return;
@@ -1323,7 +1323,7 @@ function renderNode(container,node){
       const row=document.createElement('div');
       row.className='trow dir';
       row.dataset.path=d.path||'';
-      row.innerHTML='<span class="caret">▶</span><input type="checkbox" class="dcb"'+(dirAllSelected(d)?' checked':'')+'><span class="fico">📁</span><span class="fname">'+esc(d.name||'')+'/</span><span class="fsize">'+countDir(d)+' files</span>';
+      row.innerHTML='<span class="caret">▶</span><input type="checkbox" class="dcb"'+(dirAllSelected(d)?' checked':'')+'><span class="fico"><svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-folder"/></svg></span><span class="fname">'+esc(d.name||'')+'/</span><span class="fsize">'+countDir(d)+' files</span>';
       container.appendChild(row);
       const child=document.createElement('div');
       child.className='tnode';
@@ -1334,7 +1334,7 @@ function renderNode(container,node){
     for(const f of visibleFiles){
       const row=document.createElement('div');
       row.className='trow';
-      const icon=isLock(f)?'🔒':isText(f)?'📄':'🧊';
+      const icon=isLock(f)?'<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-lock"/></svg>':isText(f)?'<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-file"/></svg>':'<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-box"/></svg>';
       /* File type color coding */
       const ext=extOf(f.path||'');
       const ficoClass='fico'+(ext?' '+ext:'');
@@ -1351,7 +1351,7 @@ function renderNode(container,node){
         for(const f of files.slice(NODE_RENDER_CAP)){
           const row=document.createElement('div');
           row.className='trow';
-          const icon=isLock(f)?'🔒':isText(f)?'📄':'🧊';
+          const icon=isLock(f)?'<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-lock"/></svg>':isText(f)?'<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-file"/></svg>':'<svg class="ic" style="width:13px;height:13px;vertical-align:-2px"><use href="#i-box"/></svg>';
           const ext=extOf(f.path||'');
           const ficoClass='fico'+(ext?' '+ext:'');
           row.innerHTML='<span class="caret" style="visibility:hidden">·</span><input type="checkbox" class="fcb" data-path="'+esc(f.path||'')+'"'+(S.sel.has(f.path)?' checked':'')+'><span class="'+ficoClass+'">'+icon+'</span><span class="fname" title="'+esc(f.path||'')+'">'+esc((f.name||(f.path||'').split('/').pop())||'')+'</span><span class="fsize">'+fmtSize(f.size||0)+'</span>';
@@ -1407,7 +1407,7 @@ document.addEventListener('change',e=>{
   }
 });
 function expandAll(open){
-  if(open&&FILEMAP.size>2500){toast('Too many files to auto-expand — open folders manually','err');return}
+  if(open&&FILEMAP.size>2500){toast('Too many files to auto-expand, open folders manually','err');return}
   $$('#tree .trow.dir').forEach(row=>{
     if(open&&row.dataset.rendered==='0'){
       const node=NODEMAP.get(row.dataset.path);
@@ -1463,7 +1463,7 @@ async function generateDigest(){
   const m=S.repo,branch=(m&&m.default_branch)||'main';
   const paths=Array.from(S.sel).sort();
   let bytes=0;paths.forEach(p=>{const f=FILEMAP.get(p);if(f)bytes+=f.size||0});
-  if(bytes>3*1024*1024){toast('Selection is over 3 MB — trim it down','err');btn.disabled=false;btn.textContent='🤖 Generate digest';return}
+  if(bytes>3*1024*1024){toast('Selection is over 3 MB, trim it down','err');btn.disabled=false;btn.textContent='Generate digest';return}
   /* Pass 1: fetch everything into per-file sections */
   const sections=[];
   let readmeSection=null;
@@ -1506,7 +1506,7 @@ async function generateDigest(){
   showDigestPart(0);
   updateSelMeta();
   $('#copyBtn').disabled=false;$('#dlBtn').disabled=false;$('#gistBtn').disabled=false;$('#tokBtn').disabled=false;
-  btn.disabled=false;btn.textContent='🤖 Generate digest';
+  btn.disabled=false;btn.textContent='Generate digest';
   toast(S.digestParts.length>1?('Digest split into '+S.digestParts.length+' parts (context limit)'):('Digest ready ('+digestFormat.toUpperCase()+')'),'ok');
   setupLLMButtons();
   switchTab('digest');
@@ -1563,7 +1563,7 @@ function showDigestPart(idx){
     nav.style.display='';
     const prev=(idx-1)<0?0:idx-1,next=(idx+1)>(parts.length-1)?parts.length-1:idx+1;
     nav.innerHTML='<button class="btn ghost sm" onclick="showDigestPart('+prev+')" '+(idx===0?'disabled':'')+'>◀</button>'+
-      '<span style="font-size:12px;color:var(--text2);align-self:center">Part <b>'+(idx+1)+'/'+parts.length+'</b> <span style="color:var(--text3)">— context limit; paste parts sequentially in one chat</span></span>'+
+      '<span style="font-size:12px;color:var(--text2);align-self:center">Part <b>'+(idx+1)+'/'+parts.length+'</b> <span style="color:var(--text3)">, context limit; paste parts sequentially in one chat</span></span>'+
       '<button class="btn ghost sm" onclick="showDigestPart('+next+')" '+(idx===parts.length-1?'disabled':'')+'>▶</button>';
   }else{
     nav.style.display='none';nav.innerHTML='';
@@ -1620,7 +1620,7 @@ function editCustomTask(){
   bg.className='modal-bg';
   bg.style.cssText='position:fixed;inset:0;background:rgba(5,5,12,.7);backdrop-filter:blur(6px);z-index:120;display:grid;place-items:center;padding:20px';
   bg.innerHTML='<div class="modal" style="background:var(--card-solid);border:1px solid var(--line2);border-radius:20px;padding:26px;width:min(560px,94vw);box-shadow:var(--shadow)">'+
-    '<h3>✏️ Custom preset instructions</h3>'+
+    '<h3>Custom preset instructions</h3>'+
     '<p style="font-size:12.5px;color:var(--text2)">These instructions are prepended to every digest generated with the Custom preset.</p>'+
     '<textarea id="custTaskInput" rows="6" spellcheck="false" style="width:100%;margin-top:10px;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical" placeholder="e.g. You are a Scala expert. Review everything for functional programming style…">'+esc(saved)+'</textarea>'+
     '<div class="mrow" style="margin-top:12px">'+
@@ -1656,20 +1656,20 @@ async function shareDigestGist(){
       method:'POST',
       headers:{'Content-Type':'application/json',Accept:'application/vnd.github+json',Authorization:'Bearer '+pat},
       body:JSON.stringify({
-        description:'Repodest LLM digest for '+(S.repo&&S.repo.full_name||'repo')+' — preset: '+(DIGEST_PRESETS[digestPreset]||{}).label,
+        description:'Repodest LLM digest for '+(S.repo&&S.repo.full_name||'repo')+', preset: '+(DIGEST_PRESETS[digestPreset]||{}).label,
         public:false,
         files:{[name]:{content:t.slice(0,900000)}}
       })
     });
     if(resp.status===401||resp.status===403){
       const j=await resp.json().catch(()=>({}));
-      throw new Error(j.message||'Token rejected — needs gist scope');
+      throw new Error(j.message||'Token rejected, needs gist scope');
     }
     if(!resp.ok)throw new Error('Gist API '+resp.status);
     const gist=await resp.json();
     const url=gist.html_url||(gist.data&&gist.data.html_url);
     (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).catch(()=>{});
-    showModal('🌐 Digest shared as secret Gist',
+    showModal('Digest shared as secret Gist',
       '<p style="font-size:13px;color:var(--text2)">Anyone with this link can read the digest. It does not appear in your public profile.</p>'+
       '<p style="margin:12px 0"><a href="'+esc(url)+'" target="_blank" rel="noopener" style="word-break:break-all">'+esc(url)+'</a></p>'+
       '<p style="font-size:12px;color:var(--text3)">Link copied to clipboard.</p>');
@@ -1677,7 +1677,7 @@ async function shareDigestGist(){
   }catch(e){
     toast(e.message||'Gist upload failed','err');
   }finally{
-    btn.disabled=false;btn.textContent='🌐 Gist share';
+    btn.disabled=false;btn.textContent='Gist share';
   }
 }
 function downloadDigest(){
@@ -1736,7 +1736,7 @@ function renderFun(){
 }
 
 /* ============================================================
-   Repo Wrapped — a fun 12-month story from activity data
+   Repo Wrapped, a fun 12-month story from activity data
    ============================================================ */
 function renderWrapped(){
   const el=$('#wrappedCard');
@@ -1761,9 +1761,9 @@ function renderWrapped(){
     const half1=last52.slice(0,26).reduce((a,w)=>a+(w.total||0),0);
     const half2=last52.slice(26).reduce((a,w)=>a+(w.total||0),0);
     if(half1+half2<10)return null;
-    return half2>half1*1.25?'📈 Accelerating — the last 6 months are busier than the first.'
-      :half1>half2*1.25?'🌅 Cooling down — earlier months were busier.'
-      :'⚖️ Steady rhythm all year long.';
+    return half2>half1*1.25?'📈 Accelerating, the last 6 months are busier than the first.'
+      :half1>half2*1.25?'🌅 Cooling down, earlier months were busier.'
+      :'Steady rhythm all year long.';
   })();
   const topContrib=(S.contribs&&S.contribs.filter(c=>c.type!=='Bot').slice().sort((a,b)=>(b.contributions||0)-(a.contributions||0))[0])||null;
   const daysOld=(()=>{try{return Math.round((Date.now()-new Date(m.created_at))/(365.25*864e5)*10)/10}catch(e){return null}})();
@@ -1772,9 +1772,9 @@ function renderWrapped(){
   const cards=[];
   const add=(icon,title,body)=>cards.push('<div class="wrapped-tile"><div class="wt-i">'+icon+'</div><div class="wt-b"><b>'+esc(title)+'</b><span>'+body+'</span></div></div>');
   if(commits>0){
-    add('🧾',fmt(commits)+' commits','across '+activeWeeks+' active weeks — '+(activeWeeks>=45?'almost never offline!':activeWeeks>=30?'a reliable heartbeat.':'quality over quantity.'));
+    add('🧾',fmt(commits)+' commits','across '+activeWeeks+' active weeks, '+(activeWeeks>=45?'almost never offline!':activeWeeks>=30?'a reliable heartbeat.':'quality over quantity.'));
   }else{
-    add('😴','A quiet year','no commits in the last 52 weeks — the repo is resting.');
+    add('😴','A quiet year','no commits in the last 52 weeks, the repo is resting.');
   }
   if(busiestLabel)add('⚡','Peak week: '+fmt(busiestLabel.n)+' commits','week of '+busiestLabel.date);
   if(topContrib)add('👑',esc(topContrib.login||'Anonymous'),'led the charge with '+fmt(topContrib.contributions)+' lifetime commits');
@@ -1784,14 +1784,14 @@ function renderWrapped(){
   el.innerHTML='<div class="wrapped-grid">'+cards.join('')+'</div>';
 }
 
-/* first shareCard removed — using the share template version below */
+/* first shareCard removed, using the share template version below */
 function copyLink(){
   const url=location.origin+location.pathname+'?repo='+encodeURIComponent(S.repo&&S.repo.full_name||'');
   (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Deep link copied','ok')).catch(()=>toast('Copy failed','err'));
 }
 function tweet(){
   const m=S.repo;if(!m)return;
-  const txt='Scoped "'+m.full_name+'" with Repodest 🧪 — health score '+healthCheck().score+'/100, ★ '+fmt(m.stargazers_count)+', '+Object.keys(S.langs).length+' languages.';
+  const txt='Scoped "'+m.full_name+'" with Repodest 🧪, health score '+healthCheck().score+'/100, ★ '+fmt(m.stargazers_count)+', '+Object.keys(S.langs).length+' languages.';
   window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(txt),'_blank');
 }
 function printReport(){
@@ -1804,7 +1804,7 @@ function printReport(){
     const contribs=S.contribs.slice(0,10);
     const ach=getAch().filter(a=>a.on);
     $('#printReport').innerHTML=
-      '<h1>🧪 Repodest Report — '+esc(m.full_name||'')+'</h1>'+
+      '<h1>Repodest Report, '+esc(m.full_name||'')+'</h1>'+
       '<div class="pr-sub">'+esc(m.description||'No description')+' · generated '+new Date().toLocaleString()+'</div>'+
       '<table><tr><th>Health score</th><th>Stars</th><th>Forks</th><th>Open issues</th><th>Files</th><th>License</th></tr>'+
       '<tr><td><b>'+hc.score+'/100</b></td><td>'+fmt(m.stargazers_count)+'</td><td>'+fmt(m.forks_count)+'</td><td>'+fmt(m.open_issues_count)+'</td><td>'+fmt(FILEMAP.size)+'</td><td>'+(m.license?esc(m.license.spdx_id):'none')+'</td></tr></table>'+
@@ -1813,7 +1813,7 @@ function printReport(){
       '<h2>Top contributors</h2><table>'+contribs.map(c=>'<tr><td style="width:60%">'+esc(c.login||'')+'</td><td>'+fmt(c.contributions)+' commits</td></tr>').join('')+'</table>'+
       '<h2>Heaviest files</h2><table>'+sizes.slice(0,10).map(x=>'<tr><td style="width:60%">'+esc(x.p)+'</td><td>'+fmtSize(x.s)+'</td></tr>').join('')+'</table>'+
       '<h2>Trophies</h2><p>'+ach.map(a=>a.i+' '+esc(a.n)).join(' · ')+'</p>'+
-      '<p style="color:#777;margin-top:20px">Generated by Repodest — '+location.origin+location.pathname+'</p>';
+      '<p style="color:#777;margin-top:20px">Generated by Repodest, '+location.origin+location.pathname+'</p>';
     window.print();
   }catch(e){console.warn('printReport error:',e)}
 }
@@ -1850,19 +1850,19 @@ function savePat(){
 /* Validate a PAT against /user: shows the account it belongs to, or
    a clear warning. (Note: GitHub's OAuth Device Flow endpoints do not
    allow CORS, so a fully browser-side "Sign in with GitHub" is not
-   possible without a proxy — token entry remains the zero-backend path.) */
+   possible without a proxy, token entry remains the zero-backend path.) */
 async function validatePat(token){
   try{
     const r=await fetch(apiBase()+'/user',{headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}});
     if(r.ok){
       const u=await r.json();
-      toast('✓ Token valid — signed in as @'+(u.login||'user'),'ok');
+      toast('✓ Token valid, signed in as @'+(u.login||'user'),'ok');
       const chip=$('#rateChip');
       if(chip)chip.title='Signed in as @'+(u.login||'user');
     }else if(r.status===401){
-      toast('⚠️ Token was rejected by GitHub (invalid or expired)','err');
+      toast('Token was rejected by GitHub (invalid or expired)','err');
     }
-  }catch(e){/* network issue — silent */}
+  }catch(e){/* network issue, silent */}
 }
 $('#modalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal()});
 $('#explainModalBg').addEventListener('click',e=>{if(e.target===e.currentTarget)closeExplainModal()});
