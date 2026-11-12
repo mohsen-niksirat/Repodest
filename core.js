@@ -172,7 +172,7 @@ RepodestCore.stripCommentsAndWhitespace=function(src,ext){
 RepodestCore.filterPathsByGoal=function(paths,goal){
   if(!Array.isArray(paths)||!paths.length)return[];
   goal=(goal||'').toLowerCase();
-  const isExcluded=p=>/(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|dist|build|coverage|\.git|node_modules|vendor)\//i.test(p);
+  const isExcluded=p=>/(^|\/)(dist|build|coverage|\.git|node_modules|vendor)(\/|$)/i.test(p)||RepodestCore.isLock({path:p});
   const valid=paths.filter(p=>!isExcluded(p));
 
   if(goal==='bug'||goal==='bughunter'){
@@ -310,7 +310,7 @@ RepodestCore.buildPRDigest=function(pr,files,an,opts){
   }else{
     lines.push('- No high-risk areas touched');
   }
-  if(an&&an.truncated)lines.push('- Note: the file list is truncated at 100 files, request the rest via pagination before deep review');
+  if(an&&an.truncated)lines.push('- Note: the file list is truncated; request the rest via pagination before deep review');
   if(m.body){
     lines.push('');
     lines.push('## PR description');

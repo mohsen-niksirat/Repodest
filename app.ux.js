@@ -1,3 +1,32 @@
+function wrapFileSection(p,ext,content){
+  const safeCdata=s=>String(s).replace(/\]\]>/g,']]]]><![CDATA[>');
+  if(p==='__docs_bundle__.txt'){
+    if(digestFormat==='xml')return '  <docs_bundle>\n<![CDATA[\n'+safeCdata(content)+'\n]]>\n  </docs_bundle>';
+    if(digestFormat==='repomix')return '<file path="'+esc(p)+'">\n'+content+'\n</file>';
+    if(digestFormat==='json')return '    '+JSON.stringify({docs_bundle:content})+',';
+    return '\n# Crawled documentation (from the Crawl tab)\n\n'+content;
+  }
+  if(digestFormat==='xml')return '  <file path="'+esc(p)+'">\n<![CDATA[\n'+safeCdata(content)+'\n]]>\n  </file>';
+  if(digestFormat==='repomix')return '<file path="'+esc(p)+'">\n'+content+'\n</file>';
+  if(digestFormat==='llmstxt')return '\n### '+p+'\n\n```'+ext+'\n'+content+'\n```';
+  if(digestFormat==='json')return '    '+JSON.stringify({path:p,content})+',';
+  return '\n# File: '+p+'\n\n````'+ext+'\n'+content+'````';
+}
+
+function finalizeDigestFooter(parts){
+  if(digestFormat==='xml')parts.push('</repository>');
+  else if(digestFormat==='repomix')parts.push('</repository_files>');
+  else if(digestFormat==='llmstxt')parts.push('\n---\nEnd of llms.txt repository documentation.');
+  else if(digestFormat==='json'){
+    let s=parts.join('\n');
+    if(s.endsWith(','))s=s.slice(0,-1);
+    parts.length=0;
+    parts.push(s,'\n  ]\n}');
+    return;
+  }
+  parts.push('\n---\nEnd of repository digest. Use this context to answer questions about the codebase.');
+}
+
 'use strict';
 /* ============================================================
    Repodest, UX layer
@@ -1397,6 +1426,76 @@ function parseDepsFromManifest(label,txt){
   }catch(e){}
   return Array.from(new Set(deps)).filter(Boolean);
 }
+/* Pinned-version parser for accurate OSV.dev queries */
+function parsePinnedDeps(path,text){
+  if(!text||typeof text!=='string')return[];
+  const cleanVer=v=>{
+    const m=String(v||'').trim().replace(/^[\^~>=<\s]+/,'').match(/^v?(\d+\.\d+(?:\.\d+)?(?:[-+][\w.-]+)?)/);
+    return m?m[1]:null;
+  };
+  const out=[];
+  const push=(name,v,eco)=>{const cv=cleanVer(v);if(name&&cv)out.push({name,version:cv,eco})};
+  if(/(^|\/)package\.json$/i.test(path)){
+    let j=null;try{j=JSON.parse(text)}catch(e){return[]}
+    [j&&j.dependencies,j&&j.devDependencies].forEach(deps=>{Object.keys(deps||{}).forEach(n=>push(n,deps[n],'npm'))});
+    return out;
+  }
+  if(/(^|\/)requirements\.txt$/i.test(path)){
+    text.split('\n').forEach(line=>{
+      line=line.trim();if(!line||line[0]==='#'||line[0]==='-')return;
+      const m=line.match(/^([A-Za-z0-9._-]+)(?:\[[^\]]*\])?\s*(===|==|~=)\s*(\d[\w.*+-]*)/);
+      if(m)push(m[1].replace(/[-_.]+/g,'-').toLowerCase(),m[3],'PyPI');
+    });
+    return out;
+  }
+  if(/(^|\/)pyproject\.toml$/i.test(path)){
+    const seen=new Set();
+    const add=(name,v)=>{
+      const cv=cleanVer(v);if(!cv||!name||/^python$/i.test(name))return;
+      const norm=name.replace(/[-_.]+/g,'-').toLowerCase(),k=norm+'@'+cv;
+      if(seen.has(k))return;seen.add(k);out.push({name:norm,version:cv,eco:'PyPI'});
+    };
+    let sec='';
+    text.split('\n').forEach(line=>{
+      const sm=line.trim().match(/^\[([\w.-]+)\]$/);if(sm){sec=sm[1];return}
+      const q=line.match(/["']([A-Za-z0-9._-]+)(?:\[[^\]]*\])?\s*(===|==|~=)\s*([^"']+)["']/);
+      if(q){add(q[1],q[3]);return}
+      if(sec==='tool.poetry.dependencies'){
+        const kv=line.trim().match(/^([A-Za-z0-9._-]+)\s*=\s*(.+)$/);if(!kv)return;
+        const vm=kv[2].match(/^"([^"]+)"/)||kv[2].match(/version\s*=\s*"([^"]+)"/);
+        if(vm)add(kv[1],vm[1]);
+      }
+    });
+    return out;
+  }
+  if(/(^|\/)composer\.json$/i.test(path)){
+    let j=null;try{j=JSON.parse(text)}catch(e){return[]}
+    [j&&j.require,j&&j['require-dev']].forEach(deps=>{
+      Object.keys(deps||{}).forEach(n=>{if(!/^(php|ext-|composer-|lib-)/i.test(n))push(n,deps[n],'Packagist')});
+    });
+    return out;
+  }
+  if(/(^|\/)go\.mod$/i.test(path)){
+    text.split('\n').forEach(line=>{
+      const m=line.trim().match(/^(?:require\s+)?([\w.-]+\.[\w.-]+\/[\w./-]+)\s+(v[\w.+-]+)/);
+      if(m)push(m[1],m[2],'Go');
+    });
+    return out;
+  }
+  if(/(^|\/)Cargo\.toml$/i.test(path)){
+    const allowed={dependencies:1,'dev-dependencies':1,'build-dependencies':1};
+    let sec='';
+    text.split('\n').forEach(line=>{
+      const sm=line.trim().match(/^\[([\w.-]+)\]$/);if(sm){sec=sm[1];return}
+      if(!allowed[sec])return;
+      const kv=line.trim().match(/^([A-Za-z0-9_-]+)\s*=\s*(.+)$/);if(!kv)return;
+      const vm=kv[2].match(/^"([^"]+)"/)||kv[2].match(/version\s*=\s*"([^"]+)"/);
+      if(vm)push(kv[1],vm[1],'crates.io');
+    });
+    return out;
+  }
+  return[];
+}
 async function runOsvScan(){
   const el=$('#osvContent'),badge=$('#osvBadge');
   if(S.deep.osv){renderOsv(S.deep.osv);return}
@@ -1406,22 +1505,18 @@ async function runOsvScan(){
   try{
     const paths=[];FILEMAP.forEach((v,k)=>paths.push(k));
     const branch=(S.repo&&S.repo.default_branch)||'main';
-    const plans=[{f:'package.json',label:'npm',eco:'npm'},{f:'requirements.txt',label:'pip',eco:'PyPI'},{f:'pyproject.toml',label:'pyproject',eco:'PyPI'},{f:'Cargo.toml',label:'Cargo',eco:'crates.io'},{f:'go.mod',label:'Go modules',eco:'Go'}];
-    const ecoDeps={};
-    for(const pl of plans){
-      const hit=paths.find(p=>p===pl.f||p.endsWith('/'+pl.f));
-      if(!hit)continue;
-      try{
-        const r=await fetch(rawUrl((S.repo&&S.repo.full_name),branch,hit));
-        if(!r.ok)continue;
-        const deps=parseDepsFromManifest(pl.label,await r.text()).slice(0,100);
-        if(deps.length)ecoDeps[pl.eco]=(ecoDeps[pl.eco]||[]).concat(deps);
-      }catch(e){}
-    }
+    const manifestNames=['package.json','requirements.txt','pyproject.toml','composer.json','Cargo.toml','go.mod'];
+    const hits=[];
+    manifestNames.forEach(name=>{
+      const nl=name.toLowerCase();
+      const hit=paths.find(p=>p.toLowerCase()===nl)||paths.find(p=>p.toLowerCase().endsWith('/'+nl));
+      if(hit)hits.push(hit);
+    });
     const entries=[];
-    Object.keys(ecoDeps).forEach(eco=>{ecoDeps[eco].forEach(name=>entries.push({name,eco}))});
+    const texts=await Promise.all(hits.map(hit=>fetch(rawUrl((S.repo&&S.repo.full_name),branch,hit)).then(r=>r.ok?r.text():null).catch(()=>null)));
+    hits.forEach((hit,i)=>{if(texts[i])entries.push(...parsePinnedDeps(hit,texts[i]).slice(0,60))});
     if(!entries.length){
-      el.innerHTML='<p style="color:var(--text3);font-size:12px">No supported manifest files (package.json, requirements.txt, pyproject.toml, Cargo.toml, go.mod) found in the tree.</p>';
+      el.innerHTML='<p style="color:var(--text3);font-size:12px">No pinned dependencies found in supported manifests (package.json, requirements.txt, pyproject.toml, composer.json, Cargo.toml, go.mod).</p>';
       if(badge)badge.textContent='0';
       if(btn){btn.disabled=false;btn.textContent='Scan dependencies'}
       return;
@@ -1433,20 +1528,18 @@ async function runOsvScan(){
       const resp=await fetch('https://api.osv.dev/v1/querybatch',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({queries:chunk.map(e=>({package:{name:e.name,ecosystem:e.eco}}))})
+        body:JSON.stringify({queries:chunk.map(e=>({package:{name:e.name,ecosystem:e.eco},version:e.version}))})
       });
       if(!resp.ok)throw new Error('OSV API '+resp.status);
       const data=await resp.json();
-      ((data&&data.results)||[]).forEach((r,j)=>{
-        const idx=i+j;
-        if(r&&Array.isArray(r.vulns))results[idx]=r.vulns.map(v=>v.id||'');
-      });
+      ((data&&data.results)||[]).forEach((r,j)=>{const idx=i+j;if(r&&Array.isArray(r.vulns))results[idx]=r.vulns.map(v=>v.id||'')});
     }
-    let vulnerable=0,vulnList=[];
+    let vulnerable=0,vulnList=[];const ecos=new Set();
     entries.forEach((e,i)=>{
-      if(results[i].length){vulnerable++;vulnList.push({name:e.name,eco:e.eco,count:results[i].length,sample:results[i].slice(0,3)})}
+      ecos.add(e.eco);
+      if(results[i].length){vulnerable++;vulnList.push({name:e.name+'@'+e.version,eco:e.eco,count:results[i].length,sample:results[i].slice(0,3)})}
     });
-    S.deep.osv={total:entries.length,vulnerable,vulnList:vulnList.slice(0,12),ecos:Object.keys(ecoDeps)};
+    S.deep.osv={total:entries.length,vulnerable,vulnList:vulnList.slice(0,12),ecos:Array.from(ecos)};
     renderOsv(S.deep.osv);
   }catch(e){
     el.innerHTML='<p style="color:var(--red);font-size:12px">Scan failed: '+esc(e.message||'error')+'</p>';
@@ -1464,7 +1557,7 @@ function renderOsv(d){
     '<div class="kv"><span>Packages with known advisories</span><b style="color:'+color+'">'+d.vulnerable+'</b></div>'+
     (d.vulnList.length?'<div style="margin-top:10px;font-size:11px;color:var(--text3)">Flagged packages</div>'+
       d.vulnList.map(v=>'<div class="kv"><span>'+esc(v.name)+' <span style="color:var(--text3)">('+esc(v.eco)+')</span></span><b style="color:var(--red)">'+v.count+' advisory'+(v.count>1?'ies':'')+'</b></div>').join(''):'')+
-    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Advisory counts include all severities. Verify details on <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> before acting, version pinning info is not sent in this batch scan.</p>';
+    '<p style="color:var(--text3);font-size:11px;margin-top:8px">Scanned against <a href="https://osv.dev/list" target="_blank" rel="noopener">osv.dev</a> using pinned versions found in manifests.</p>';
   if(d.vulnerable)toast(d.vulnerable+' packages have known advisories','err');
 }
 
@@ -1653,7 +1746,7 @@ function extractSignatures(src,ext){
   return dedup.join('\n').replace(/\n{3,}/g,'\n\n');
 }
 
-function buildDigestHeader(m,branch,partLabel){
+function buildDigestHeader(m,branch,partLabel,treeStr){
   if(digestFormat==='xml'){
     return ['# Repository Context','<repository name="'+esc(m&&m.full_name)+'" platform="'+esc(S.platform||'github')+'" branch="'+esc(branch)+'">',
       '  <meta>','    <description>'+esc(m&&m.description)+'</description>','    <language>'+esc(m&&m.language)+'</language>',
@@ -1699,9 +1792,12 @@ function buildDigestHeader(m,branch,partLabel){
       '## Files'].join('\n');
   }
   if(digestFormat==='json'){
-    return ['{','  "repository": "'+(m&&m.full_name)+'",','  "platform": "'+(S.platform||'github')+'",','  "branch": "'+branch+'",',
+    const head=['{','  "repository": '+JSON.stringify(m&&m.full_name)+',','  "platform": '+JSON.stringify(S.platform||'github')+',','  "branch": '+JSON.stringify(branch)+',',
       '  "meta": '+JSON.stringify({description:m&&m.description,primary_language:m&&m.language,stars:m&&m.stargazers_count,forks:m&&m.forks_count,license:m&&m.license?m.license.spdx_id:null,generated:new Date().toISOString().slice(0,10),part:partLabel||null})+',',
-      '  "task": '+JSON.stringify(digestTask())+','].join('\n');
+      '  "task": '+JSON.stringify(digestTask())+','];
+    if(treeStr!=null)head.push('  "file_tree": '+JSON.stringify(treeStr)+',');
+    head.push('  "files": [');
+    return head.join('\n');
   }
   return ['# Repository Context: '+(m&&m.full_name),
     'Source: '+(m&&m.html_url),'Platform: '+(S.platform||'github'),'Branch: '+branch,

@@ -1464,44 +1464,57 @@ async function generateDigest(){
   const paths=Array.from(S.sel).sort();
   let bytes=0;paths.forEach(p=>{const f=FILEMAP.get(p);if(f)bytes+=f.size||0});
   if(bytes>3*1024*1024){toast('Selection is over 3 MB, trim it down','err');btn.disabled=false;btn.textContent='Generate digest';return}
-  /* Pass 1: fetch everything into per-file sections */
+  /* Pass 1: fetch everything into per-file sections (8-way parallel) */
   const sections=[];
+  const rawSections=[];
   let readmeSection=null;
   if($('#optReadme').checked){
     const readme=FILEMAP.size?Array.from(FILEMAP.keys()).find(p=>/(^|\/)readme\.md$/i.test(p)):null;
     if(readme){
       try{
         btn.textContent='⏳ README…';
-        const t=await(await fetch(rawUrl((m&&m.full_name),branch,readme))).text();
-        readmeSection={path:readme,ext:'md',content:t.slice(0,20000)};
+        const rr=await fetch(rawUrl((m&&m.full_name),branch,readme));
+        if(rr.ok){
+          const t=await rr.text();
+          readmeSection={path:readme,ext:'md',content:t.slice(0,20000)};
+        }
       }catch(e){}
     }
   }
-  let fetched=0,skipped=0,binSkipped=0,sigShrunk=0;
-  for(const p of paths){
-    fetched++;
-    btn.textContent='⏳ '+fetched+'/'+paths.length+' files…';
-    const f=FILEMAP.get(p);
-    if(!f){skipped++;continue}
-    const ext=extOf(p);
-    if(BINARY_EXT.has(ext)){binSkipped++;skipped++;continue}
-    if((f.size||0)>200*1024){skipped++;continue}
-    if(!isText(f)){binSkipped++;skipped++;continue}
-    try{
-      const r=await fetch(rawUrl((m&&m.full_name),branch,p));
-      if(!r.ok){skipped++;continue}
-      let t=await r.text();
-      if(t.includes('\0')||/[ --]{5,}/.test(t)){binSkipped++;skipped++;continue}
-      if(typeof tokenShrink!=='undefined'&&tokenShrink){
-        t=stripCommentsAndWhitespace(t,ext);
-      }
-      if(sigOnly&&(f.size||0)>10*1024){const shrunk=extractSignatures(t,ext);if(shrunk.length<t.length){t=shrunk;sigShrunk++}}
-      sections.push({path:p,ext,content:t});
-    }catch(e){skipped++}
+  let skipped=0,binSkipped=0,sigShrunk=0;
+  const CHUNK=8;
+  for(let i=0;i<paths.length;i+=CHUNK){
+    const chunk=paths.slice(i,i+CHUNK);
+    const res=await Promise.all(chunk.map(async p=>{
+      const f=FILEMAP.get(p);
+      if(!f)return{skip:'missing'};
+      const ext=extOf(p);
+      if(BINARY_EXT.has(ext))return{skip:'binary'};
+      if((f.size||0)>200*1024)return{skip:'large'};
+      if(!isText(f))return{skip:'binary'};
+      try{
+        const r=await fetch(rawUrl((m&&m.full_name),branch,p));
+        if(!r.ok)return{skip:'fetch'};
+        const rawText=await r.text();
+        if(rawText.includes('\0')||/[\u0000-\u0008\u000e-\u001f]{5,}/.test(rawText))return{skip:'binary'};
+        let t=rawText;
+        let shrunkApplied=false;
+        if(typeof tokenShrink!=='undefined'&&tokenShrink){
+          t=stripCommentsAndWhitespace(t,ext);
+        }
+        if(sigOnly&&(f.size||0)>10*1024){const shrunk=extractSignatures(t,ext);if(shrunk.length<t.length){t=shrunk;shrunkApplied=true}}
+        return{raw:{path:p,ext,content:rawText},sec:{path:p,ext,content:t},shrunkApplied};
+      }catch(e){return{skip:'fetch'}}
+    }));
+    res.forEach(item=>{
+      if(item.sec){rawSections.push(item.raw);sections.push(item.sec);if(item.shrunkApplied)sigShrunk++}
+      else{skipped++;if(item.skip==='binary')binSkipped++}
+    });
+    btn.textContent='⏳ '+Math.min(i+CHUNK,paths.length)+'/'+paths.length+' files…';
   }
   /* Pass 2: pack sections into context-sized parts */
   S.digestParts=packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkipped,sigShrunk);
-  try{collectSmellSections(sections)}catch(e){}
+  try{collectSmellSections(rawSections)}catch(e){}
   S.digestPartIdx=0;
   showDigestPart(0);
   updateSelMeta();
@@ -1536,17 +1549,19 @@ function packDigestParts(m,branch,paths,readmeSection,sections,skipped,binSkippe
   if(cur.length)groups.push(cur);
   if(!groups.length)groups.push([]);
   const out=[];
+  const incTree=$('#optTree').checked;
   groups.forEach((group,gi)=>{
     const parts=[];
-    parts.push(buildDigestHeader(m,branch,group.length+' of '+paths.length+' files (part '+(gi+1)+'/'+groups.length+')'));
-    if($('#optTree').checked){
-      if(digestFormat==='xml')parts.push('  <file_tree>\n'+asciiTree(group.map(s=>s.path)).split('&').join('&amp;').split('<').join('&lt;')+'\n  </file_tree>');
-      else if(digestFormat==='repomix')parts.push('<directory_structure>\n'+asciiTree(group.map(s=>s.path))+'\n</directory_structure>');
-      else if(digestFormat==='json')parts.push('    "file_tree": '+JSON.stringify(asciiTree(group.map(s=>s.path)))+',');
-      else parts.push('\n# File Tree\n\n```text\n'+asciiTree(group.map(s=>s.path))+'\n```');
+    const treeStr=incTree?asciiTree(group.map(s=>s.path)):null;
+    parts.push(buildDigestHeader(m,branch,group.length+' of '+paths.length+' files (part '+(gi+1)+'/'+groups.length+')',treeStr));
+    if(incTree){
+      if(digestFormat==='xml')parts.push('  <file_tree>\n'+treeStr.split('&').join('&amp;').split('<').join('&lt;')+'\n  </file_tree>');
+      else if(digestFormat==='repomix')parts.push('<directory_structure>\n'+treeStr+'\n</directory_structure>');
+      else if(digestFormat==='llmstxt')parts.push('\n## File Tree\n\n```text\n'+treeStr+'\n```');
+      else if(digestFormat!=='json')parts.push('\n# File Tree\n\n```text\n'+treeStr+'\n```');
     }
     group.forEach(sec=>parts.push(wrapFileSection(sec.path,sec.ext,sec.content)));
-    if(gi===groups.length-1&&skipped)parts.push((digestFormat==='xml'||digestFormat==='repomix')?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
+    if(gi===groups.length-1&&skipped&&digestFormat!=='json')parts.push((digestFormat==='xml'||digestFormat==='repomix')?'  <!-- '+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large -->':'\n('+skipped+' files skipped: '+binSkipped+' binary, '+(skipped-binSkipped)+' too large or unfetchable'+(sigShrunk?', '+sigShrunk+' shrunk to signatures':'')+')');
     finalizeDigestFooter(parts);
     out.push(parts.join('\n'));
   });

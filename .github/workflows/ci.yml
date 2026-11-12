@@ -57,7 +57,7 @@ jobs:
 
       - name: Validate JS syntax
         run: |
-          for f in core.js app.js app.features.js app.ux.js app.boot.js app.map.js app.crawl.js; do
+          for f in core.js app.js app.features.js app.ux.js app.boot.js app.map.js app.crawl.js app.pr.js; do
             node -e "new Function(require('fs').readFileSync('$f','utf8')); console.log('$f syntax OK ✓')"
           done
 

@@ -59,11 +59,25 @@ async function analyzePRNumber(n){
     return;
   }
   let files=[];
+  let truncated=false;
   try{
-    files=await api('/repos/'+S.repo.full_name+'/pulls/'+n+'/files?per_page=100');
-    if(!Array.isArray(files))files=[];
+    const p1=await api('/repos/'+S.repo.full_name+'/pulls/'+n+'/files?per_page=100&page=1');
+    if(Array.isArray(p1)){
+      files=p1;
+      if(p1.length===100){
+        const rest=await Promise.all([2,3].map(pg=>api('/repos/'+S.repo.full_name+'/pulls/'+n+'/files?per_page=100&page='+pg).catch(()=>[])));
+        rest.forEach(r=>{if(Array.isArray(r))files=files.concat(r)});
+      }
+      truncated=files.length>=300||(typeof pr.changed_files==='number'&&pr.changed_files>files.length);
+    }
   }catch(e){/* files endpoint failed, still show header-level analysis */}
   const an=analyzePR(pr,files);
+  an.truncated=truncated;
+  if(an.truncated){
+    if(typeof pr.additions==='number')an.totals.add=pr.additions;
+    if(typeof pr.deletions==='number')an.totals.del=pr.deletions;
+    an.totals.changes=an.totals.add+an.totals.del;
+  }
   S.pr.current={pr,files,an};
   renderPRAnalysis();
   $('#prDigestOut').value='';
@@ -133,7 +147,7 @@ function renderPRAnalysis(){
   }
 
   if(an.truncated){
-    html+='<div class="card" style="margin:12px 0;border-color:var(--yellow)"><p style="color:var(--yellow);font-size:12px">This PR changes more than 100 files, the analysis covers the first 100 only.</p></div>';
+    html+='<div class="card" style="margin:12px 0;border-color:var(--yellow)"><p style="color:var(--yellow);font-size:12px">This PR changes more than '+files.length+' files, the analysis covers the first '+files.length+' only.</p></div>';
   }
 
   if(files.length&&!an.byType.test){
