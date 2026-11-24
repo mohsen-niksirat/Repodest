@@ -25,7 +25,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 ::-webkit-scrollbar-thumb:hover{background:#33425A}
 a{color:var(--accent-text)}
 button{font-family:inherit}
-svg.ic,svg.pic{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+svg.ic,svg.pic{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
 /* Static backdrop: one calm radial tint, no motion */
 .backdrop{position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -445,6 +445,7 @@ footer a{color:var(--text2)}
 
 .rec-btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .rec-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--card2);color:var(--text2);font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.rec-btn svg{width:14px;height:14px;flex-shrink:0}
 .rec-btn:hover{border-color:var(--accent);color:var(--text)}
 .rec-btn .rcnt{font-family:var(--mono);color:var(--accent-text);font-size:11px}
 .rec-btn.preset-sel{border-color:var(--accent);background:var(--accent-dim);color:var(--text);box-shadow:0 0 0 1px var(--accent) inset}
