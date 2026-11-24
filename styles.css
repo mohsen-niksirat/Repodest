@@ -981,6 +981,7 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
 
 /* Architecture Diagram (GitDiagram-grade, Linear/Geist/DeepWiki surface) */
 .st b,.hs,.fsize,#scoreVal,#rateVal,.pr-num{font-variant-numeric:tabular-nums}
+.tab-sep{width:1px;height:20px;background:var(--line);align-self:center;margin:0 4px;flex-shrink:0}
 .diagram-ai-bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
 .diagram-ai-bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-size:12.5px;outline:none;transition:border-color .15s}
 .diagram-ai-bar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(52,211,153,.14)}

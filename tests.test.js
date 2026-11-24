@@ -586,6 +586,19 @@ describe('buildArchDiagram() & Diagram helpers — GitDiagram engine', () => {
     expect(core.stripCommentsAndWhitespace(col, 'js')).toContain('__STR_0__');
     expect(core.parseRepoInput('https://github.com/a/b.git').repo).toEqual('b');
   });
+
+  it('Item 3: encodeGitHubPath & buildGitHubUrl direct unit assertions', () => {
+    expect(core.encodeGitHubPath('src/my file#2.ts')).toEqual('src/my%20file%232.ts');
+    expect(core.encodeGitHubPath('feat/login')).toEqual('feat/login');
+    expect(core.buildGitHubUrl('acme/app', 'feat/login', 'a+b/c%d.md', false)).toEqual('https://github.com/acme/app/blob/feat/login/a%2Bb/c%25d.md');
+    expect(core.buildGitHubUrl('acme/app', 'feat/login', 'src/dir', true)).toEqual('https://github.com/acme/app/tree/feat/login/src/dir');
+  });
+
+  it('Item 3: safeDiagramLabel direct unit assertions', () => {
+    expect(core.safeDiagramLabel('a"b\nc{d}#e;f')).toEqual('ab cdef');
+    expect(core.safeDiagramLabel('-->arrow')).toEqual('arrow');
+    if (core.safeDiagramLabel('x'.repeat(300)).length > 48) throw new Error('Expected label cap <= 48');
+  });
 });
 
 /* ============================================================

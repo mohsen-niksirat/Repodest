@@ -170,3 +170,11 @@ test('toolbar more-tools tray toggles on mobile viewport', async ({ page }) => {
   await expect(page.locator('#moreTools')).toHaveClass(/open/);
   await expect(page.locator('#moreTools .btn').first()).toBeVisible();
 });
+
+test('Diagram deep link: #diagram hash activates Diagram tab (mocked API)', async ({ page }) => {
+  await mockGitHubApi(page);
+  await page.goto('/?repo=acme/widget#diagram');
+  await expect(page.locator('#repoHero')).toContainText(/widget/i, { timeout: 15000 });
+  await expect(page.locator('#p-diagram')).toHaveClass(/active/, { timeout: 10000 });
+  await expect(page.locator('#diagramStats')).toContainText(/layers/i, { timeout: 10000 });
+});

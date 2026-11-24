@@ -9,6 +9,7 @@
    Loaded after app.pr.js, before app.boot.js.
    ============================================================ */
 const MERMAID_CDN_URL='https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js';
+const MERMAID_SRI='sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I';
 let _mermaidPromise=null;
 let _diagState={
   repoKey:'',
@@ -35,6 +36,7 @@ function ensureMermaid(){
   _mermaidPromise=new Promise((resolve,reject)=>{
     const s=document.createElement('script');
     s.src=MERMAID_CDN_URL;
+    s.integrity=MERMAID_SRI;
     s.crossOrigin='anonymous';
     s.async=true;
     s.onload=()=>{
@@ -242,7 +244,7 @@ function renderDiagramTab(force){
   diagramRenderSVG(built.mermaid);
 }
 
-/* B2: Bounded client-side import tracer for real evidence edges */
+/* B2 / Item 5: Principled import tracer (JS/TS + Python + Go, entry points + largest files, cap 25) */
 async function diagramTraceImports(){
   const m=S.repo;
   if(!m)return;
@@ -251,30 +253,65 @@ async function diagramTraceImports(){
   try{
     const branch=m.default_branch||'main';
     const allPaths=Array.from(FILEMAP.keys());
-    const candidates=allPaths.filter(p=>/\.(js|ts|jsx|tsx|mjs|cjs|py)$/i.test(p)&&!RepodestCore.isLock({path:p})).slice(0,14);
+    const sourcePaths=allPaths.filter(p=>/\.(js|ts|jsx|tsx|mjs|cjs|py|go)$/i.test(p)&&!RepodestCore.isLock({path:p}));
+    const entryRx=/(^|\/)(index|main|app|server|cli|core)\.[a-z0-9]+$/i;
+    const sorted=sourcePaths.slice().sort((a,b)=>{
+      const ae=entryRx.test(a)?1:0,be=entryRx.test(b)?1:0;
+      if(ae!==be)return be-ae;
+      const sa=(FILEMAP.get(a)&&FILEMAP.get(a).size)||0;
+      const sb=(FILEMAP.get(b)&&FILEMAP.get(b).size)||0;
+      return sb-sa;
+    });
+    const candidates=sorted.slice(0,25);
     const edges=[];
     const pathSet=new Set(allPaths);
+    let traced=0;
     for(const p of candidates){
+      traced++;
+      if(btn)btn.textContent='Tracing '+traced+'/'+candidates.length+'…';
       try{
         const r=await fetch(rawUrl(m.full_name,branch,p));
         if(!r.ok)continue;
         const txt=await r.text();
+        const ext=extOf(p);
         const dir=p.includes('/')?p.slice(0,p.lastIndexOf('/')):'';
-        const rx=/(?:import\s+[\s\S]*?from\s+['"]([^'"]+)['"]|require\(\s*['"]([^'"]+)['"]\s*\))/g;
-        let match;
-        while((match=rx.exec(txt))!==null){
-          const spec=match[1]||match[2]||'';
-          if(!spec.startsWith('.'))continue;
-          const base=(dir?dir+'/':'')+spec.replace(/^\.\//,'');
-          const norm=base.split('/').reduce((acc,seg)=>{if(seg==='..')acc.pop();else if(seg&&seg!=='.')acc.push(seg);return acc},[]).join('/');
-          const hit=[norm,norm+'.js',norm+'.ts',norm+'.tsx',norm+'.jsx',norm+'/index.js',norm+'/index.ts'].find(c=>pathSet.has(c));
+        const specs=(typeof mapParseImports==='function')?mapParseImports(txt,ext):[];
+        /* Also parse Python relative/package imports & Go imports */
+        if(ext==='py'){
+          const pyRx=/^\s*(?:from\s+([\w.]+)\s+import|import\s+([\w.]+))/gm;
+          let pm;
+          while((pm=pyRx.exec(txt))!==null){
+            const mod=(pm[1]||pm[2]||'').trim();
+            if(mod)specs.push(mod);
+          }
+        }else if(ext==='go'){
+          const goRx=/"([^"]+)"/g;
+          let gm;
+          while((gm=goRx.exec(txt))!==null){if(gm[1]&&gm[1].includes('/'))specs.push(gm[1])}
+        }
+        for(const spec of specs){
+          let hit=null;
+          if(spec.startsWith('.')){
+            const rel=spec.replace(/^\.+/,mDots=>mDots.length>1?'../'.repeat(mDots.length-1):'');
+            const base=(dir?dir+'/':'')+rel.replace(/\./g,'/');
+            const norm=base.split('/').reduce((acc,seg)=>{if(seg==='..')acc.pop();else if(seg&&seg!=='.')acc.push(seg);return acc},[]).join('/');
+            hit=[norm,norm+'.js',norm+'.ts',norm+'.tsx',norm+'.jsx',norm+'.py',norm+'/index.js',norm+'/index.ts',norm+'/__init__.py'].find(c=>pathSet.has(c));
+          }else if(ext==='py'){
+            const modPath=spec.replace(/\./g,'/');
+            hit=[modPath+'.py',modPath+'/__init__.py','src/'+modPath+'.py'].find(c=>pathSet.has(c));
+          }else if(ext==='go'){
+            const tail=spec.split('/').slice(-2).join('/');
+            hit=allPaths.find(ap=>ap.endsWith('.go')&&(ap.includes('/'+tail+'/')||ap.startsWith(tail+'/')));
+          }
           if(hit&&hit!==p)edges.push({from:p,to:hit,label:'imports'});
         }
       }catch(e){}
     }
     _diagState.importEdges=edges;
     renderDiagramTab(true);
-    toast(edges.length?('Found '+edges.length+' verified import edges'):'No local relative imports found in sampled files','ok');
+    const status=$('#diagramStatus');
+    if(status)status.textContent='Traced '+candidates.length+' of '+sourcePaths.length+' source files · '+edges.length+' verified import edges · Click any node to open on GitHub';
+    toast('Traced '+candidates.length+'/'+sourcePaths.length+' files ('+edges.length+' import edges)','ok');
   }finally{
     if(btn){btn.disabled=false;btn.textContent='Trace imports'}
   }
