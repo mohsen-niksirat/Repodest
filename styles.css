@@ -979,11 +979,16 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
 .pr-file-path{font-family:var(--mono);font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;display:inline-block;vertical-align:middle}
 .pr-files .kv{padding:5px 0}
 
-/* Architecture Diagram (GitDiagram-style) */
+/* Architecture Diagram (GitDiagram-grade, Linear/Geist/DeepWiki surface) */
+.st b,.hs,.fsize,#scoreVal,#rateVal,.pr-num{font-variant-numeric:tabular-nums}
 .diagram-ai-bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
-.diagram-ai-bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-size:12.5px;outline:none}
-.diagram-ai-bar input:focus{border-color:var(--accent)}
-.diagram-viewport{position:relative;width:100%;height:540px;overflow:hidden;border-radius:14px;border:1px solid var(--line);background:var(--bg2);cursor:grab;display:flex;align-items:center;justify-content:center}
-.diagram-stage{transform-origin:center center;transition:transform .06s linear;padding:24px}
+.diagram-ai-bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-size:12.5px;outline:none;transition:border-color .15s}
+.diagram-ai-bar input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(52,211,153,.14)}
+.diagram-viewport{position:relative;width:100%;height:560px;overflow:hidden;border-radius:14px;border:1px solid var(--line);background-color:var(--bg2);background-image:radial-gradient(rgba(148,163,184,.14) 1px,transparent 1px);background-size:20px 20px;cursor:grab;display:flex;align-items:center;justify-content:center;touch-action:none}
+.diagram-viewport:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.diagram-stage{transform-origin:center center;will-change:transform;padding:24px}
 .diagram-stage svg{max-width:none !important;height:auto}
 .diagram-stage a{cursor:pointer}
+.diagram-explain{margin-top:8px;padding:14px 16px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text2);font-family:var(--sans);font-size:13px;line-height:1.75;white-space:pre-wrap;overflow-x:auto}
+.diagram-err{padding:20px 24px;border-radius:12px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);color:var(--red);font-size:13px;max-width:460px;text-align:center}
+@media (prefers-reduced-motion:reduce){.diagram-stage,.btn,.feat,.rec-btn{transition:none !important}}

@@ -1,5 +1,5 @@
 /* Repodest Service Worker: caches the app shell and CDN resources */
-const CACHE_NAME = 'repodest-v12';
+const CACHE_NAME = 'repodest-v13';
 const SHELL_URLS = [
   './',
   './index.html',
@@ -52,7 +52,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  /* Cache-first for CDN resources (Chart.js, html2canvas, fonts) */
+  /* Stale-while-revalidate for CDN resources (Mermaid, Chart.js, html2canvas, fonts) */
   if (
     url.hostname === 'cdn.jsdelivr.net' ||
     url.hostname === 'fonts.googleapis.com' ||
@@ -60,14 +60,14 @@ self.addEventListener('fetch', event => {
   ) {
     event.respondWith(
       caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(response => {
+        const net = fetch(event.request).then(response => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
           return response;
         }).catch(() => cached);
+        return cached || net;
       })
     );
     return;

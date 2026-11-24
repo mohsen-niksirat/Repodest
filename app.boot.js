@@ -47,6 +47,7 @@ function toggleTheme(){
   document.body.classList.toggle('light');
   const isLight=document.body.classList.contains('light');
   LS.set('repodest_theme',isLight?'light':'dark');
+  if(typeof renderDiagramTab==='function'&&document.querySelector('#p-diagram.active'))renderDiagramTab(true);
   toast(isLight?'Light theme':'Dark theme','ok');
 }
 initTheme();

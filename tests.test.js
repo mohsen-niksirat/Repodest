@@ -522,11 +522,69 @@ describe('buildArchDiagram() & Diagram helpers — GitDiagram engine', () => {
     expect(p).toContain('```mermaid');
   });
 
-  it('extracts Mermaid block from markdown fenced output', () => {
+  it('extracts Mermaid block from markdown fenced output and rejects prose', () => {
     const raw = 'Here is your diagram:\n```mermaid\nflowchart TD\n  A --> B\n```\nHope this helps!';
     expect(core.extractMermaidBlock(raw)).toEqual('flowchart TD\n  A --> B');
     expect(core.extractMermaidBlock('flowchart LR\n  X --> Y')).toEqual('flowchart LR\n  X --> Y');
+    expect(core.extractMermaidBlock('Just some random prose with no diagram')).toEqual('');
     expect(core.extractMermaidBlock('')).toEqual('');
+  });
+
+  it('A1/A2: sanitizes hostile paths and encodes URLs segment-by-segment including slash branches', () => {
+    const hostile = [
+      'src/my file#2.ts',
+      'src/a+b/c%d.md',
+      'src/فایل-فارسی.js',
+      'src/evil"quote\nline{break};`tick`.js',
+      'src/' + 'x'.repeat(260) + '.ts'
+    ];
+    const res = core.buildArchDiagram(hostile, { full_name: 'acme/app', default_branch: 'feat/login' });
+    expect(res.mermaid).toContain('https://github.com/acme/app/blob/feat/login/src/my%20file%232.ts');
+    expect(res.mermaid).toContain('https://github.com/acme/app/blob/feat/login/src/a%2Bb/c%25d.md');
+    expect(res.mermaid).toContain(encodeURIComponent('فایل-فارسی.js'));
+    if (res.mermaid.includes('evil"quote')) throw new Error('Raw quote leaked into Mermaid label');
+    if (res.mermaid.includes('{break}')) throw new Error('Braces leaked into Mermaid label');
+  });
+
+  it('A3/B2: does NOT fabricate HTTP/RPC edges when no evidence exists', () => {
+    const res = core.buildArchDiagram(['src/components/App.tsx', 'data/users.sql'], sampleRepo);
+    if (res.mermaid.includes('HTTP / RPC') || res.mermaid.includes('reads / writes')) {
+      throw new Error('Fabricated template edge should not be emitted without evidence');
+    }
+    expect(res.stats.edges).toEqual(0);
+    const withEvidence = core.buildArchDiagram(['src/components/App.tsx', 'data/users.sql'], sampleRepo, {
+      importEdges: [{ from: 'src/components/App.tsx', to: 'data/users.sql', label: 'imports' }]
+    });
+    expect(withEvidence.stats.edges).toEqual(1);
+    expect(withEvidence.mermaid).toContain('-->|"imports"|');
+  });
+
+  it('A5/B4: disambiguates duplicate basenames, shows +N more overflow, and validates paths', () => {
+    const dups = ['src/index.js', 'lib/index.js'];
+    const res = core.buildArchDiagram(dups, sampleRepo);
+    expect(res.mermaid).toContain('src/index.js');
+    expect(res.mermaid).toContain('lib/index.js');
+
+    const many = Array.from({ length: 10 }, (_, i) => 'src/mod' + i + '/file.js');
+    const capped = core.buildArchDiagram(many, sampleRepo, { maxPerLayer: 3 });
+    expect(capped.mermaid).toContain('+7 more files');
+
+    const g = core.buildArchGraph(['src/a.js'], sampleRepo);
+    g.nodes.N_FAKE = { id: 'N_FAKE', label: 'fake.js', path: 'src/does-not-exist.js', isDir: false, layer: 'core', count: 1, shape: 'rect', url: '', isOverflow: false };
+    g.groups[0].nodes.push('N_FAKE');
+    const v = core.validateArchGraph(g, ['src/a.js']);
+    expect(v.droppedNodes).toEqual(1);
+    if (v.graph.nodes.N_FAKE) throw new Error('Fake node should have been dropped by validation');
+  });
+
+  it('A12: token shrinker preserves template literals, regex literals, and __STR_0__ safely', () => {
+    const tpl = 'const s = `hello\n${name}`;\n// comment';
+    expect(core.stripCommentsAndWhitespace(tpl, 'js')).toContain('${name}');
+    const rx = 'const re = /https?:\\/\\//g;';
+    expect(core.stripCommentsAndWhitespace(rx, 'js')).toContain('/https?:\\/\\//g');
+    const col = 'const x = "__STR_0__";';
+    expect(core.stripCommentsAndWhitespace(col, 'js')).toContain('__STR_0__');
+    expect(core.parseRepoInput('https://github.com/a/b.git').repo).toEqual('b');
   });
 });
 

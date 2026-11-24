@@ -446,34 +446,36 @@
     <section class="panel" id="p-diagram">
       <div class="card hint-card" style="margin-bottom:16px">
         <p style="font-size:13px;line-height:1.7;color:var(--text2)">
-          <b>Architecture Diagram</b> (GitDiagram-style) visualizes this repository as an interactive <b>Mermaid.js</b> system flowchart grouped by architectural layers. Click any node to open it on GitHub, pan/zoom freely, edit the Mermaid code live, or copy the AI prompt for a custom LLM-crafted diagram.
+          <b>Architecture Diagram</b> (GitDiagram-style) builds a structured graph from this repository, compiles it to sanitized <b>Mermaid.js</b>, and links every node to GitHub. Click <b>Trace imports</b> to add verified dependency edges, or copy the AI prompt for a custom LLM diagram.
         </p>
       </div>
       <div class="card">
         <div class="minititle">
           Architecture Diagram
-          <span style="font-size:11.5px;color:var(--text3);font-weight:400;margin-left:8px" id="diagramStats"></span>
+          <span style="font-size:11.5px;color:var(--text3);font-weight:400;margin-left:8px;font-variant-numeric:tabular-nums" id="diagramStats"></span>
           <span class="map-actions">
+            <button class="btn sm" id="diagramTraceBtn" onclick="diagramTraceImports()" title="Fetch source files and extract verified import edges">Trace imports</button>
             <button class="btn ghost sm" id="diagramDirBtn" onclick="diagramToggleDir()">Layout: TD ↓</button>
             <button class="btn ghost sm" onclick="diagramZoom(0.2)" title="Zoom in">+</button>
-            <span id="diagramZoomLabel" style="font-family:var(--mono);font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
+            <span id="diagramZoomLabel" style="font-family:var(--mono);font-size:11px;color:var(--text3);min-width:36px;text-align:center;font-variant-numeric:tabular-nums">100%</span>
             <button class="btn ghost sm" onclick="diagramZoom(-0.2)" title="Zoom out">−</button>
-            <button class="btn ghost sm" onclick="diagramResetZoom()" title="Reset view">Reset</button>
-            <button class="btn ghost sm" onclick="diagramToggleCode()">&lt;/&gt; Mermaid</button>
+            <button class="btn ghost sm" onclick="diagramResetZoom()" title="Reset view (0)">Reset</button>
+            <button class="btn ghost sm" id="diagramCodeToggleBtn" aria-expanded="false" onclick="diagramToggleCode()">&lt;/&gt; Code</button>
             <button class="btn ghost sm" onclick="diagramCopyCode()">Copy .mmd</button>
+            <button class="btn ghost sm" onclick="diagramDownloadJSON()">JSON</button>
             <button class="btn ghost sm" onclick="diagramDownloadSVG()">SVG</button>
             <button class="btn ghost sm" onclick="diagramDownloadPNG()">PNG</button>
           </span>
         </div>
         <div class="diagram-ai-bar">
           <input id="diagramCustomInput" type="text" placeholder="Optional custom focus (e.g. Focus on authentication & data flow)…" spellcheck="false">
-          <button class="btn sm" onclick="diagramCopyPrompt()" title="Copy a GitDiagram-style prompt for ChatGPT, Claude or Gemini">✨ Copy AI Diagram Prompt</button>
-          <button class="btn ghost sm" onclick="renderDiagramTab(true)" title="Regenerate instant diagram">↻ Regenerate</button>
+          <button class="btn ghost sm" onclick="diagramCopyPrompt()" title="Copy a GitDiagram-style prompt for ChatGPT, Claude or Gemini">Copy AI Diagram Prompt</button>
+          <button class="btn ghost sm" onclick="renderDiagramTab(true)" title="Regenerate diagram">Regenerate</button>
         </div>
         <div id="diagramCodeWrap" style="display:none;margin-bottom:12px">
-          <textarea id="diagramCode" rows="8" spellcheck="false" style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical" placeholder="Paste or edit Mermaid flowchart code here…"></textarea>
+          <textarea id="diagramCode" dir="ltr" rows="8" spellcheck="false" style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical" placeholder="Paste Mermaid flowchart code or Graph JSON here…"></textarea>
           <div style="display:flex;gap:8px;margin-top:8px">
-            <button class="btn green sm" onclick="diagramRenderCode()">▶ Render Mermaid</button>
+            <button class="btn green sm" onclick="diagramRenderCode()">Render</button>
             <button class="btn ghost sm" onclick="diagramToggleCode()">Hide editor</button>
           </div>
         </div>
@@ -481,6 +483,15 @@
           <div class="diagram-stage" id="diagramStage"></div>
         </div>
         <div id="diagramStatus" style="font-size:11.5px;color:var(--text3);margin-top:8px"></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="minititle">
+          Architecture Explanation
+          <span class="map-actions">
+            <button class="btn ghost sm" onclick="diagramCopyExplanation()">Copy Markdown</button>
+          </span>
+        </div>
+        <pre id="diagramExplain" class="diagram-explain"></pre>
       </div>
     </section>
 

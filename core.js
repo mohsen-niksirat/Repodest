@@ -35,7 +35,7 @@ RepodestCore.detectPlatform=function(input){
 };
 RepodestCore.parseRepoInput=function(v){
   if(!v)return null;
-  v=v.trim().replace(/\.git+$/,'');
+  v=v.trim().replace(/\.git$/i,'');
   let m=v.match(/github\.com[\/:]([^\/\s]+)\/([^\/#?\s]+)/i);
   if(m)return{owner:m[1],repo:m[2],platform:'github'};
   m=v.match(/gitlab\.com\/([^\/\s]+)\/([^\/#?\s]+)/i);
@@ -119,34 +119,36 @@ RepodestCore.stripCommentsAndWhitespace=function(src,ext){
 
   /* C-style languages: js, ts, jsx, tsx, c, cpp, cs, java, go, rs, swift, php, kt, etc. */
   if(/^(js|ts|jsx|tsx|mjs|cjs|c|h|cpp|cc|cxx|hpp|hh|cs|java|go|rs|swift|kt|kts|dart|scala|php)$/.test(ext)){
-    /* Replace strings and regex literals with placeholders or preserve them safely */
-    const strings=[];
-    code=code.replace(/(["'`])(?:\\.|(?!\1)[^\\\r\n])*\1/g,m=>{
-      strings.push(m);
-      return '__STR_'+(strings.length-1)+'__';
-    });
-    /* Strip single line comments // ... */
-    code=code.replace(/\/\/.*$/gm,'');
-    /* Strip multi-line comments /* ... * / */
-    code=code.replace(/\/\*[\s\S]*?\*\//g,'');
-    /* Restore strings */
-    code=code.replace(/__STR_(\d+)__/g,(_,i)=>strings[i]!==undefined?strings[i]:'');
-  } else if(/^(py|pyw|rb|sh|bash|zsh|yaml|yml|r)$/.test(ext)){
-    /* Python, Ruby, Shell, YAML: # comments */
-    const strings=[];
-    /* Handle triple-quotes in Python */
-    if(ext.startsWith('py')){
-      code=code.replace(/("""[\s\S]*?"""|'''[\s\S]*?''')/g,m=>{
+    /* Safety guard (A12): avoid corrupting multi-line template literals, regex literals with // or /*, or placeholder collisions */
+    const hasUnsafeTemplate=/`[^`]*(\r?\n|\$\{)[^`]*`/.test(code);
+    const hasRegexSlash=/[=(:,[!&|?]\s*\/(?![/*])(?:\\.|[^/\\\r\n])*\/[gimsuy]*/.test(code);
+    const hasPlaceholder=/__STR_\d+__/.test(code);
+    if(!hasUnsafeTemplate&&!hasRegexSlash&&!hasPlaceholder){
+      const strings=[];
+      code=code.replace(/(["'`])(?:\\.|(?!\1)[^\\\r\n])*\1/g,m=>{
         strings.push(m);
         return '__STR_'+(strings.length-1)+'__';
       });
+      code=code.replace(/\/\/.*$/gm,'');
+      code=code.replace(/\/\*[\s\S]*?\*\//g,'');
+      code=code.replace(/__STR_(\d+)__/g,(_,i)=>strings[i]!==undefined?strings[i]:'');
     }
-    code=code.replace(/(["'])(?:\\.|(?!\1)[^\\\r\n])*\1/g,m=>{
-      strings.push(m);
-      return '__STR_'+(strings.length-1)+'__';
-    });
-    code=code.replace(/#.*$/gm,'');
-    code=code.replace(/__STR_(\d+)__/g,(_,i)=>strings[i]!==undefined?strings[i]:'');
+  } else if(/^(py|pyw|rb|sh|bash|zsh|yaml|yml|r)$/.test(ext)){
+    if(!/__STR_\d+__/.test(code)){
+      const strings=[];
+      if(ext.startsWith('py')){
+        code=code.replace(/("""[\s\S]*?"""|'''[\s\S]*?''')/g,m=>{
+          strings.push(m);
+          return '__STR_'+(strings.length-1)+'__';
+        });
+      }
+      code=code.replace(/(["'])(?:\\.|(?!\1)[^\\\r\n])*\1/g,m=>{
+        strings.push(m);
+        return '__STR_'+(strings.length-1)+'__';
+      });
+      code=code.replace(/#.*$/gm,'');
+      code=code.replace(/__STR_(\d+)__/g,(_,i)=>strings[i]!==undefined?strings[i]:'');
+    }
   } else if(/^(html|htm|xml|svg|vue|svelte)$/.test(ext)){
     /* HTML comments <!-- ... --> */
     code=code.replace(/<!--[\s\S]*?-->/g,'');
@@ -341,134 +343,308 @@ RepodestCore.buildPRDigest=function(pr,files,an,opts){
   return lines.join('\n');
 };
 
-/* ---------- GitDiagram-style Architecture Diagram Engine (pure) ---------- */
-RepodestCore.buildArchDiagram=function(paths,meta,opts){
+/* ---------- GitDiagram-grade Architecture Graph & Mermaid Engine (pure) ---------- */
+RepodestCore.encodeGitHubPath=function(p){
+  return String(p||'').split('/').filter(Boolean).map(seg=>encodeURIComponent(seg)).join('/');
+};
+
+RepodestCore.buildGitHubUrl=function(fullName,branch,p,isDir){
+  const repo=String(fullName||'owner/repo').replace(/^\/+|\/+$/g,'');
+  const encBranch=RepodestCore.encodeGitHubPath(branch||'main')||'main';
+  const encPath=RepodestCore.encodeGitHubPath(p||'');
+  if(!encPath)return 'https://github.com/'+repo;
+  return 'https://github.com/'+repo+'/'+(isDir?'tree':'blob')+'/'+encBranch+'/'+encPath;
+};
+
+RepodestCore.safeDiagramLabel=function(s){
+  let out=String(s==null?'':s)
+    .replace(/[\r\n\t]+/g,' ')
+    .replace(/["'`<>[\](){};#&\\|]/g,'')
+    .replace(/^[-=>]+/,'')
+    .replace(/\s{2,}/g,' ')
+    .trim();
+  if(out.length>48)out=out.slice(0,45)+'…';
+  return out||'item';
+};
+
+RepodestCore.buildArchGraph=function(paths,meta,opts){
   opts=opts||{};
-  const dir=(opts.direction==='LR')?'LR':'TD';
   const maxPerLayer=Math.max(2,Math.min(10,Number(opts.maxPerLayer)||6));
   const fullName=(meta&&meta.full_name)||'owner/repo';
   const branch=(meta&&meta.default_branch)||'main';
-  const baseUrl=opts.baseUrl||('https://github.com/'+fullName+'/blob/'+encodeURIComponent(branch)+'/');
-  const treeBaseUrl=opts.treeBaseUrl||('https://github.com/'+fullName+'/tree/'+encodeURIComponent(branch)+'/');
+  const entrySet=new Set((Array.isArray(opts.entryPoints)?opts.entryPoints:[]).map(p=>String(p||'').replace(/^\.\//,'')));
 
   const isIgnored=p=>/(^|\/)(node_modules|vendor|dist|build|coverage|\.git|\.next|\.nuxt|__pycache__|\.venv|target)\//i.test(p)||RepodestCore.isLock({path:p});
   const valid=(Array.isArray(paths)?paths:[]).filter(p=>p&&typeof p==='string'&&!isIgnored(p));
 
   const LAYERS=[
-    {id:'ui',title:'Frontend & UI',color:'#0ea5e9',bg:'#0c4a6e',test:p=>/(^|\/)(components?|pages?|views?|ui|frontend|client|public|styles?|assets?|templates?|layouts?|app\/.*\.(tsx|jsx|vue|svelte))(\/|$)/i.test(p)||/\.(html|css|scss|less|vue|svelte|jsx|tsx)$/i.test(p)},
-    {id:'api',title:'API & Routing',color:'#a855f7',bg:'#3b0764',test:p=>/(^|\/)(api|routes?|router|controllers?|handlers?|endpoints?|graphql|trpc|middleware|server|backend|functions)(\/|$)/i.test(p)},
-    {id:'core',title:'Core Logic & Modules',color:'#22c55e',bg:'#14532d',test:p=>/(^|\/)(core|lib|src|services?|domain|engine|utils?|helpers?|hooks?|store|state|modules?|pkg|internal|cmd|content|background)(\/|$)/i.test(p)||/^(index|main|app|cli|core)\.[a-z0-9]+$/i.test(p)},
-    {id:'data',title:'Data & Storage',color:'#f59e0b',bg:'#451a03',test:p=>/(^|\/)(models?|db|database|prisma|migrations?|schemas?|sql|data|storage|entities|repositories)(\/|$)/i.test(p)||/\.(sql|prisma|graphql|proto)$/i.test(p)},
-    {id:'infra',title:'Config & Infra',color:'#64748b',bg:'#1e293b',test:p=>/(^|\/)(\.github\/workflows|docker|k8s|terraform|infra|deploy|scripts?|tools?)(\/|$)/i.test(p)||/^(package\.json|tsconfig.*\.json|pyproject\.toml|Cargo\.toml|go\.mod|Dockerfile|docker-compose\.ya?ml|Makefile|manifest\.json|vite\.config|webpack\.config|next\.config|wrangler\.)/i.test(p)},
-    {id:'tests',title:'Tests & QA',color:'#ec4899',bg:'#500724',test:p=>/(^|\/)(tests?|specs?|__tests__|e2e|cypress|playwright)(\/|$)/i.test(p)||/\.(test|spec|e2e)\.[a-z0-9]+$/i.test(p)}
+    {id:'ui',title:'Frontend & UI',color:'#38bdf8',bg:'#0c2d48',test:p=>/(^|\/)(components?|pages?|views?|ui|frontend|client|public|styles?|assets?|templates?|layouts?)(\/|$)/i.test(p)||/\.(html|css|scss|less|vue|svelte|jsx|tsx)$/i.test(p)},
+    {id:'api',title:'API & Routing',color:'#a78bfa',bg:'#251647',test:p=>/(^|\/)(api|routes?|router|controllers?|handlers?|endpoints?|graphql|trpc|middleware|server|backend|functions)(\/|$)/i.test(p)},
+    {id:'core',title:'Core Logic & Modules',color:'#34d399',bg:'#0b2e22',test:p=>/(^|\/)(core|lib|src|services?|domain|engine|utils?|helpers?|hooks?|store|state|modules?|pkg|internal|cmd|content|background)(\/|$)/i.test(p)||/^(index|main|app|cli|core)\.[a-z0-9]+$/i.test(p)},
+    {id:'data',title:'Data & Storage',color:'#fbbf24',bg:'#332208',test:p=>/(^|\/)(models?|db|database|prisma|migrations?|schemas?|sql|data|storage|entities|repositories)(\/|$)/i.test(p)||/\.(sql|prisma|graphql|proto)$/i.test(p)},
+    {id:'infra',title:'Config & Infra',color:'#94a3b8',bg:'#1a2232',test:p=>/(^|\/)(\.github\/workflows|docker|k8s|terraform|infra|deploy|scripts?|tools?)(\/|$)/i.test(p)||/^(package\.json|tsconfig.*\.json|pyproject\.toml|Cargo\.toml|go\.mod|Dockerfile|docker-compose\.ya?ml|Makefile|manifest\.json|vite\.config|webpack\.config|next\.config|wrangler\.)/i.test(p)},
+    {id:'tests',title:'Tests & QA',color:'#f472b6',bg:'#3b1228',test:p=>/(^|\/)(tests?|specs?|__tests__|e2e|cypress|playwright)(\/|$)/i.test(p)||/\.(test|spec|e2e)\.[a-z0-9]+$/i.test(p)},
+    {id:'docs',title:'Docs & Other',color:'#67e8f9',bg:'#0d2c36',test:p=>/(^|\/)(docs?|documentation|wiki|examples?)(\/|$)/i.test(p)||/\.(md|mdx|rst|txt)$/i.test(p)}
   ];
 
-  /* Bucket files into layers (first match wins, with tests & infra checked early for accuracy) */
-  const buckets={ui:[],api:[],core:[],data:[],infra:[],tests:[]};
-  const checkOrder=['tests','infra','data','api','ui','core'];
+  const buckets={ui:[],api:[],core:[],data:[],infra:[],tests:[],docs:[]};
+  const checkOrder=['tests','infra','docs','data','api','ui','core'];
   for(const p of valid){
     let matched=false;
     for(const lid of checkOrder){
       const layer=LAYERS.find(l=>l.id===lid);
       if(layer&&layer.test(p)){buckets[lid].push(p);matched=true;break}
     }
-    if(!matched&&!/\.(md|txt|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|pdf|zip)$/i.test(p)){
-      buckets.core.push(p);
+    if(!matched){
+      if(/\.(png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|eot|pdf|zip|mp3|mp4)$/i.test(p))buckets.docs.push(p);
+      else buckets.core.push(p);
     }
   }
 
-  /* Summarize each bucket into representative nodes (group deep subfolders if many files) */
-  function pickNodes(list){
-    if(list.length<=maxPerLayer){
-      return list.map(p=>({label:p.split('/').pop(),path:p,isDir:false,count:1}));
-    }
-    const groups=new Map();
-    for(const p of list){
-      const parts=p.split('/');
-      const key=parts.length>=2?(parts[0]+'/'+parts[1]):parts[0];
-      if(!groups.has(key))groups.set(key,{path:key,isDir:parts.length>2||(parts.length===2&&list.filter(x=>x.startsWith(parts[0]+'/')).length>2),files:[]});
-      groups.get(key).files.push(p);
-    }
-    const items=Array.from(groups.values())
-      .sort((a,b)=>b.files.length-a.files.length)
-      .slice(0,maxPerLayer)
-      .map(g=>{
-        if(g.files.length===1){
-          const fp=g.files[0];
-          return{label:fp.split('/').pop(),path:fp,isDir:false,count:1};
-        }
-        return{label:g.path+'/ ('+g.files.length+')',path:g.path,isDir:true,count:g.files.length};
+  /* Monorepo-aware O(n) grouping + shortest-unique-suffix disambiguation (A4, A5, A10) */
+  function disambiguate(items){
+    const byName=new Map();
+    items.forEach(it=>{
+      const k=it.label;
+      if(!byName.has(k))byName.set(k,[]);
+      byName.get(k).push(it);
+    });
+    byName.forEach(dups=>{
+      if(dups.length<2)return;
+      dups.forEach(it=>{
+        const parts=it.path.split('/');
+        it.label=parts.length>=2?(parts[parts.length-2]+'/'+parts[parts.length-1]):it.path;
       });
+    });
     return items;
   }
 
-  const safeLabel=s=>String(s||'').replace(/["`<>]/g,'').replace(/[\[\]()]/g,'');
-  const nodeMap={};
-  const activeLayers=[];
-  const lines=['flowchart '+dir];
-  let nIdx=0;
+  function pickNodes(list){
+    if(list.length<=maxPerLayer){
+      const items=list.map(p=>({label:p.split('/').pop(),path:p,isDir:false,count:1,isEntry:entrySet.has(p)}));
+      return{items:disambiguate(items),shownFiles:list.length,hiddenFiles:0};
+    }
+    /* Precompute folder counts in O(n) */
+    const groups=new Map();
+    for(const p of list){
+      const parts=p.split('/');
+      let key;
+      if(/^(packages|apps|services|libs|modules)$/i.test(parts[0])&&parts.length>=2){
+        key=parts[0]+'/'+parts[1];
+      }else if(parts.length>=2){
+        key=parts[0]+'/'+parts[1];
+      }else{
+        key=parts[0];
+      }
+      if(!groups.has(key))groups.set(key,{path:key,files:[],hasEntry:false});
+      const g=groups.get(key);
+      g.files.push(p);
+      if(entrySet.has(p))g.hasEntry=true;
+    }
+    const sorted=Array.from(groups.values()).sort((a,b)=>{
+      if(a.hasEntry!==b.hasEntry)return a.hasEntry?-1:1;
+      return b.files.length-a.files.length;
+    });
+    const kept=sorted.slice(0,maxPerLayer);
+    const dropped=sorted.slice(maxPerLayer);
+    const shownFiles=kept.reduce((s,g)=>s+g.files.length,0);
+    const hiddenFiles=dropped.reduce((s,g)=>s+g.files.length,0);
+    const items=kept.map(g=>{
+      if(g.files.length===1){
+        const fp=g.files[0];
+        return{label:fp.split('/').pop(),path:fp,isDir:false,count:1,isEntry:g.hasEntry};
+      }
+      return{label:g.path+'/ ('+g.files.length+')',path:g.path,isDir:true,count:g.files.length,isEntry:g.hasEntry};
+    });
+    return{items:disambiguate(items),shownFiles,hiddenFiles};
+  }
+
+  const nodes={};
+  const groups=[];
+  const pathToNodeId=new Map();
+  let nIdx=0,totalShown=0;
 
   for(const layer of LAYERS){
     const raw=buckets[layer.id];
     if(!raw.length)continue;
-    const nodes=pickNodes(raw);
-    const layerNodes=[];
-    lines.push('  subgraph SG_'+layer.id+'["'+layer.title+' ('+raw.length+')"]');
-    for(const nd of nodes){
+    const picked=pickNodes(raw);
+    const layerNodeIds=[];
+    for(const nd of picked.items){
       const nid='N'+(++nIdx);
-      const lbl=safeLabel(nd.label);
-      const shape=layer.id==='data'?'[("'+lbl+'")]':layer.id==='infra'?'(["'+lbl+'"])':'["'+lbl+'"]';
-      lines.push('    '+nid+shape);
-      nodeMap[nid]={path:nd.path,isDir:nd.isDir,layer:layer.id,label:nd.label,count:nd.count};
-      layerNodes.push(nid);
+      const shape=layer.id==='data'?'cylinder':layer.id==='infra'?'stadium':'rect';
+      const url=RepodestCore.buildGitHubUrl(fullName,branch,nd.path,nd.isDir);
+      nodes[nid]={id:nid,label:RepodestCore.safeDiagramLabel(nd.label),path:nd.path,isDir:nd.isDir,layer:layer.id,count:nd.count,shape,url,isEntry:!!nd.isEntry,isOverflow:false};
+      layerNodeIds.push(nid);
+      pathToNodeId.set(nd.path,nid);
     }
-    lines.push('  end');
-    activeLayers.push({id:layer.id,title:layer.title,nodes:layerNodes,color:layer.color,bg:layer.bg,total:raw.length});
+    if(picked.hiddenFiles>0){
+      const oid='N'+(++nIdx);
+      nodes[oid]={id:oid,label:'+'+picked.hiddenFiles+' more files',path:'',isDir:false,layer:layer.id,count:picked.hiddenFiles,shape:'stadium',url:'',isEntry:false,isOverflow:true};
+      layerNodeIds.push(oid);
+    }
+    totalShown+=picked.shownFiles;
+    groups.push({id:layer.id,title:layer.title,color:layer.color,bg:layer.bg,nodes:layerNodeIds,total:raw.length,shown:picked.shownFiles,hidden:picked.hiddenFiles});
   }
 
-  if(!activeLayers.length){
-    lines.push('  N1["'+safeLabel(fullName)+'"]');
-    nodeMap.N1={path:'',isDir:true,layer:'core',label:fullName,count:valid.length};
+  if(!groups.length){
+    nodes.N1={id:'N1',label:RepodestCore.safeDiagramLabel(fullName),path:'',isDir:true,layer:'core',count:valid.length,shape:'rect',url:RepodestCore.buildGitHubUrl(fullName,branch,'',true),isEntry:true,isOverflow:false};
+    groups.push({id:'core',title:'Repository',color:'#34d399',bg:'#0b2e22',nodes:['N1'],total:valid.length,shown:valid.length,hidden:0});
   }
 
-  /* Add architectural flow edges between active subgraphs */
-  const has=id=>activeLayers.some(l=>l.id===id);
-  const firstOf=id=>(activeLayers.find(l=>l.id===id)||{nodes:[]}).nodes[0];
+  /* Evidence-based edges ONLY (A3 + B2) — never fabricate HTTP/RPC edges */
   const edges=[];
-  if(has('ui')&&has('api'))edges.push('  SG_ui -->|"HTTP / RPC"| SG_api');
-  else if(has('ui')&&has('core'))edges.push('  SG_ui -->|"uses"| SG_core');
-  if(has('api')&&has('core'))edges.push('  SG_api -->|"invokes"| SG_core');
-  if(has('core')&&has('data'))edges.push('  SG_core -->|"reads / writes"| SG_data');
-  else if(has('api')&&has('data'))edges.push('  SG_api -->|"queries"| SG_data');
-  if(has('infra')&&has('core'))edges.push('  SG_infra -.->|"configures"| SG_core');
-  else if(has('infra')&&has('ui'))edges.push('  SG_infra -.->|"builds"| SG_ui');
-  if(has('tests')&&has('core'))edges.push('  SG_tests -.->|"verifies"| SG_core');
-  else if(has('tests')&&has('ui'))edges.push('  SG_tests -.->|"verifies"| SG_ui');
-  if(edges.length){
-    lines.push('');
-    edges.forEach(e=>lines.push(e));
+  const edgeSeen=new Set();
+  function resolveNode(p){
+    if(!p)return null;
+    if(pathToNodeId.has(p))return pathToNodeId.get(p);
+    /* Match parent folder node if file was grouped */
+    for(const [k,nid] of pathToNodeId.entries()){
+      if(nodes[nid].isDir&&(p===k||p.startsWith(k+'/')))return nid;
+    }
+    return null;
+  }
+  function pushEdge(fromPath,toPath,label,evidence){
+    const f=resolveNode(fromPath),t=resolveNode(toPath);
+    if(!f||!t||f===t)return;
+    const ek=f+'->'+t+':'+evidence;
+    if(edgeSeen.has(ek))return;
+    edgeSeen.add(ek);
+    edges.push({from:f,to:t,label:RepodestCore.safeDiagramLabel(label||evidence),evidence});
   }
 
-  /* Add click handlers for GitHub navigation */
-  lines.push('');
-  Object.keys(nodeMap).forEach(nid=>{
-    const info=nodeMap[nid];
-    if(!info.path)return;
-    const url=(info.isDir?treeBaseUrl:baseUrl)+info.path;
-    lines.push('  click '+nid+' "'+url+'" "Open '+safeLabel(info.path)+'" _blank');
+  (Array.isArray(opts.importEdges)?opts.importEdges:[]).forEach(e=>{
+    if(e&&e.from&&e.to)pushEdge(e.from,e.to,e.label||'imports','import');
+  });
+  (Array.isArray(opts.manifestEdges)?opts.manifestEdges:[]).forEach(e=>{
+    if(e&&e.from&&e.to)pushEdge(e.from,e.to,e.label||'depends on','manifest');
   });
 
-  /* Styling */
-  lines.push('');
-  for(const l of activeLayers){
-    lines.push('  style SG_'+l.id+' fill:'+l.bg+',stroke:'+l.color+',stroke-width:1.5px,color:#e2e8f0');
-  }
-
+  const evidenceTypes=Array.from(new Set(edges.map(e=>e.evidence)));
   return{
-    mermaid:lines.join('\n'),
-    nodeMap,
-    layers:activeLayers,
-    stats:{totalFiles:valid.length,layers:activeLayers.length,nodes:Object.keys(nodeMap).length,edges:edges.length}
+    meta:{full_name:fullName,branch,description:(meta&&meta.description)||'',truncated:!!opts.truncated},
+    groups,
+    nodes,
+    edges,
+    stats:{
+      totalFiles:valid.length,
+      shownFiles:totalShown,
+      layers:groups.length,
+      nodes:Object.keys(nodes).length,
+      edges:edges.length,
+      evidenceTypes
+    }
+  };
+};
+
+RepodestCore.validateArchGraph=function(graph,validPaths){
+  if(!graph||!graph.nodes)return{graph,droppedNodes:0,droppedEdges:0};
+  const pathSet=new Set(Array.isArray(validPaths)?validPaths:[]);
+  let droppedNodes=0,droppedEdges=0;
+  if(pathSet.size>0){
+    Object.keys(graph.nodes).forEach(nid=>{
+      const nd=graph.nodes[nid];
+      if(!nd||nd.isOverflow||!nd.path)return;
+      const exists=nd.isDir
+        ? Array.from(pathSet).some(p=>p===nd.path||p.startsWith(nd.path+'/'))
+        : pathSet.has(nd.path);
+      if(!exists){
+        delete graph.nodes[nid];
+        droppedNodes++;
+      }
+    });
+    graph.groups=(graph.groups||[]).map(g=>Object.assign({},g,{nodes:g.nodes.filter(nid=>!!graph.nodes[nid])})).filter(g=>g.nodes.length>0);
+  }
+  const origEdges=(graph.edges||[]).length;
+  graph.edges=(graph.edges||[]).filter(e=>e&&graph.nodes[e.from]&&graph.nodes[e.to]&&e.from!==e.to);
+  droppedEdges=origEdges-graph.edges.length;
+  if(graph.stats){
+    graph.stats.nodes=Object.keys(graph.nodes).length;
+    graph.stats.edges=graph.edges.length;
+    graph.stats.layers=graph.groups.length;
+  }
+  return{graph,droppedNodes,droppedEdges};
+};
+
+RepodestCore.graphToMermaid=function(graph,opts){
+  opts=opts||{};
+  const dir=(opts.direction==='LR')?'LR':'TD';
+  const lines=['flowchart '+dir];
+  (graph.groups||[]).forEach(g=>{
+    lines.push('  subgraph SG_'+g.id+'["'+RepodestCore.safeDiagramLabel(g.title)+' ('+g.total+')"]');
+    (g.nodes||[]).forEach(nid=>{
+      const nd=graph.nodes[nid];
+      if(!nd)return;
+      const lbl=RepodestCore.safeDiagramLabel(nd.label);
+      const shape=nd.shape==='cylinder'?'[("'+lbl+'")]':nd.shape==='stadium'?'(["'+lbl+'"])':'["'+lbl+'"]';
+      lines.push('    '+nid+shape);
+    });
+    lines.push('  end');
+  });
+  if((graph.edges||[]).length){
+    lines.push('');
+    graph.edges.forEach(e=>{
+      const arrow=e.evidence==='structural'?'-.->':'-->';
+      const lbl=RepodestCore.safeDiagramLabel(e.label||'');
+      lines.push('  '+e.from+' '+arrow+(lbl?'|"'+lbl+'"|':'')+' '+e.to);
+    });
+  }
+  lines.push('');
+  Object.keys(graph.nodes||{}).forEach(nid=>{
+    const nd=graph.nodes[nid];
+    if(!nd||!nd.url||nd.isOverflow)return;
+    lines.push('  click '+nid+' "'+nd.url+'" "Open '+RepodestCore.safeDiagramLabel(nd.path)+'" _blank');
+  });
+  lines.push('');
+  (graph.groups||[]).forEach(g=>{
+    lines.push('  style SG_'+g.id+' fill:'+g.bg+',stroke:'+g.color+',stroke-width:1.5px,color:#e2e8f0');
+  });
+  return lines.join('\n');
+};
+
+RepodestCore.buildArchExplanation=function(graph,lang){
+  const fa=lang==='fa';
+  const m=(graph&&graph.meta)||{};
+  const s=(graph&&graph.stats)||{totalFiles:0,shownFiles:0,layers:0,nodes:0,edges:0,evidenceTypes:[]};
+  const groups=(graph&&graph.groups)||[];
+  const isEvidence=s.edges>0;
+  const lines=[];
+  if(fa){
+    lines.push('## نمای معماری: '+(m.full_name||'مخزن'));
+    if(m.description)lines.push('> '+m.description);
+    lines.push('');
+    lines.push(isEvidence
+      ? 'این نمودار بر اساس **ساختار فایل‌ها و یال‌های وابستگی واقعی** ('+s.edges+' ارتباط استخراج‌شده) ساخته شده است.'
+      : 'این یک **نقشه ساختاری هیوریستیک** بر اساس دسته‌بندی فایل‌ها و پوشه‌ها است (برای ترسیم یال‌های وابستگی واقعی، دکمه **Trace imports** را بزنید).');
+    lines.push('');
+    lines.push('### لایه‌های شناسایی‌شده ('+s.layers+')');
+    groups.forEach(g=>lines.push('- **'+g.title+'**: '+g.total+' فایل ('+g.shown+' نمایش‌داده‌شده)'));
+  }else{
+    lines.push('## Architecture Overview: '+(m.full_name||'Repository'));
+    if(m.description)lines.push('> '+m.description);
+    lines.push('');
+    lines.push(isEvidence
+      ? 'Built from **repository structure + traced dependency evidence** ('+s.edges+' verified edges: '+s.evidenceTypes.join(', ')+').'
+      : 'This is a **heuristic structural map** derived from file paths and manifests. Click **Trace imports** to add verified import dependency edges.');
+    lines.push('');
+    lines.push('### Detected Layers ('+s.layers+')');
+    groups.forEach(g=>lines.push('- **'+g.title+'**: '+g.total+' files ('+g.shown+' shown)'));
+  }
+  return lines.join('\n');
+};
+
+RepodestCore.buildArchDiagram=function(paths,meta,opts){
+  const rawGraph=RepodestCore.buildArchGraph(paths,meta,opts);
+  const validated=RepodestCore.validateArchGraph(rawGraph,paths);
+  const graph=validated.graph;
+  const mermaid=RepodestCore.graphToMermaid(graph,opts);
+  return{
+    mermaid,
+    graph,
+    nodeMap:graph.nodes,
+    layers:graph.groups,
+    stats:graph.stats,
+    droppedNodes:validated.droppedNodes,
+    droppedEdges:validated.droppedEdges
   };
 };
 
@@ -483,8 +659,8 @@ RepodestCore.buildDiagramPrompt=function(paths,meta,customInstructions){
     '',
     'Requirements:',
     '1. Group components into clean `subgraph` layers (e.g., Frontend/UI, API/Routes, Core Logic, Data/Storage, Config/Infra).',
-    '2. Show clear labeled arrows (`-->|"label"|`) for data flow and dependencies.',
-    '3. Add clickable GitHub links for key nodes using: `click NodeId "https://github.com/'+fullName+'/blob/'+branch+'/path/to/file" "Open file" _blank`',
+    '2. Show clear labeled arrows (`-->|"label"|`) ONLY for real data flow and dependencies.',
+    '3. Add clickable GitHub links for key nodes using: `click NodeId "https://github.com/'+fullName+'/blob/'+RepodestCore.encodeGitHubPath(branch)+'/path/to/file" "Open file" _blank`',
     '4. Keep labels concise and wrap them in double quotes to avoid Mermaid syntax errors.',
     '5. Output ONLY a single ```mermaid ... ``` code block.',
     customInstructions?('\nCustom user instructions: '+customInstructions):'',
@@ -500,10 +676,11 @@ RepodestCore.buildDiagramPrompt=function(paths,meta,customInstructions){
 RepodestCore.extractMermaidBlock=function(text){
   if(!text||typeof text!=='string')return '';
   const m=text.match(/```(?:mermaid)?\s*\r?\n([\s\S]*?)```/i);
-  if(m&&m[1])return m[1].trim();
-  const trimmed=text.trim();
-  if(/^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|erDiagram)\b/m.test(trimmed))return trimmed;
-  return trimmed;
+  const candidate=(m&&m[1]?m[1]:text).trim();
+  if(/^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(?:-v2)?|erDiagram|gitGraph|mindmap|C4Context)\b/m.test(candidate)){
+    return candidate;
+  }
+  return '';
 };
 
 /* ---------- UMD export ---------- */
