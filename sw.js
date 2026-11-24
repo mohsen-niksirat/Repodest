@@ -1,5 +1,5 @@
 /* Repodest Service Worker: caches the app shell and CDN resources */
-const CACHE_NAME = 'repodest-v15';
+const CACHE_NAME = 'repodest-v16';
 const SHELL_URLS = [
   './',
   './index.html',

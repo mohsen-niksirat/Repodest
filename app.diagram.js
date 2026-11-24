@@ -55,7 +55,18 @@ function sanitizeMermaidSvg(svgText,fullName){
   const doc=parser.parseFromString(svgText,'text/html');
   const svg=doc.querySelector('svg');
   if(!svg)throw new Error('Invalid SVG output');
-  svg.querySelectorAll('script,foreignObject,iframe,object,embed').forEach(el=>el.remove());
+  svg.querySelectorAll('script,iframe,object,embed').forEach(el=>el.remove());
+  svg.querySelectorAll('foreignObject').forEach(fo=>{
+    const txt=(fo.textContent||'').trim();
+    fo.innerHTML='';
+    if(txt){
+      const div=doc.createElement('div');
+      div.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+      div.style.cssText='display:flex;align-items:center;justify-content:center;height:100%;font-size:12px;font-family:ui-monospace,monospace;color:'+(document.body.classList.contains('light')?'#0f172a':'#e8ecf4');
+      div.textContent=txt;
+      fo.appendChild(div);
+    }
+  });
   const allowedPrefix='https://github.com/'+String(fullName||'').toLowerCase()+'/';
   const all=svg.querySelectorAll('*');
   all.forEach(el=>{
@@ -151,7 +162,19 @@ function diagramZoom(delta){
 }
 
 function diagramResetZoom(){
-  _diagState.scale=1;_diagState.tx=0;_diagState.ty=0;
+  const vp=$('#diagramViewport');
+  const svg=$('#diagramStage svg');
+  let fit=1;
+  if(vp&&svg){
+    const vb=(svg.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);
+    const sw=(vb.length===4&&vb[2]>0)?vb[2]:svg.getBoundingClientRect().width;
+    const sh=(vb.length===4&&vb[3]>0)?vb[3]:svg.getBoundingClientRect().height;
+    if(sw>0&&sh>0&&vp.clientWidth>0&&vp.clientHeight>0){
+      fit=Math.min(1,(vp.clientWidth-48)/sw,(vp.clientHeight-48)/sh);
+      fit=Math.max(0.25,fit);
+    }
+  }
+  _diagState.scale=fit;_diagState.tx=0;_diagState.ty=0;
   diagramApplyTransform();
 }
 
@@ -198,6 +221,11 @@ async function diagramRenderSVG(code){
       startOnLoad:false,
       securityLevel:'antiscript',
       theme:isLight?'default':'dark',
+      themeVariables:isLight?{
+        primaryColor:'#f1f5f9',primaryTextColor:'#0f172a',primaryBorderColor:'#94a3b8',lineColor:'#64748b',textColor:'#0f172a'
+      }:{
+        primaryColor:'#1e293b',primaryTextColor:'#e8ecf4',primaryBorderColor:'#475569',lineColor:'#64748b',textColor:'#e8ecf4'
+      },
       flowchart:{useMaxWidth:false,htmlLabels:false,curve:'basis'}
     });
     const id='repodest-mmd-'+(++_diagState.renderCount);
