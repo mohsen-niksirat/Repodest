@@ -52,9 +52,9 @@ function ensureMermaid(){
 /* A1: Local SVG sanitizer + strict GitHub-only link allowlist for current repo */
 function sanitizeMermaidSvg(svgText,fullName){
   const parser=new DOMParser();
-  const doc=parser.parseFromString(svgText,'image/svg+xml');
+  const doc=parser.parseFromString(svgText,'text/html');
   const svg=doc.querySelector('svg');
-  if(!svg||doc.querySelector('parsererror'))throw new Error('Invalid SVG output');
+  if(!svg)throw new Error('Invalid SVG output');
   svg.querySelectorAll('script,foreignObject,iframe,object,embed').forEach(el=>el.remove());
   const allowedPrefix='https://github.com/'+String(fullName||'').toLowerCase()+'/';
   const all=svg.querySelectorAll('*');
