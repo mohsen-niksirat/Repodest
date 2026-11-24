@@ -96,6 +96,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       contents: read
+      actions: read
       pages: write
       id-token: write
     concurrency:
