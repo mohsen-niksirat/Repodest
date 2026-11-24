@@ -879,7 +879,7 @@ async function loadRepo(owner,repo,platform){
   url.searchParams.set('repo',key);
   url.searchParams.delete('user');
   url.searchParams.delete('compare');
-  history.replaceState(null,'',url.pathname+'?repo='+encodeURIComponent(key));
+  history.replaceState(null,'',url.pathname+'?repo='+encodeURIComponent(key)+(location.hash||''));
   window.scrollTo({top:0});
   setLoad('Fetching '+key+'…');
   $('#landing').style.display='none';$('#app').style.display='';
@@ -1062,8 +1062,9 @@ function renderDash(){
        (user pasted a PR URL) jumps straight to the PR X-Ray tab. */
     const pendingPR=S.pr&&S.pr.pending!=null;
     const hashTab=(location.hash||'').replace(/^#/,'').split('&')[0];
+    const hashValid=hashTab&&document.querySelector('#tabs .tab[data-tab="'+hashTab+'"]');
     const activeTab=document.querySelector('#tabs .tab.active');
-    const targetTab=pendingPR?'pr':(hashTab==='diagram'?'diagram':(activeTab?activeTab.dataset.tab:'overview'));
+    const targetTab=pendingPR?'pr':(hashValid?hashTab:(activeTab?activeTab.dataset.tab:'overview'));
     switchTab(targetTab);
   }catch(e){console.warn('renderDash error:',e)}
 }
