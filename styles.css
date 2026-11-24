@@ -977,3 +977,12 @@ button:focus-visible,.tab:focus-visible,.chip-lite:focus-visible,.ex:focus-visib
 .pr-stats .st span{font-size:10.5px;color:var(--text3)}
 .pr-file-path{font-family:var(--mono);font-size:11.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;display:inline-block;vertical-align:middle}
 .pr-files .kv{padding:5px 0}
+
+/* Architecture Diagram (GitDiagram-style) */
+.diagram-ai-bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px}
+.diagram-ai-bar input{flex:1;min-width:220px;padding:8px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-size:12.5px;outline:none}
+.diagram-ai-bar input:focus{border-color:var(--accent)}
+.diagram-viewport{position:relative;width:100%;height:540px;overflow:hidden;border-radius:14px;border:1px solid var(--line);background:var(--bg2);cursor:grab;display:flex;align-items:center;justify-content:center}
+.diagram-stage{transform-origin:center center;transition:transform .06s linear;padding:24px}
+.diagram-stage svg{max-width:none !important;height:auto}
+.diagram-stage a{cursor:pointer}

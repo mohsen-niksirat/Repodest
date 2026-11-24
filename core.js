@@ -341,6 +341,171 @@ RepodestCore.buildPRDigest=function(pr,files,an,opts){
   return lines.join('\n');
 };
 
+/* ---------- GitDiagram-style Architecture Diagram Engine (pure) ---------- */
+RepodestCore.buildArchDiagram=function(paths,meta,opts){
+  opts=opts||{};
+  const dir=(opts.direction==='LR')?'LR':'TD';
+  const maxPerLayer=Math.max(2,Math.min(10,Number(opts.maxPerLayer)||6));
+  const fullName=(meta&&meta.full_name)||'owner/repo';
+  const branch=(meta&&meta.default_branch)||'main';
+  const baseUrl=opts.baseUrl||('https://github.com/'+fullName+'/blob/'+encodeURIComponent(branch)+'/');
+  const treeBaseUrl=opts.treeBaseUrl||('https://github.com/'+fullName+'/tree/'+encodeURIComponent(branch)+'/');
+
+  const isIgnored=p=>/(^|\/)(node_modules|vendor|dist|build|coverage|\.git|\.next|\.nuxt|__pycache__|\.venv|target)\//i.test(p)||RepodestCore.isLock({path:p});
+  const valid=(Array.isArray(paths)?paths:[]).filter(p=>p&&typeof p==='string'&&!isIgnored(p));
+
+  const LAYERS=[
+    {id:'ui',title:'Frontend & UI',color:'#0ea5e9',bg:'#0c4a6e',test:p=>/(^|\/)(components?|pages?|views?|ui|frontend|client|public|styles?|assets?|templates?|layouts?|app\/.*\.(tsx|jsx|vue|svelte))(\/|$)/i.test(p)||/\.(html|css|scss|less|vue|svelte|jsx|tsx)$/i.test(p)},
+    {id:'api',title:'API & Routing',color:'#a855f7',bg:'#3b0764',test:p=>/(^|\/)(api|routes?|router|controllers?|handlers?|endpoints?|graphql|trpc|middleware|server|backend|functions)(\/|$)/i.test(p)},
+    {id:'core',title:'Core Logic & Modules',color:'#22c55e',bg:'#14532d',test:p=>/(^|\/)(core|lib|src|services?|domain|engine|utils?|helpers?|hooks?|store|state|modules?|pkg|internal|cmd|content|background)(\/|$)/i.test(p)||/^(index|main|app|cli|core)\.[a-z0-9]+$/i.test(p)},
+    {id:'data',title:'Data & Storage',color:'#f59e0b',bg:'#451a03',test:p=>/(^|\/)(models?|db|database|prisma|migrations?|schemas?|sql|data|storage|entities|repositories)(\/|$)/i.test(p)||/\.(sql|prisma|graphql|proto)$/i.test(p)},
+    {id:'infra',title:'Config & Infra',color:'#64748b',bg:'#1e293b',test:p=>/(^|\/)(\.github\/workflows|docker|k8s|terraform|infra|deploy|scripts?|tools?)(\/|$)/i.test(p)||/^(package\.json|tsconfig.*\.json|pyproject\.toml|Cargo\.toml|go\.mod|Dockerfile|docker-compose\.ya?ml|Makefile|manifest\.json|vite\.config|webpack\.config|next\.config|wrangler\.)/i.test(p)},
+    {id:'tests',title:'Tests & QA',color:'#ec4899',bg:'#500724',test:p=>/(^|\/)(tests?|specs?|__tests__|e2e|cypress|playwright)(\/|$)/i.test(p)||/\.(test|spec|e2e)\.[a-z0-9]+$/i.test(p)}
+  ];
+
+  /* Bucket files into layers (first match wins, with tests & infra checked early for accuracy) */
+  const buckets={ui:[],api:[],core:[],data:[],infra:[],tests:[]};
+  const checkOrder=['tests','infra','data','api','ui','core'];
+  for(const p of valid){
+    let matched=false;
+    for(const lid of checkOrder){
+      const layer=LAYERS.find(l=>l.id===lid);
+      if(layer&&layer.test(p)){buckets[lid].push(p);matched=true;break}
+    }
+    if(!matched&&!/\.(md|txt|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|pdf|zip)$/i.test(p)){
+      buckets.core.push(p);
+    }
+  }
+
+  /* Summarize each bucket into representative nodes (group deep subfolders if many files) */
+  function pickNodes(list){
+    if(list.length<=maxPerLayer){
+      return list.map(p=>({label:p.split('/').pop(),path:p,isDir:false,count:1}));
+    }
+    const groups=new Map();
+    for(const p of list){
+      const parts=p.split('/');
+      const key=parts.length>=2?(parts[0]+'/'+parts[1]):parts[0];
+      if(!groups.has(key))groups.set(key,{path:key,isDir:parts.length>2||(parts.length===2&&list.filter(x=>x.startsWith(parts[0]+'/')).length>2),files:[]});
+      groups.get(key).files.push(p);
+    }
+    const items=Array.from(groups.values())
+      .sort((a,b)=>b.files.length-a.files.length)
+      .slice(0,maxPerLayer)
+      .map(g=>{
+        if(g.files.length===1){
+          const fp=g.files[0];
+          return{label:fp.split('/').pop(),path:fp,isDir:false,count:1};
+        }
+        return{label:g.path+'/ ('+g.files.length+')',path:g.path,isDir:true,count:g.files.length};
+      });
+    return items;
+  }
+
+  const safeLabel=s=>String(s||'').replace(/["`<>]/g,'').replace(/[\[\]()]/g,'');
+  const nodeMap={};
+  const activeLayers=[];
+  const lines=['flowchart '+dir];
+  let nIdx=0;
+
+  for(const layer of LAYERS){
+    const raw=buckets[layer.id];
+    if(!raw.length)continue;
+    const nodes=pickNodes(raw);
+    const layerNodes=[];
+    lines.push('  subgraph SG_'+layer.id+'["'+layer.title+' ('+raw.length+')"]');
+    for(const nd of nodes){
+      const nid='N'+(++nIdx);
+      const lbl=safeLabel(nd.label);
+      const shape=layer.id==='data'?'[("'+lbl+'")]':layer.id==='infra'?'(["'+lbl+'"])':'["'+lbl+'"]';
+      lines.push('    '+nid+shape);
+      nodeMap[nid]={path:nd.path,isDir:nd.isDir,layer:layer.id,label:nd.label,count:nd.count};
+      layerNodes.push(nid);
+    }
+    lines.push('  end');
+    activeLayers.push({id:layer.id,title:layer.title,nodes:layerNodes,color:layer.color,bg:layer.bg,total:raw.length});
+  }
+
+  if(!activeLayers.length){
+    lines.push('  N1["'+safeLabel(fullName)+'"]');
+    nodeMap.N1={path:'',isDir:true,layer:'core',label:fullName,count:valid.length};
+  }
+
+  /* Add architectural flow edges between active subgraphs */
+  const has=id=>activeLayers.some(l=>l.id===id);
+  const firstOf=id=>(activeLayers.find(l=>l.id===id)||{nodes:[]}).nodes[0];
+  const edges=[];
+  if(has('ui')&&has('api'))edges.push('  SG_ui -->|"HTTP / RPC"| SG_api');
+  else if(has('ui')&&has('core'))edges.push('  SG_ui -->|"uses"| SG_core');
+  if(has('api')&&has('core'))edges.push('  SG_api -->|"invokes"| SG_core');
+  if(has('core')&&has('data'))edges.push('  SG_core -->|"reads / writes"| SG_data');
+  else if(has('api')&&has('data'))edges.push('  SG_api -->|"queries"| SG_data');
+  if(has('infra')&&has('core'))edges.push('  SG_infra -.->|"configures"| SG_core');
+  else if(has('infra')&&has('ui'))edges.push('  SG_infra -.->|"builds"| SG_ui');
+  if(has('tests')&&has('core'))edges.push('  SG_tests -.->|"verifies"| SG_core');
+  else if(has('tests')&&has('ui'))edges.push('  SG_tests -.->|"verifies"| SG_ui');
+  if(edges.length){
+    lines.push('');
+    edges.forEach(e=>lines.push(e));
+  }
+
+  /* Add click handlers for GitHub navigation */
+  lines.push('');
+  Object.keys(nodeMap).forEach(nid=>{
+    const info=nodeMap[nid];
+    if(!info.path)return;
+    const url=(info.isDir?treeBaseUrl:baseUrl)+info.path;
+    lines.push('  click '+nid+' "'+url+'" "Open '+safeLabel(info.path)+'" _blank');
+  });
+
+  /* Styling */
+  lines.push('');
+  for(const l of activeLayers){
+    lines.push('  style SG_'+l.id+' fill:'+l.bg+',stroke:'+l.color+',stroke-width:1.5px,color:#e2e8f0');
+  }
+
+  return{
+    mermaid:lines.join('\n'),
+    nodeMap,
+    layers:activeLayers,
+    stats:{totalFiles:valid.length,layers:activeLayers.length,nodes:Object.keys(nodeMap).length,edges:edges.length}
+  };
+};
+
+RepodestCore.buildDiagramPrompt=function(paths,meta,customInstructions){
+  const fullName=(meta&&meta.full_name)||'owner/repo';
+  const branch=(meta&&meta.default_branch)||'main';
+  const desc=(meta&&meta.description)||'';
+  const tree=RepodestCore.asciiTree((Array.isArray(paths)?paths:[]).slice(0,180));
+  const lines=[
+    'You are an expert software architect. Generate an interactive Mermaid.js architecture diagram (`flowchart TD`) for the GitHub repository `'+fullName+'`.',
+    desc?'Description: '+desc:'',
+    '',
+    'Requirements:',
+    '1. Group components into clean `subgraph` layers (e.g., Frontend/UI, API/Routes, Core Logic, Data/Storage, Config/Infra).',
+    '2. Show clear labeled arrows (`-->|"label"|`) for data flow and dependencies.',
+    '3. Add clickable GitHub links for key nodes using: `click NodeId "https://github.com/'+fullName+'/blob/'+branch+'/path/to/file" "Open file" _blank`',
+    '4. Keep labels concise and wrap them in double quotes to avoid Mermaid syntax errors.',
+    '5. Output ONLY a single ```mermaid ... ``` code block.',
+    customInstructions?('\nCustom user instructions: '+customInstructions):'',
+    '',
+    'Repository file tree (truncated to 180 entries):',
+    '```text',
+    tree,
+    '```'
+  ];
+  return lines.filter(l=>l!==null).join('\n');
+};
+
+RepodestCore.extractMermaidBlock=function(text){
+  if(!text||typeof text!=='string')return '';
+  const m=text.match(/```(?:mermaid)?\s*\r?\n([\s\S]*?)```/i);
+  if(m&&m[1])return m[1].trim();
+  const trimmed=text.trim();
+  if(/^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram|erDiagram)\b/m.test(trimmed))return trimmed;
+  return trimmed;
+};
+
 /* ---------- UMD export ---------- */
 if(typeof module!=='undefined'&&module.exports)module.exports=RepodestCore;
 if(typeof globalThis!=='undefined'){

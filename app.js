@@ -1083,6 +1083,7 @@ function switchTab(name){
     renderReleaseTimeline();
   }
   if(name==='languages')ensureChartJs().then(()=>drawLangChart());
+  if(name==='diagram'&&typeof renderDiagramTab==='function')renderDiagramTab();
   if(name==='deps')buildDepGraph();
   if(name==='deep')renderDeepPanel();
   if(name==='pr')renderPRPanel();

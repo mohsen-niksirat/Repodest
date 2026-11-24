@@ -481,6 +481,55 @@ describe('buildPRDigest() — LLM review prompt', () => {
   });
 });
 
+describe('buildArchDiagram() & Diagram helpers — GitDiagram engine', () => {
+  const sampleRepo = { full_name: 'acme/webapp', default_branch: 'main', description: 'Sample fullstack app' };
+  const samplePaths = [
+    'src/components/Header.tsx',
+    'src/pages/Home.tsx',
+    'src/api/users.ts',
+    'src/core/engine.ts',
+    'prisma/schema.prisma',
+    'package.json',
+    'tests/engine.test.ts',
+    'node_modules/pkg/index.js',
+    'package-lock.json'
+  ];
+
+  it('builds a valid Mermaid flowchart with subgraphs and click links', () => {
+    const res = core.buildArchDiagram(samplePaths, sampleRepo, { direction: 'TD' });
+    expect(res.mermaid).toContain('flowchart TD');
+    expect(res.mermaid).toContain('subgraph SG_ui');
+    expect(res.mermaid).toContain('subgraph SG_api');
+    expect(res.mermaid).toContain('subgraph SG_core');
+    expect(res.mermaid).toContain('subgraph SG_data');
+    expect(res.mermaid).toContain('click N');
+    expect(res.mermaid).toContain('https://github.com/acme/webapp/blob/main/');
+    if (res.mermaid.includes('node_modules')) throw new Error('Should ignore node_modules');
+    if (res.mermaid.includes('package-lock.json')) throw new Error('Should ignore lockfiles');
+  });
+
+  it('supports LR direction and empty path arrays safely', () => {
+    const lr = core.buildArchDiagram(samplePaths, sampleRepo, { direction: 'LR' });
+    expect(lr.mermaid).toContain('flowchart LR');
+    const empty = core.buildArchDiagram([], sampleRepo);
+    expect(empty.mermaid).toContain('acme/webapp');
+  });
+
+  it('builds an AI diagram prompt with custom instructions', () => {
+    const p = core.buildDiagramPrompt(samplePaths, sampleRepo, 'Highlight auth');
+    expect(p).toContain('acme/webapp');
+    expect(p).toContain('Highlight auth');
+    expect(p).toContain('```mermaid');
+  });
+
+  it('extracts Mermaid block from markdown fenced output', () => {
+    const raw = 'Here is your diagram:\n```mermaid\nflowchart TD\n  A --> B\n```\nHope this helps!';
+    expect(core.extractMermaidBlock(raw)).toEqual('flowchart TD\n  A --> B');
+    expect(core.extractMermaidBlock('flowchart LR\n  X --> Y')).toEqual('flowchart LR\n  X --> Y');
+    expect(core.extractMermaidBlock('')).toEqual('');
+  });
+});
+
 /* ============================================================
    Summary
    ============================================================ */

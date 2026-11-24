@@ -242,6 +242,7 @@
       <button class="tab" data-tab="languages"><svg class="ic"><use href="#i-chart"/></svg> Languages</button>
       <button class="tab" data-tab="files"><svg class="ic"><use href="#i-folder"/></svg> Files</button>
       <button class="tab" data-tab="map"><svg class="ic"><use href="#i-map"/></svg> Map</button>
+      <button class="tab" data-tab="diagram"><svg class="ic"><use href="#i-branch"/></svg> Diagram</button>
       <button class="tab" data-tab="crawl"><svg class="ic"><use href="#i-rss"/></svg> Crawl</button>
       <button class="tab" data-tab="digest"><svg class="ic"><use href="#i-robot"/></svg> Digest</button>
       <button class="tab" data-tab="activity"><svg class="ic"><use href="#i-activity"/></svg> Activity</button>
@@ -439,6 +440,47 @@
           <div class="map-info" id="mapInfo"></div>
         </div>
         <div class="dep-graph-legend" id="mapLegend"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="p-diagram">
+      <div class="card hint-card" style="margin-bottom:16px">
+        <p style="font-size:13px;line-height:1.7;color:var(--text2)">
+          <b>Architecture Diagram</b> (GitDiagram-style) visualizes this repository as an interactive <b>Mermaid.js</b> system flowchart grouped by architectural layers. Click any node to open it on GitHub, pan/zoom freely, edit the Mermaid code live, or copy the AI prompt for a custom LLM-crafted diagram.
+        </p>
+      </div>
+      <div class="card">
+        <div class="minititle">
+          Architecture Diagram
+          <span style="font-size:11.5px;color:var(--text3);font-weight:400;margin-left:8px" id="diagramStats"></span>
+          <span class="map-actions">
+            <button class="btn ghost sm" id="diagramDirBtn" onclick="diagramToggleDir()">Layout: TD ↓</button>
+            <button class="btn ghost sm" onclick="diagramZoom(0.2)" title="Zoom in">+</button>
+            <span id="diagramZoomLabel" style="font-family:var(--mono);font-size:11px;color:var(--text3);min-width:36px;text-align:center">100%</span>
+            <button class="btn ghost sm" onclick="diagramZoom(-0.2)" title="Zoom out">−</button>
+            <button class="btn ghost sm" onclick="diagramResetZoom()" title="Reset view">Reset</button>
+            <button class="btn ghost sm" onclick="diagramToggleCode()">&lt;/&gt; Mermaid</button>
+            <button class="btn ghost sm" onclick="diagramCopyCode()">Copy .mmd</button>
+            <button class="btn ghost sm" onclick="diagramDownloadSVG()">SVG</button>
+            <button class="btn ghost sm" onclick="diagramDownloadPNG()">PNG</button>
+          </span>
+        </div>
+        <div class="diagram-ai-bar">
+          <input id="diagramCustomInput" type="text" placeholder="Optional custom focus (e.g. Focus on authentication & data flow)…" spellcheck="false">
+          <button class="btn sm" onclick="diagramCopyPrompt()" title="Copy a GitDiagram-style prompt for ChatGPT, Claude or Gemini">✨ Copy AI Diagram Prompt</button>
+          <button class="btn ghost sm" onclick="renderDiagramTab(true)" title="Regenerate instant diagram">↻ Regenerate</button>
+        </div>
+        <div id="diagramCodeWrap" style="display:none;margin-bottom:12px">
+          <textarea id="diagramCode" rows="8" spellcheck="false" style="width:100%;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;resize:vertical" placeholder="Paste or edit Mermaid flowchart code here…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn green sm" onclick="diagramRenderCode()">▶ Render Mermaid</button>
+            <button class="btn ghost sm" onclick="diagramToggleCode()">Hide editor</button>
+          </div>
+        </div>
+        <div class="diagram-viewport" id="diagramViewport">
+          <div class="diagram-stage" id="diagramStage"></div>
+        </div>
+        <div id="diagramStatus" style="font-size:11.5px;color:var(--text3);margin-top:8px"></div>
       </div>
     </section>
 
@@ -881,6 +923,7 @@
 <script src="app.map.js"></script>
 <script src="app.crawl.js"></script>
 <script src="app.pr.js"></script>
+<script src="app.diagram.js"></script>
 <script src="app.boot.js"></script>
 </body>
 </html>
